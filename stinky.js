@@ -1,24 +1,35 @@
 import * as THREE from './three.module.js';
 import RAPIER from './rapier3d.js';
+import { debugRay } from './debug.js'
+
+const JUMP_FORCE = 5; // Increased for better jump response
+const GRAVITY = -10;
+const MOVE_SPEED = 4;
+const ROTATION_SPEED = 0.04;
+const CAMERA_DISTANCE = 5;
+const CAMERA_HEIGHT = 3;
+
+let isGrounded = false;
+let jumpRequested = false;
 
 let camera, scene, renderer, world;
 let character, characterBody;
 let cube, cubeBody;
-let characterRotation = 0; // Track character rotation
+let characterRotation = 0;
 
 const keys = {
     w: false,
     s: false,
     a: false,
-    d: false
+    d: false,
 };
 
 async function init() {
     // Initialize RAPIER
     await RAPIER.init();
-    
+
     // Create physics world
-    world = new RAPIER.World({ x: 0.0, y: -9.81, z: 0.0 });
+    world = new RAPIER.World({ x: 0.0, y: GRAVITY, z: 0.0 });
 
     // Create Three.js scene
     scene = new THREE.Scene();
@@ -26,7 +37,7 @@ async function init() {
 
     // Setup camera
     camera = new THREE.PerspectiveCamera(90, window.innerWidth / window.innerHeight, 0.1, 1000);
-    camera.position.set(0, 5, 10);
+    camera.position.set(0, CAMERA_HEIGHT, CAMERA_DISTANCE);
 
     // Setup renderer
     renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -45,10 +56,10 @@ async function init() {
 
     // Create ground
     createGround();
-    
+
     // Create character
     createCharacter();
-    
+
     // Create sample object (cube)
     createCube();
 
@@ -62,7 +73,8 @@ async function init() {
 }
 
 function createGround() {
-    const groundGeometry = new THREE.PlaneGeometry(20, 20);
+    const groundGeometry = new THREE.BoxGeometry(20, 20, 20);
+    groundGeometry.translate(0, 0, -15);
     const groundMaterial = new THREE.MeshStandardMaterial({ 
         color: 0x808080,
         roughness: 0.8,
@@ -73,40 +85,36 @@ function createGround() {
     groundMesh.receiveShadow = true;
     scene.add(groundMesh);
 
-    const groundColliderDesc = RAPIER.ColliderDesc.cuboid(10, 0.1, 10);
+    const groundColliderDesc = RAPIER.ColliderDesc.cuboid(10, 10, 10).setTranslation(0, -15, 0);;
     world.createCollider(groundColliderDesc);
 }
 
 function createCharacter() {
-    // Create character mesh
-    const characterGeometry = new THREE.BoxGeometry(1, 1, 1);
-    const characterMaterial = new THREE.MeshStandardMaterial({ color: 0xff0000 });
+    const characterGeometry = new THREE.CapsuleGeometry(0.25, 0.5);
+    const characterMaterial = new THREE.MeshStandardMaterial({ color: 0xff0000, transparent: true, opacity: 0.25 });
     character = new THREE.Mesh(characterGeometry, characterMaterial);
     character.castShadow = true;
     scene.add(character);
 
-    // Create character physics body
     const characterBodyDesc = RAPIER.RigidBodyDesc.dynamic()
-        .setTranslation(0, 0.5, 0)  // Position adjusted to half the height
-        .lockRotations()  // Prevent physics from rotating the body
-        .setLinearDamping(1.0);  // Add damping to prevent sliding
+        .setTranslation(0, 1, 0)
+        .lockRotations()
+        .setLinearDamping(0.1); // Reduced damping for better responsiveness
+
     characterBody = world.createRigidBody(characterBodyDesc);
 
-    const characterColliderDesc = RAPIER.ColliderDesc.cuboid(0.5, 0.5, 0.5);
+    const characterColliderDesc = RAPIER.ColliderDesc.capsule(0.25, 0.25);
     world.createCollider(characterColliderDesc, characterBody);
 }
 
 function createCube() {
-    // Create cube mesh
     const cubeGeometry = new THREE.BoxGeometry(1, 1, 1);
     const cubeMaterial = new THREE.MeshStandardMaterial({ color: 0x00ff00 });
     cube = new THREE.Mesh(cubeGeometry, cubeMaterial);
     cube.castShadow = true;
     scene.add(cube);
 
-    // Create cube physics body
-    const cubeBodyDesc = RAPIER.RigidBodyDesc.dynamic()
-        .setTranslation(3, 2, 3);
+    const cubeBodyDesc = RAPIER.RigidBodyDesc.dynamic().setTranslation(3, 2, 3);
     cubeBody = world.createRigidBody(cubeBodyDesc);
 
     const cubeColliderDesc = RAPIER.ColliderDesc.cuboid(0.5, 0.5, 0.5);
@@ -115,13 +123,17 @@ function createCube() {
 
 function setupControls() {
     document.addEventListener('keydown', (event) => {
-        if (keys.hasOwnProperty(event.key)) {
+        if (event.key === ' ') {
+            jumpRequested = true;
+        } else if (keys.hasOwnProperty(event.key)) {
             keys[event.key] = true;
         }
     });
 
     document.addEventListener('keyup', (event) => {
-        if (keys.hasOwnProperty(event.key)) {
+        if (event.key === ' ') {
+            jumpRequested = false; // Corrected: Reset jumpRequested on keyup
+        } else if (keys.hasOwnProperty(event.key)) {
             keys[event.key] = false;
         }
     });
@@ -129,17 +141,10 @@ function setupControls() {
 
 function updateCamera() {
     const characterPosition = characterBody.translation();
-    const cameraDistance = 5;
-    
-    // Calculate camera position based on character rotation
-    const cameraX = characterPosition.x - Math.sin(characterRotation) * cameraDistance;
-    const cameraZ = characterPosition.z - Math.cos(characterRotation) * cameraDistance;
-    
-    camera.position.set(
-        cameraX,
-        characterPosition.y + 3, // Keep camera height constant
-        cameraZ
-    );
+    const cameraX = characterPosition.x - Math.sin(characterRotation) * CAMERA_DISTANCE;
+    const cameraZ = characterPosition.z - Math.cos(characterRotation) * CAMERA_DISTANCE;
+
+    camera.position.set(cameraX, characterPosition.y + CAMERA_HEIGHT, cameraZ);
     camera.lookAt(characterPosition.x, characterPosition.y, characterPosition.z);
 }
 
@@ -150,36 +155,65 @@ function onWindowResize() {
 }
 
 function updateCharacterPosition() {
-    const moveSpeed = 0.1;
-    const rotationSpeed = 0.05;
     const position = characterBody.translation();
-    
+
     // Update rotation based on A/D keys
-    if (keys.a) characterRotation += rotationSpeed;
-    if (keys.d) characterRotation -= rotationSpeed;
-    
+    if (keys.a) characterRotation += ROTATION_SPEED;
+    if (keys.d) characterRotation -= ROTATION_SPEED;
+
     // Calculate movement direction based on current rotation
-    let deltaX = 0;
-    let deltaZ = 0;
-    
-    if (keys.w) {
-        deltaX = Math.sin(characterRotation) * moveSpeed;
-        deltaZ = Math.cos(characterRotation) * moveSpeed;
-    }
-    if (keys.s) {
-        deltaX = -Math.sin(characterRotation) * moveSpeed;
-        deltaZ = -Math.cos(characterRotation) * moveSpeed;
+    const forward = new THREE.Vector3(
+        Math.sin(characterRotation),
+        0,
+        Math.cos(characterRotation)
+    ).normalize();
+
+    let movement = new THREE.Vector3();
+
+    // Apply movement only if W or S is pressed
+    if (keys.w) movement.add(forward);
+    if (keys.s) movement.sub(forward);
+
+    // Normalize movement to ensure consistent speed in all directions
+    if (movement.length() > 0) {
+        movement.normalize().multiplyScalar(MOVE_SPEED);
     }
 
-    characterBody.setTranslation(
-        { 
-            x: position.x + deltaX, 
-            y: position.y, 
-            z: position.z + deltaZ 
-        }, 
+    // Get current velocity
+    const currentVelocity = characterBody.linvel();
+
+    // Set linear velocity directly (preserve Y velocity for gravity/jumping)
+    characterBody.setLinvel(
+        {
+            x: movement.x,
+            y: currentVelocity.y, // Preserve vertical velocity
+            z: movement.z
+        },
         true
     );
-    
+
+    // Ground detection raycast
+    const rayOrigin = { x: position.x, y: position.y - 0.5, z: position.z }; // TODO: tie to character size
+    const rayDirection = { x: 0, y: -1, z: 0 }
+    const ray = new RAPIER.Ray(rayOrigin, rayDirection);
+    const maxDistance = 0.1;
+    const hit = world.castRay(ray, maxDistance, true, null, null, null, characterBody);
+    // debugRay(scene, rayOrigin, rayDirection, maxDistance)
+    isGrounded = hit !== null;
+
+    // Handle jumping
+    if (jumpRequested && isGrounded) {
+        characterBody.setLinvel(
+            {
+                x: currentVelocity.x,
+                y: JUMP_FORCE, // Apply jump force
+                z: currentVelocity.z
+            },
+            true
+        );
+        jumpRequested = false;
+    }
+
     // Update visual rotation of character mesh
     character.rotation.y = characterRotation;
 }
@@ -187,26 +221,19 @@ function updateCharacterPosition() {
 function animate() {
     requestAnimationFrame(animate);
 
-    // Update character position and rotation based on current key states
     updateCharacterPosition();
-
-    // Step the physics world
     world.step();
 
-    // Update meshes based on physics
     const characterPosition = characterBody.translation();
     character.position.set(characterPosition.x, characterPosition.y, characterPosition.z);
 
     const cubePosition = cubeBody.translation();
     cube.position.set(cubePosition.x, cubePosition.y, cubePosition.z);
 
-    // Update camera to follow character
     updateCamera();
-
     renderer.render(scene, camera);
 }
 
-// Start the application
 init();
 
 /**
