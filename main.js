@@ -1,13 +1,16 @@
-import * as THREE from './three.module.js';
-import RAPIER from './rapier3d.js';
-import { debugRay } from './debug.js'
+import * as THREE from 'three';
+import * as RAPIER from '@dimforge/rapier3d-compat';
+import { GLTFLoader } from 'three/examples/jsm/Addons.js';
+import { debugCapsuleHitbox, debugRay } from './debug';
+
+const DEBUG = false;
 
 const JUMP_FORCE = 5; // Increased for better jump response
 const GRAVITY = -10;
 const MOVE_SPEED = 4;
 const ROTATION_SPEED = 0.04;
-const CAMERA_DISTANCE = 5;
-const CAMERA_HEIGHT = 3;
+const CAMERA_DISTANCE = 3;
+const CAMERA_HEIGHT = 1;
 
 let isGrounded = false;
 let jumpRequested = false;
@@ -25,7 +28,7 @@ const keys = {
 };
 
 async function init() {
-    // Initialize RAPIER
+    // Initialize Rapier3D
     await RAPIER.init();
 
     // Create physics world
@@ -49,7 +52,7 @@ async function init() {
     const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
     scene.add(ambientLight);
 
-    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
     directionalLight.position.set(5, 5, 5);
     directionalLight.castShadow = true;
     scene.add(directionalLight);
@@ -62,6 +65,10 @@ async function init() {
 
     // Create sample object (cube)
     createCube();
+
+    // Add static GLB objects
+    addStaticGLBObject('./assets/pip_original.glb', { x: 5, y: -4, z: 0 }, { x: 0, y: 0, z: 0 }, { x: 0.025, y: 0.025, z: 0.025 });
+    addStaticGLBObject('./assets/pip_original.glb', { x: -5, y: -4, z: 0 }, { x: 0, y: 0, z: 0 }, { x: 0.025, y: 0.025, z: 0.025 });
 
     // Setup controls
     setupControls();
@@ -90,21 +97,48 @@ function createGround() {
 }
 
 function createCharacter() {
-    const characterGeometry = new THREE.CapsuleGeometry(0.25, 0.5);
-    const characterMaterial = new THREE.MeshStandardMaterial({ color: 0xff0000, transparent: true, opacity: 0.25 });
-    character = new THREE.Mesh(characterGeometry, characterMaterial);
-    character.castShadow = true;
-    scene.add(character);
+    // Load the GLB model
+    const loader = new GLTFLoader();
+    loader.load("./assets/pip_original.glb", (gltf) => {
+        const model = gltf.scene;
 
+        // Optionally, you can scale or position the model if needed
+        model.scale.set(0.025, 0.025, 0.025);
+        model.position.set(0, 0, 0);
+
+        // Add the model to the scene
+        scene.add(model);
+
+        // Replace the character with the model
+        character = model;
+
+        // You can also set the model to cast shadows if needed
+        model.traverse((child) => {
+            if (child.isMesh) {
+                child.castShadow = true;
+            }
+        });
+    }, undefined, (error) => {
+        console.error('An error occurred while loading the GLB model:', error);
+    });
+
+    // Create the character's rigid body
     const characterBodyDesc = RAPIER.RigidBodyDesc.dynamic()
-        .setTranslation(0, 1, 0)
+        .setTranslation(0, 0, 0)
         .lockRotations()
         .setLinearDamping(0.1); // Reduced damping for better responsiveness
 
     characterBody = world.createRigidBody(characterBodyDesc);
 
-    const characterColliderDesc = RAPIER.ColliderDesc.capsule(0.25, 0.25);
+    // Create the capsule collider (adjust the size to fit your model)
+    const capsuleHalfHeight = 0.1
+    const capsuleRadius = 1;
+    const capsuleOffsetY = 0.2;
+    const characterColliderDesc = RAPIER.ColliderDesc.capsule(capsuleHalfHeight, capsuleRadius)
+        .setTranslation(0, capsuleOffsetY, 0); // Adjust these values as needed
     world.createCollider(characterColliderDesc, characterBody);
+
+    if (DEBUG) debugCapsuleHitbox(scene, characterBody, capsuleRadius, capsuleHalfHeight, capsuleOffsetY);
 }
 
 function createCube() {
@@ -119,6 +153,41 @@ function createCube() {
 
     const cubeColliderDesc = RAPIER.ColliderDesc.cuboid(0.5, 0.5, 0.5);
     world.createCollider(cubeColliderDesc, cubeBody);
+}
+
+function addStaticGLBObject(path, position, rotation, scale) {
+    const loader = new GLTFLoader();
+    loader.load(path, (gltf) => {
+        const model = gltf.scene;
+
+        // Set position, rotation, and scale
+        model.position.set(position.x, position.y, position.z);
+        model.rotation.set(rotation.x, rotation.y, rotation.z);
+        model.scale.set(scale.x, scale.y, scale.z);
+
+        // Add the model to the scene
+        scene.add(model);
+
+        // Create a static rigid body for the object
+        const bodyDesc = RAPIER.RigidBodyDesc.fixed()
+            .setTranslation(position.x, position.y, position.z)
+            .setRotation({ x: rotation.x, y: rotation.y, z: rotation.z, w: 1 });
+
+        const body = world.createRigidBody(bodyDesc);
+
+        // Create a collider for the object (assuming it's a box for simplicity)
+        const colliderDesc = RAPIER.ColliderDesc.cuboid(scale.x, scale.y, scale.z);
+        world.createCollider(colliderDesc, body);
+
+        // Optionally, set the model to cast shadows
+        model.traverse((child) => {
+            if (child.isMesh) {
+                child.castShadow = true;
+            }
+        });
+    }, undefined, (error) => {
+        console.error('An error occurred while loading the GLB model:', error);
+    });
 }
 
 function setupControls() {
@@ -193,12 +262,12 @@ function updateCharacterPosition() {
     );
 
     // Ground detection raycast
-    const rayOrigin = { x: position.x, y: position.y - 0.5, z: position.z }; // TODO: tie to character size
-    const rayDirection = { x: 0, y: -1, z: 0 }
+    const rayOrigin = { x: position.x, y: position.y - 0.5, z: position.z };
+    const rayDirection = { x: 0, y: -1, z: 0 };
     const ray = new RAPIER.Ray(rayOrigin, rayDirection);
-    const maxDistance = 0.1;
+    const maxDistance = 0.5;
     const hit = world.castRay(ray, maxDistance, true, null, null, null, characterBody);
-    // debugRay(scene, rayOrigin, rayDirection, maxDistance)
+    if (DEBUG) debugRay(scene, rayOrigin, rayDirection, maxDistance)
     isGrounded = hit !== null;
 
     // Handle jumping
@@ -215,21 +284,29 @@ function updateCharacterPosition() {
     }
 
     // Update visual rotation of character mesh
-    character.rotation.y = characterRotation;
+    if (character) {
+        character.rotation.y = characterRotation; // Rotate the entire GLB model
+    }
 }
 
 function animate() {
     requestAnimationFrame(animate);
 
+    // Update character position and physics
     updateCharacterPosition();
     world.step();
 
-    const characterPosition = characterBody.translation();
-    character.position.set(characterPosition.x, characterPosition.y, characterPosition.z);
+    // Update character position (GLB model)
+    if (character) { // Ensure character is defined
+        const characterPosition = characterBody.translation();
+        character.position.set(characterPosition.x, characterPosition.y, characterPosition.z);
+    }
 
+    // Update cube position (if needed)
     const cubePosition = cubeBody.translation();
     cube.position.set(cubePosition.x, cubePosition.y, cubePosition.z);
 
+    // Update camera and render the scene
     updateCamera();
     renderer.render(scene, camera);
 }
@@ -238,15 +315,27 @@ init();
 
 /**
  * TODO:
- * * how to add models (characters & world)
- * * interacting with characters (just says stuff)
- * * add THINGS
- * * * veron pip
- * * * matt pip
- * * * other pips
- * * * the world
- * * * * grass n flowers
- * * * * pip town
- * * * * skybox
- * * other systems if time permits
+ * * build out the world
+ * * * matt pip & veron pip
+ * * * grass & flowers
+ * * * pip town
+ * * * lighting 
+ *
+ * * interaction system
+ * * * press E when near enough
+ * * * speech bubble overlay (html) appears with A. cahracter name B. 2d character image C. text
+ * 
+ * * polish
+ * * * better hitboxes
+ * * * more pips
+ * * * more world building
+ * * * more systems if time permits
+ * 
+ * * ideas
+ * * * cannon shoot a pip
+ * * * something with dynamic bodies
+ * * * * button that spawns pips
+ * * * crash land alien pip
+ * 
+ * * clean up the code dipshit
  */

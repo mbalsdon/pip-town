@@ -1,0 +1,14 @@
+{
+  "name": "stinky",
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "vite"
+  },
+  "dependencies": {
+    "@dimforge/rapier3d-compat": "^0.14.0",
+    "three": "^0.173.0"
+  },
+  "devDependencies": {
+    "vite": "^6.0.11"
+  }
+}
