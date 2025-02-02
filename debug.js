@@ -56,6 +56,7 @@ export function dbgAxesHelper(model) {
     model.add(gyro);
 }
 
+// TODO: use collider? (see dbgCuboidHitbox)
 export function dbgCapsuleHitbox(model, capsuleDesc) {
     const hitboxGeometry = new THREE.CapsuleGeometry(capsuleDesc.dim.r, capsuleDesc.dim.hy * 2, 4, 16);
     hitboxGeometry.translate(capsuleDesc.pos.x, capsuleDesc.pos.y, capsuleDesc.pos.z);
@@ -75,7 +76,7 @@ export function dbgCapsuleHitbox(model, capsuleDesc) {
 }
 
 export function dbgConsoleUpdateCam(camPos, camRot) {
-    const xPos = camPos.x.toFixed(2);    
+    const xPos = camPos.x.toFixed(2);
     const yPos = camPos.y.toFixed(2);
     const zPos = camPos.z.toFixed(2);
 
@@ -93,7 +94,7 @@ export function dbgConsoleUpdateCam(camPos, camRot) {
 }
 
 export function dbgConsoleUpdateChar(charPos, charRot) {
-    const xPos = charPos.x.toFixed(2);    
+    const xPos = charPos.x.toFixed(2);
     const yPos = charPos.y.toFixed(2);
     const zPos = charPos.z.toFixed(2);
 
@@ -122,3 +123,38 @@ export function dbgAssertModelPos(model, modelBody) {
         `);
     }
 }
+
+export function dbgCuboidHitbox(model, collider) {
+    // Get collider dimensions (half-extents)
+    const halfExtents = collider.halfExtents();
+    const width = halfExtents.x * 2;
+    const height = halfExtents.y * 2;
+    const depth = halfExtents.z * 2;
+
+    // Get collider position
+    const position = collider.translation();
+
+    // Create wireframe geometry matching collider dimensions
+    const hitboxGeometry = new THREE.BoxGeometry(width, height, depth);
+
+    // Create wireframe material
+    const hitboxMaterial = new THREE.MeshBasicMaterial({
+        color: 0xff0000,
+        wireframe: true,
+        transparent: true,
+        opacity: 0.5
+    });
+
+    // Create mesh and add to group
+    const hitboxMesh = new THREE.Mesh(hitboxGeometry, hitboxMaterial);
+
+    // Set position relative to group
+    hitboxMesh.position.set(
+        position.x,
+        position.y - halfExtents.y,
+        position.z
+    );
+
+    model.add(hitboxMesh);
+}
+

@@ -1,6 +1,6 @@
 export const DEBUG = true;
 
-export const FPS = 60;
+export const FPS = 30;
 const speedScale = 60 / FPS;
 
 export const OBJ_PIP = {
@@ -11,9 +11,9 @@ export const OBJ_PIP = {
     }
 };
 
-export const JUMP_FORCE = 5;
-export const MOVE_SPEED = 4;
-export const ROTATION_SPEED = speedScale * 0.04;
+export const JUMP_FORCE = 10; // TODO: 5
+export const MOVE_SPEED = 12; // TODO: 4
+export const ROTATION_SPEED = speedScale * 0.08; // TODO: 0.04
 export const JUMP_RAY_DISTANCE = 0.5;
 
 export const SPAWN_POSITION = { x: 0, y: 10, z: 0 };

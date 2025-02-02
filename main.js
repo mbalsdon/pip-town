@@ -3,7 +3,7 @@ import * as RAPIER from '@dimforge/rapier3d-compat';
 import { GLTFLoader } from 'three/examples/jsm/Addons.js';
 import { createDbgConsole, dbgAxesHelper, dbgCapsuleHitbox, dbgRay, dbgConsoleUpdateCam, dbgConsoleUpdateChar, dbgAssertModelPos } from './debug';
 import { setupCamera, setupPhysicsWorld, setupRenderer, setupScene } from './init';
-import { createDynamicUnitCube, createDynamicGLBObject, createGround, createStaticGLBObject } from './objects';
+import { createDynamicUnitCube, createDynamicGLBObject, createGround, createStaticGLBObject, createHouse1 } from './objects';
 import { DEBUG, FPS, OBJ_PIP, JUMP_FORCE, MOVE_SPEED, ROTATION_SPEED, JUMP_RAY_DISTANCE, SPAWN_POSITION } from './consts'
 
 let lastTime = 0;
@@ -32,14 +32,33 @@ async function init() {
     renderer = setupRenderer();
     [camera, controls] = setupCamera(renderer);
 
-    // Add lights TODO: lights fns
-    const ambientLight = new THREE.AmbientLight(0xffffff, 1.0);
+    ////// Add lights TODO: lights fns///////////////////////////////
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
     scene.add(ambientLight);
 
-    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
-    directionalLight.position.set(0, 15, 0);
-    directionalLight.castShadow = true;
-    scene.add(directionalLight);
+    // Sun light (directional light)
+    const sunLight = new THREE.DirectionalLight(0xffffff, 1.0);
+    sunLight.position.set(50, 80, 50); // Positions the light like a sun
+    sunLight.castShadow = true;
+
+    // Configure shadow camera to match ground size
+    sunLight.shadow.camera.left = -60;
+    sunLight.shadow.camera.right = 60;
+    sunLight.shadow.camera.top = 60;
+    sunLight.shadow.camera.bottom = -60;
+    sunLight.shadow.camera.near = 1;
+    sunLight.shadow.camera.far = 200;
+
+    // Basic shadow map settings
+    sunLight.shadow.mapSize.width = 1024;
+    sunLight.shadow.mapSize.height = 1024;
+
+    scene.add(sunLight);
+
+    // Uncomment to debug shadow camera area
+    // const helper = new THREE.CameraHelper(sunLight.shadow.camera);
+    // scene.add(helper);
+    ////////////////////////////////
 
     const groundModel = createGround(scene, world);
     await createCharacter();
@@ -52,7 +71,7 @@ async function init() {
         "./assets/pip_original.glb",
         scene, world,
         {
-            pos: { x: -5.0, y: 0.9, z: 0.0 },
+            pos: { x: -15.0, y: 0.9, z: 0.0 },
             rot: { x: 0.0, y: 0.0, z: 0.0 },
             scale: { x: OBJ_PIP.scaleFactor, y: OBJ_PIP.scaleFactor, z: OBJ_PIP.scaleFactor }
         },
@@ -63,12 +82,18 @@ async function init() {
         "./assets/pip_original.glb",
         scene, world,
         {
-            pos: { x: 5.0, y: 0.9, z: 0.0},
+            pos: { x: 15.0, y: 0.9, z: 0.0},
             rot: { x: 0.0, y: 0.0, z: 0.0 },
             scale: { x: OBJ_PIP.scaleFactor, y: OBJ_PIP.scaleFactor, z: OBJ_PIP.scaleFactor }
         },
         OBJ_PIP.hitbox
     );
+
+    createHouse1(scene, world, { x: 35, y: 0, z: 35 }, {});
+    createHouse1(scene, world, { x: 35, y: 0, z: 20 }, {});
+    createHouse1(scene, world, { x: 35, y: 0, z: 5 }, {});
+    createHouse1(scene, world, { x: 35, y: 0, z: -10 }, {});
+    createHouse1(scene, world, { x: 35, y: 0, z: -25 }, {});
 
     // Dynamic objects
     dynamicObjects["cube1"] = createDynamicUnitCube(scene, world);
@@ -105,7 +130,7 @@ async function createCharacter() {
         }
     });
     scene.add(characterModel);
-    
+
     // Rigid body
     const characterBodyDesc = RAPIER.RigidBodyDesc.dynamic()
         .setTranslation(SPAWN_POSITION.x, SPAWN_POSITION. y, SPAWN_POSITION.z)
@@ -184,7 +209,7 @@ function updateCharacterPosition() {
         Math.cos(characterRotation)
     ).normalize();
 
-    
+
     // Apply movement only if W or S is pressed
     let movement = new THREE.Vector3();
     if (keys.w) movement.add(forward);
@@ -245,15 +270,19 @@ function animate(currentTime) {
             obj.model.position.set(objPos.x, objPos.y, objPos.z);
             obj.model.quaternion.set(objRot.x, objRot.y, objRot.z, objRot.w);
         }
-    
+
         // Only render objects within a certain distance of the camera
         scene.traverse((obj) => {
             if (obj.isMesh && !isPartOfCharacter(obj) && !alwaysRender.includes(obj)) {
-                const distToCam = camera.position.distanceTo(obj.position);
+                // Get world position of the object
+                const worldPos = new THREE.Vector3();
+                obj.getWorldPosition(worldPos);
+
+                const distToCam = camera.position.distanceTo(worldPos);
                 obj.visible = (distToCam < window.renderDistance);
             }
         });
-    
+
         renderer.render(scene, camera);
 
         lastTime = currentTime;
@@ -264,38 +293,43 @@ init();
 
 /**
  *
- * 
- * TODO:
  *
- * * list of always-rendered things (ground, character, ...)
+ * TODO:
+ * * refactors to code & workflow
+ * * * design in tinkercad and export as obj
+ * * * manually(?) create equivalent buffergeometry (3js) (?) and trimesh
+ * * * both need to be a part of a class that has unified translation, rotation, etc.
+ * * * do questionmark args besides the basics
+ * 
  * * check TODOs
- * 
+ *
  * * build out the world
- * * * matt pip & veron pip
  * * * pip town
- * * * lighting 
- * 
+ * * * matt pip & veron pip
+ * * * lighting
+ * * * give grass texture ground a try instead of objs
+ *
  * * interaction system
  * * * press E when near enough
  * * * speech bubble overlay (html) appears with A. cahracter name B. 2d character image C. text
- * 
+ *
  * * settings menu (fps, render distance)
  * * possible to have camera not go through objects (i.e. ground)?
  * * better hitboxes (convexhull? or just cuboid?)
- * 
+ *
  * * polish
  * * * moving pips?
  * * * more pips
  * * * bob
  * * * more world building
  * * * more systems if time permits
- * 
- * 
+ *
+ *
  * * ideas
  * * * cannon shoot a pip
  * * * something with dynamic bodies
  * * * * button that spawns pips
  * * * crash land alien pip
- * 
+ *
  * * clean up the code dipshit
  */
