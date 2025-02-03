@@ -13,44 +13,9 @@
             width: 100%;
             height: 100%;
         }
-        #slider-container {
-            position: fixed;
-            top: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            background-color: rgba(0, 0, 0, 0.5);
-            padding: 10px;
-            border-radius: 5px;
-            z-index: 1000;
-        }
-        #render-distance {
-            width: 200px;
-        }
-        .slider-label {
-            color: white;
-            font-family: Arial, sans-serif;
-            margin-right: 10px;
-        }
     </style>
 </head>
 <body>
-    <div id="slider-container">
-        <span class="slider-label">Render Distance:</span>
-        <input type="range" id="render-distance" min="10" max="100" value="50">
-        <span class="slider-label" id="distance-value">50</span>
-    </div>
     <script type="module" src="./main.js"></script>
-    <script>
-        window.renderDistance = 50;
-        const slider = document.getElementById('render-distance');
-        const valueDisplay = document.getElementById('distance-value');
-
-        slider.addEventListener('input', (e) => {
-            const value = e.target.value;
-            valueDisplay.textContent = value;
-            // You can access this value in your main.js as:
-            window.renderDistance = Number(value);
-        });
-    </script>
 </body>
 </html>
