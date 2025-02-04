@@ -20,10 +20,10 @@ await populateWorldObjects(world);
 const ambientLight = new THREE.AmbientLight(0xffffff, 0.1);
 world.scene.add(ambientLight);
 
-const tmpPointLight = new THREE.PointLight(0xffffaa, 10, 100);
-tmpPointLight.position.set(0,2,5);
-world.scene.add(tmpPointLight);
-if (DEBUG) world.scene.add(new THREE.PointLightHelper(tmpPointLight));
+// const tmpPointLight = new THREE.PointLight(0xffffaa, 10, 100);
+// tmpPointLight.position.set(0,2,5);
+// world.scene.add(tmpPointLight);
+// if (DEBUG) world.scene.add(new THREE.PointLightHelper(tmpPointLight));
 
 const tmpHemiLight = new THREE.HemisphereLight(0xffffff, 0x444444, 0.5);
 tmpHemiLight.position.set(0,10,0);
@@ -33,10 +33,10 @@ if (DEBUG) world.scene.add(new THREE.HemisphereLightHelper(tmpHemiLight));
 const sunLight = new THREE.DirectionalLight(0xffffaa, 0.5);
 sunLight.position.set(50, 80, 50);
 sunLight.castShadow = true;
-sunLight.shadow.camera.left = -60;
-sunLight.shadow.camera.right = 60;
-sunLight.shadow.camera.top = 60;
-sunLight.shadow.camera.bottom = -60;
+sunLight.shadow.camera.left = -70;
+sunLight.shadow.camera.right = 70;
+sunLight.shadow.camera.top = 70;
+sunLight.shadow.camera.bottom = -70;
 sunLight.shadow.camera.near = 1;
 sunLight.shadow.camera.far = 200;
 sunLight.shadow.mapSize.width = 1024;
@@ -84,6 +84,7 @@ animate();
  * * polish
  * * * moving pips? give them velocities in a loop
  * * * * pushing them would fk their path up, but maybe it would be funny to let that happen
+ * * * dynamic objects that fall off the map either A) despawn or B) respawn at their startpos
  * * * more pips
  * * * bob
  * * * day/night mode
@@ -101,6 +102,7 @@ animate();
  * * * * button that spawns pips
  * * * crash land alien pip
  * * * look into applied forces; powerup(?) that applies big force to dynamics that player comes in contact with 
- *
+ * * * minimap: orthographic view top down, map x/y to it??
+ * 
  * * clean up the code dipshit
  */

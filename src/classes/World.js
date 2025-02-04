@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import * as RAPIER from '@dimforge/rapier3d-compat';
 import { OrbitControls } from 'three/examples/jsm/Addons.js';
 import { createDbgConsole, dbgConsoleUpdateCam } from '../debug';
-import { DEBUG, FPS, GRAVITY } from '../consts'
+import { CAMERA_MAX_DISTANCE, DEBUG, FPS, GRAVITY } from '../consts'
 
 //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\////\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
 //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\////\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
@@ -23,7 +23,7 @@ export class World {
         this.controls = new OrbitControls(this.camera, this.renderer.domElement);
         this.controls.enableDamping = false;
         this.controls.minDistance = 0;
-        this.controls.maxDistance = 5;
+        this.controls.maxDistance = CAMERA_MAX_DISTANCE;
         this.controls.rotateSpeed = 0.5;
 
         this.physics = new RAPIER.World(GRAVITY);

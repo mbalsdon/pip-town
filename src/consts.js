@@ -15,10 +15,12 @@ export const OBJ_PIP = {
     }
 };
 
-export const JUMP_FORCE = 5;
-export const MOVE_SPEED = 4;
+export const JUMP_FORCE = 10; // TODO: 5
+export const MOVE_SPEED = 12; // TODO: 4
 export const ROTATION_SPEED = speedScale * 0.04;
+
+export const CAMERA_MAX_DISTANCE = 5; // TODO: 5
 
 export const JUMP_RAY_DISTANCE = 1.0; // FUTURE: automatable based on collider?
 
-export const SPAWN_POSITION = { x: 0, y: 10, z: 0 };
+export const SPAWN_POSITION = { x: -26, y: 5, z: -32 }; // { x: -35, y: 10, z: -40 };
