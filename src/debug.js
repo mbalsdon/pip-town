@@ -136,7 +136,7 @@ export function dbgColliderMesh(mesh, collider) {
     let geometry;
     const material = new THREE.MeshBasicMaterial({
         wireframe: true,
-        color: 0x00ff00
+        color: 0xffff00
     });
 
     const shape = collider.shapeType();

@@ -9,6 +9,8 @@ import { DEBUG } from '../consts';
 export class PhysicsObject {
     constructor(world, {
         isStatic = true,
+        castShadow = true,
+        receiveShadow = true,
         position = { x: 0, y: 0, z: 0 },
         rotation = { x: 0, y: 0, z: 0 },
         scale = { x: 1, y: 1, z: 1},
@@ -22,8 +24,8 @@ export class PhysicsObject {
         this.mesh.position.set(position.x, position.y, position.z);
         this.mesh.rotation.set(rotation.x, rotation.y, rotation.z);
         this.mesh.scale.set(scale.x, scale.y, scale.z);
-        this.mesh.castShadow = true;
-        this.mesh.receiveShadow = true;
+        this.mesh.castShadow = castShadow;
+        this.mesh.receiveShadow = receiveShadow;
         this.world.scene.add(this.mesh);
 
         const rigidBodyDesc = isStatic ?

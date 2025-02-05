@@ -1,7 +1,7 @@
 
 import * as THREE from 'three';
 import { PhysicsObject } from './PhysicsObject';
-import { DEBUG, JUMP_FORCE, JUMP_RAY_DISTANCE, MOVE_SPEED, ROTATION_SPEED, SPAWN_POSITION } from '../consts';
+import { DEBUG, INIT_CHARACTER_ROTATION, JUMP_FORCE, JUMP_RAY_DISTANCE, MOVE_SPEED, ROTATION_SPEED, SPAWN_POSITION } from '../consts';
 import RAPIER from '@dimforge/rapier3d-compat';
 import { dbgAssertObject, dbgAxesHelper, dbgConsoleUpdateChar, dbgRay } from '../debug';
 
@@ -27,7 +27,7 @@ export class Player extends PhysicsObject {
             colliderDesc
         });
 
-        this.characterRotationY = 0.0;
+        this.characterRotationY = INIT_CHARACTER_ROTATION;
         this.rigidBody.restrictRotations(false, true, false);
 
         this.keys = {
@@ -54,7 +54,7 @@ export class Player extends PhysicsObject {
     update() {
         // Out-of-bounds check
         let position = this.rigidBody.translation();
-        if (position.y < -100.0) {
+        if (position.y < -50.0) {
             this.rigidBody.setTranslation(SPAWN_POSITION, true);
             this.rigidBody.setLinvel(SPAWN_POSITION, true);
             return;
@@ -105,7 +105,7 @@ export class Player extends PhysicsObject {
             dbgRay(this.world.scene, rayOrigin, rayDirection, JUMP_RAY_DISTANCE);
             dbgAxesHelper(this.mesh);
             dbgConsoleUpdateChar(this.mesh)
-            dbgAssertObject(this.mesh, this.rigidBody);
+            // dbgAssertObject(this.mesh, this.rigidBody);
         }
     }
 }

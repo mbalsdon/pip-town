@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import * as RAPIER from '@dimforge/rapier3d-compat';
 import { OrbitControls } from 'three/examples/jsm/Addons.js';
 import { createDbgConsole, dbgConsoleUpdateCam } from '../debug';
-import { CAMERA_MAX_DISTANCE, DEBUG, FPS, GRAVITY } from '../consts'
+import { CAMERA_FOV, CAMERA_MAX_DISTANCE, INIT_CAMERA_POSITION, DEBUG, FPS, GRAVITY } from '../consts'
 
 //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\////\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
 //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\////\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
@@ -17,8 +17,8 @@ export class World {
         this.renderer.shadowMap.enabled = true;
         document.body.appendChild(this.renderer.domElement);
 
-        this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-        this.camera.position.set(0, -5, 10);
+        this.camera = new THREE.PerspectiveCamera(CAMERA_FOV, window.innerWidth / window.innerHeight, 0.1, 1000);
+        this.camera.position.set(INIT_CAMERA_POSITION.x, INIT_CAMERA_POSITION.y, INIT_CAMERA_POSITION.z);
 
         this.controls = new OrbitControls(this.camera, this.renderer.domElement);
         this.controls.enableDamping = false;

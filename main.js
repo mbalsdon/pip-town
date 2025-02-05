@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import * as RAPIER from '@dimforge/rapier3d-compat';
 import { World } from './src/classes/World';
 import { populateWorldObjects } from './src/scripts/populate_world_objects';
-import { DEBUG } from './src/consts';
+import { DEBUG, SHADOW_QUALITY } from './src/consts';
 
 //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\////\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
 //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\////\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
@@ -39,8 +39,8 @@ sunLight.shadow.camera.top = 70;
 sunLight.shadow.camera.bottom = -70;
 sunLight.shadow.camera.near = 1;
 sunLight.shadow.camera.far = 200;
-sunLight.shadow.mapSize.width = 1024;
-sunLight.shadow.mapSize.height = 1024;
+sunLight.shadow.mapSize.width = SHADOW_QUALITY;
+sunLight.shadow.mapSize.height = SHADOW_QUALITY;
 world.scene.add(sunLight);
 if (DEBUG) {
     world.scene.add(new THREE.CameraHelper(sunLight.shadow.camera));
@@ -62,14 +62,13 @@ animate();
 /** TODO
  * * build out the world
  * * * pip town
- * * * * see map
- * * * * place paths, with house as reference size
- * *
- * * * matt pip & veron pip
- * * * lighting
+ * * * * bridges > forest > farmland > town garden > town square
+ * * * land features (flower patches, hills?, trees, etc)
+ * * * lighting (streetlamps, inside house lights, ambient)
  * * * skybox
  * * * sun obj (square panel?)
- * * * give grass texture ground a try instead of objs
+ * * * matt pip, veron pip, general pips, bob
+ * * * farmhouse, stables
  *
  * * interaction system
  * * * press E when near enough
@@ -91,7 +90,9 @@ animate();
  * * * more world building
  * * * when npcs fall over they say ow
  * * * remove small parts of models and add them in as dynamics
- *
+ * * * can go into river
+ * * * river pushes you
+ * * * house_2 quest: furnish the house by pushing in other pips furniture
  *
  *
  * * ideas
