@@ -50,6 +50,8 @@ export class PhysicsObject {
             throw new Error(`PhysicsObject - unimplemented shape ${shape}`);
         }
 
+        colliderDesc.setFriction(isStatic? 0.0 : 0.1);
+        colliderDesc.setRestitution(0.2);
         this.collider = this.world.physics.createCollider(colliderDesc, this.rigidBody);
 
         if (DEBUG) {

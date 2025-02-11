@@ -27,6 +27,8 @@ export class Player extends PhysicsObject {
             colliderDesc
         });
 
+        this.collider.setFriction(0.0);
+
         this.characterRotationY = INIT_CHARACTER_ROTATION;
         this.rigidBody.restrictRotations(false, true, false);
 

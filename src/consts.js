@@ -14,10 +14,10 @@ export const MOVE_SPEED = 12; // TODO: 4;
 export const ROTATION_SPEED = speedScale * 0.04;
 
 export const CAMERA_FOV = 60;
-export const CAMERA_MAX_DISTANCE = 15; // TODO: 5;
+export const CAMERA_MAX_DISTANCE = 50; // TODO: 5;
 
 export const JUMP_RAY_DISTANCE = 1.2;
 
-export const SPAWN_POSITION = { x: -10, y: 20, z: 8 }; // TODO: { x: -46, y: 10, z: -36 };
+export const SPAWN_POSITION = { x: -45.6, y: 5, z: 14.6 }; // TODO: { x: -46, y: 10, z: -36 };
 export const INIT_CHARACTER_ROTATION = Math.PI/2;
 export const INIT_CAMERA_POSITION = { x: -60, y: 8, z: -36 };

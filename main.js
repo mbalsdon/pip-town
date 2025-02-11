@@ -61,17 +61,15 @@ animate();
 
 /** TODO
  * * build out the world
- * * * pip town
- * * * * bridges > forest > farmland > town garden > town square
- * * * land features (flower patches, hills?, trees, etc)
  * * * lighting (streetlamps, inside house lights, ambient)
  * * * skybox
  * * * sun obj (square panel?)
- * * * matt pip, veron pip, general pips, bob
+ * * * matt pip, veron pip, bob, frog pip on lilypad, general pips...
  * * * farmhouse, stables
+ * * * bridges
  *
  * * interaction system
- * * * press E when near enough
+ * * * press E when near enough (arrow or doing math w/ obj coords relative to player)
  * * * options:
  * * * * 1. (?) combination of CanvasTexture and gyro
  * * * * 2. speech bubble overlay (html) appears with A. cahracter name B. 2d character image C. text
@@ -79,6 +77,8 @@ animate();
  * * settings menu (fps, render distance)
  * * possible to have camera not go through objects (i.e. ground)?
  * * better hitboxes (convexhull? or just cuboid?)
+ * 
+ * * music
  *
  * * polish
  * * * moving pips? give them velocities in a loop
