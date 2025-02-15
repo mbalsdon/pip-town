@@ -1,8 +1,6 @@
-import * as THREE from 'three';
 import * as RAPIER from '@dimforge/rapier3d-compat';
 import { World } from './src/classes/World';
 import { populateWorldObjects } from './src/scripts/populate_world_objects';
-import { DEBUG, SHADOW_QUALITY } from './src/consts';
 
 //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\////\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
 //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\////\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
@@ -16,38 +14,6 @@ const world = new World();
 // Add objects to world
 await populateWorldObjects(world);
 
-// Lights (TODO: class) ------------------------------------------------
-const ambientLight = new THREE.AmbientLight(0xffffff, 0.1);
-world.scene.add(ambientLight);
-
-// const tmpPointLight = new THREE.PointLight(0xffffaa, 10, 100);
-// tmpPointLight.position.set(0,2,5);
-// world.scene.add(tmpPointLight);
-// if (DEBUG) world.scene.add(new THREE.PointLightHelper(tmpPointLight));
-
-const tmpHemiLight = new THREE.HemisphereLight(0xffffff, 0x444444, 0.5);
-tmpHemiLight.position.set(0,10,0);
-world.scene.add(tmpHemiLight);
-if (DEBUG) world.scene.add(new THREE.HemisphereLightHelper(tmpHemiLight));
-
-const sunLight = new THREE.DirectionalLight(0xffffaa, 0.5);
-sunLight.position.set(50, 80, 50);
-sunLight.castShadow = true;
-sunLight.shadow.camera.left = -70;
-sunLight.shadow.camera.right = 70;
-sunLight.shadow.camera.top = 70;
-sunLight.shadow.camera.bottom = -70;
-sunLight.shadow.camera.near = 1;
-sunLight.shadow.camera.far = 200;
-sunLight.shadow.mapSize.width = SHADOW_QUALITY;
-sunLight.shadow.mapSize.height = SHADOW_QUALITY;
-world.scene.add(sunLight);
-if (DEBUG) {
-    world.scene.add(new THREE.CameraHelper(sunLight.shadow.camera));
-    world.scene.add(new THREE.DirectionalLightHelper(sunLight));
-}
-// ----------------------------------------------------------------------
-
 // Begin gameplay loop
 function animate(currentTime) {
     requestAnimationFrame(animate);
@@ -60,40 +26,31 @@ animate();
 //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\////\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
 
 /** TODO
- * * build out the world
- * * * lighting (streetlamps, inside house lights, ambient)
- * * * skybox
- * * * sun obj (square panel?)
- * * * matt pip, veron pip, bob, frog pip on lilypad, general pips...
- * * * farmhouse, stables
- * * * bridges
- *
+ * * lighting (streetlamps, inside house lights, ambient)
+ * * allow null geom/mat/colliders
+ * * camera fix (ITS ALWAYS RAYCASTING)
+ * * matt pip, veron pip, bob, frog pip on lilypad, general pips...
+ * * farmhouse, stables
  * * interaction system
  * * * press E when near enough (arrow or doing math w/ obj coords relative to player)
  * * * options:
  * * * * 1. (?) combination of CanvasTexture and gyro
  * * * * 2. speech bubble overlay (html) appears with A. cahracter name B. 2d character image C. text
- *
- * * settings menu (fps, render distance)
- * * possible to have camera not go through objects (i.e. ground)?
- * * better hitboxes (convexhull? or just cuboid?)
- * 
  * * music
- *
- * * polish
- * * * moving pips? give them velocities in a loop
- * * * * pushing them would fk their path up, but maybe it would be funny to let that happen
- * * * dynamic objects that fall off the map either A) despawn or B) respawn at their startpos
- * * * more pips
- * * * bob
- * * * day/night mode
- * * * more world building
- * * * when npcs fall over they say ow
- * * * remove small parts of models and add them in as dynamics
- * * * can go into river
- * * * river pushes you
- * * * house_2 quest: furnish the house by pushing in other pips furniture
- *
+ * * sound fx
+ * * moving pips? give them velocities in a loop
+ * * * pushing them would fk their path up, but maybe it would be funny to let that happen
+ * * dynamic objects that fall off the map either A) despawn or B) respawn at their startpos
+ * * more pips
+ * * more world building
+ * * when npcs fall over they say ow
+ * * remove small parts of models and add them in as dynamics
+ * * river pushes you
+ * * house_2 quest: furnish the house by pushing in other pips furniture
+ * * bridges
+ * * stars (fade in/out)
+ * * settings menu (fps, render distance)
+ * * better hitboxes (convexhull? or just cuboid?)
  *
  * * ideas
  * * * ragdoll player physics
@@ -104,6 +61,4 @@ animate();
  * * * crash land alien pip
  * * * look into applied forces; powerup(?) that applies big force to dynamics that player comes in contact with 
  * * * minimap: orthographic view top down, map x/y to it??
- * 
- * * clean up the code dipshit
  */

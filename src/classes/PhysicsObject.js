@@ -13,11 +13,20 @@ export class PhysicsObject {
         receiveShadow = true,
         position = { x: 0, y: 0, z: 0 },
         rotation = { x: 0, y: 0, z: 0 },
-        scale = { x: 1, y: 1, z: 1},
+        scale = { x: 1, y: 1, z: 1 },
         geometry,
         material,
-        colliderDesc
+        colliderDesc,
+        colliderProps = { friction: (isStatic ? 0.0 : 0.1), restitution: 0.2, density: 1 },
+        onTick = null
     }) {
+        if (position.x === undefined || position.y === undefined || position.z === undefined)
+            throw new Error("PhysicsObject::constructor - ill-defined position");
+        if (rotation.x === undefined || rotation.y === undefined || rotation.z === undefined)
+            throw new Error("PhysicsObject::constructor - ill-defined rotation");
+        if (colliderProps.friction === undefined || colliderProps.restitution === undefined || colliderProps.density === undefined)
+            throw new Error("PhysicsObject::constructor - ill-defined colliderProps");
+
         this.world = world;
 
         this.mesh = new THREE.Mesh(geometry, material);
@@ -50,14 +59,20 @@ export class PhysicsObject {
             throw new Error(`PhysicsObject - unimplemented shape ${shape}`);
         }
 
-        colliderDesc.setFriction(isStatic? 0.0 : 0.1);
-        colliderDesc.setRestitution(0.2);
+        colliderDesc.setFriction(colliderProps.friction);
+        colliderDesc.setRestitution(colliderProps.restitution);
+        colliderDesc.setDensity(colliderProps.density);
         this.collider = this.world.physics.createCollider(colliderDesc, this.rigidBody);
+
+        this.onTick = onTick;
 
         if (DEBUG) {
             dbgColliderMesh(this.mesh, this.collider);
         }
     }
+
+    getPosition() { return this.rigidBody.translation(); }
+    getQuaternion() { return this.rigidBody.rotation(); }
 
     setPosition(x, y, z) {
         this.mesh.position.set(x, y, z);
@@ -76,11 +91,13 @@ export class PhysicsObject {
 
     update() {
         if (!this.rigidBody.isFixed()) {
-            const position = this.rigidBody.translation();
+            const position = this.getPosition();
             const rotation = this.rigidBody.rotation();
             this.mesh.position.set(position.x, position.y, position.z);
             this.mesh.quaternion.set(rotation.x, rotation.y, rotation.z, rotation.w);
         }
+
+        if (this.onTick !== null) this.onTick();
     }
 
     destroy() {

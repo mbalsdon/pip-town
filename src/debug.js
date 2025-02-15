@@ -54,6 +54,7 @@ export function dbgRay(scene, origin, direction, length) {
     // Remove after a bit
     setTimeout(() => {
         scene.remove(arrowHelper);
+        arrowHelper.dispose();
     }, 1000);
 }
 

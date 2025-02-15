@@ -1,8 +1,8 @@
 
 import * as THREE from 'three';
+import RAPIER from '@dimforge/rapier3d-compat';
 import { PhysicsObject } from './PhysicsObject';
 import { DEBUG, INIT_CHARACTER_ROTATION, JUMP_FORCE, JUMP_RAY_DISTANCE, MOVE_SPEED, ROTATION_SPEED, SPAWN_POSITION } from '../consts';
-import RAPIER from '@dimforge/rapier3d-compat';
 import { dbgAssertObject, dbgAxesHelper, dbgConsoleUpdateChar, dbgRay } from '../debug';
 
 //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\////\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
@@ -15,19 +15,22 @@ export class Player extends PhysicsObject {
         scale = { x: 1, y: 1, z: 1 },
         geometry,
         material,
-        colliderDesc
+        colliderDesc,
+        colliderProps = { friction: (isStatic ? 0.0 : 0.1), restitution: 0.2, density: 1 }
     }) {
         super(world, {
             isStatic: false,
+            castShadow: true,
+            receiveShadow: true,
             position,
             rotation,
             scale,
             geometry,
             material,
-            colliderDesc
+            colliderDesc,
+            colliderProps,
+            onTick: null
         });
-
-        this.collider.setFriction(0.0);
 
         this.characterRotationY = INIT_CHARACTER_ROTATION;
         this.rigidBody.restrictRotations(false, true, false);
@@ -45,12 +48,16 @@ export class Player extends PhysicsObject {
             if (k === ' ') this.keys.space = true;
             else if (this.keys.hasOwnProperty(k)) this.keys[k] = true;
         });
-    
+
         document.addEventListener('keyup', (e) => {
             const k = e.key.toLowerCase();
             if (k === ' ') this.keys.space = false;
             else if (this.keys.hasOwnProperty(k)) this.keys[k] = false;
         });
+
+        if (DEBUG) {
+            dbgAxesHelper(this.mesh);
+        }
     }
 
     update() {
@@ -105,9 +112,8 @@ export class Player extends PhysicsObject {
 
         if (DEBUG) {
             dbgRay(this.world.scene, rayOrigin, rayDirection, JUMP_RAY_DISTANCE);
-            dbgAxesHelper(this.mesh);
             dbgConsoleUpdateChar(this.mesh)
-            // dbgAssertObject(this.mesh, this.rigidBody);
+            dbgAssertObject(this.mesh, this.rigidBody);
         }
     }
 }

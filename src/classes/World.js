@@ -10,7 +10,13 @@ import { CAMERA_FOV, CAMERA_MAX_DISTANCE, INIT_CAMERA_POSITION, DEBUG, FPS, GRAV
 export class World {
     constructor() {
         this.scene = new THREE.Scene();
-        this.scene.background = new THREE.Color(0x87ceeb);
+
+        this.dayColor = new THREE.Color(0x87ceeb);
+        this.nightColor = new THREE.Color(0x0a0921);
+        this.sunsetColor = new THREE.Color(0xff5e00);
+
+        this.backgroundColor = new THREE.Color(61.78/255, 159.11/255, 211.184/255);
+        this.scene.background = this.backgroundColor;
 
         this.renderer = new THREE.WebGLRenderer({ antialias: true });
         this.renderer.setSize(window.innerWidth, window.innerHeight);

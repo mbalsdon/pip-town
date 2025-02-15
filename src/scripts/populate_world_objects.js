@@ -3,7 +3,8 @@ import * as RAPIER from '@dimforge/rapier3d-compat';
 import { PhysicsObject } from '../classes/PhysicsObject';
 import { Player } from '../classes/Player';
 import { BufferGeometryUtils, GLTFLoader } from 'three/examples/jsm/Addons.js';
-import { DEBUG, SPAWN_POSITION } from '../consts';
+import { DEBUG, SHADOW_QUALITY, SPAWN_POSITION, CLOUDGEN_STRIDE, CLOUDGEN_RAD, CLOUDGEN_BASE_Y, SUN_TICK_ROTATION, SUN_INIT_POSITION } from '../consts';
+import { LightObject } from '../classes/LightObject';
 
 //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\////\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
 //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\////\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
@@ -43,7 +44,7 @@ function generateGardenObjects(dim) {
     for (let i = 0; i < numFlowers; ++i) {
         const stemGeometry = new THREE.BoxGeometry(0.1, stemY, 0.1);
         const headGeometry = new THREE.BoxGeometry(0.2, 0.2, 0.2);
-        
+
         const scale = 0.8 + Math.random() * 0.4;
         stemGeometry.scale(scale, scale, scale);
         headGeometry.scale(scale*1.6, scale*1.6, scale*1.6);
@@ -51,7 +52,7 @@ function generateGardenObjects(dim) {
         stemGeometry.rotateX(Math.random() * (Math.PI/16));
         stemGeometry.rotateY(Math.random() * Math.PI);
         stemGeometry.rotateZ(Math.random() * (Math.PI/16));
-        
+
         headGeometry.rotateX(Math.random() * (Math.PI/8));
         headGeometry.rotateY(Math.random() * Math.PI);
         headGeometry.rotateZ(Math.random() * (Math.PI/8));
@@ -77,7 +78,7 @@ function generateGardenObjects(dim) {
             stemGeometryAggregate,
             new THREE.MeshToonMaterial({ color: 0x7eed6d })
         );
-    }    
+    }
 
     for (const heads of headsList) {
         if (heads.geometries.length === 0) {
@@ -103,7 +104,7 @@ function generateGrassPatch(dim) {
         { color: 0x3e9636, geometries: [], mesh: null },
     ];
 
-    const grassDensity = 5; // TODO: 4
+    const grassDensity = 5;
     const numBlades = Math.floor(dim.x * dim.z * grassDensity);
 
     for (let i = 0; i < numBlades; ++i) {
@@ -143,6 +144,101 @@ function generateGrassPatch(dim) {
     return grassesList;
 }
 
+function cloudOnTick(inst, speed) {
+    const pos = inst.getPosition();
+    const newPos = { x: pos.x, y: pos.y, z: pos.z };
+    if (pos.x > CLOUDGEN_RAD) {
+        newPos.x -= (CLOUDGEN_RAD*2);
+    }
+    if (pos.z > CLOUDGEN_RAD) {
+        newPos.z -= (CLOUDGEN_RAD*2);
+    }
+
+    newPos.x += speed;
+
+    inst.setPosition(newPos.x, newPos.y, newPos.z);
+}
+
+function dayNightOnTick(sun, moon, hemi) {
+    const sunPos = sun.getPosition();
+    const moonPos = moon.getPosition();
+
+    const sunMaxY = Math.sqrt(Math.pow(SUN_INIT_POSITION.y, 2) + Math.pow(SUN_INIT_POSITION.z, 2));
+
+    const minOpacityY = sunMaxY * -0.47;
+    const maxOpacityY = sunMaxY * -0.12;
+
+    // Fade sun object in/out
+    if (sunPos.y > maxOpacityY) {
+        sun.mesh.material.opacity = 1;
+    } else if (sunPos.y < minOpacityY) {
+        sun.mesh.material.opacity = 0;
+    } else {
+        sun.mesh.material.opacity = (sunPos.y + Math.abs(minOpacityY)) / Math.abs(maxOpacityY);
+    }
+
+    // Fade sun intensity in/out
+    sun.light.intensity = 1.0 * ((Math.max(0, Math.min(sunMaxY, sunPos.y))) / sunMaxY);
+
+    // Move sun
+    const newSunY = (sunPos.y * Math.cos(SUN_TICK_ROTATION)) - (sunPos.z * Math.sin(SUN_TICK_ROTATION));
+    const newSunZ = (sunPos.y * Math.sin(SUN_TICK_ROTATION)) + (sunPos.z * Math.cos(SUN_TICK_ROTATION));
+    sun.setPosition(sunPos.x, newSunY, newSunZ);
+
+    // Fade moon object in/out
+
+    if (moonPos.y > maxOpacityY) {
+        moon.mesh.material.opacity = 1;
+    } else if (moonPos.y < minOpacityY) {
+        moon.mesh.material.opacity = 0;
+    } else {
+        moon.mesh.material.opacity = (moonPos.y + Math.abs(minOpacityY)) / Math.abs(maxOpacityY);
+    }
+
+    // Fade moon intensity in/out
+    moon.light.intensity = 0.1 * ((Math.max(0, Math.min(sunMaxY, moonPos.y))) / sunMaxY);
+
+    // Move moon
+    const newMoonY = (moonPos.y * Math.cos(SUN_TICK_ROTATION)) - (moonPos.z * Math.sin(SUN_TICK_ROTATION));
+    const newMoonZ = (moonPos.y * Math.sin(SUN_TICK_ROTATION)) + (moonPos.z * Math.cos(SUN_TICK_ROTATION));
+    moon.setPosition(moonPos.x, newMoonY, newMoonZ);
+
+    // Fade sky color
+    const colorHangFactor = sunMaxY * 0.4; // decreasing makes the ends of the gradient "stick" for longer
+    const alpha = Math.min(1, Math.abs(sunPos.y) / colorHangFactor);
+    if (sunPos.y > 0) {
+        sun.world.backgroundColor.lerpColors(sun.world.sunsetColor, sun.world.dayColor, alpha)
+    } else {
+        sun.world.backgroundColor.lerpColors(sun.world.sunsetColor, sun.world.nightColor, alpha)
+    }
+
+    // Fade hemi intensity in/out
+    if (sunPos.y > 0) {
+        hemi.light.intensity = 0.3;
+    } else {
+        const normalizedSunPos = 1 - (Math.abs(sunPos.y) / sunMaxY);
+        const minIntensity = 0.1;
+        const maxIntensityGain = 0.2;
+        hemi.light.intensity = minIntensity + (normalizedSunPos * maxIntensityGain);
+    }
+
+    // TODO: dbg sunpos, moonpos, opacities, intensities
+}
+
+function streetLampOnTick(sun, lamp, seed) {
+    const sunPos = sun.getPosition();
+
+    if (sunPos.y > 50) {
+        lamp.light.intensity = 0;
+    } else {
+        const offset = seed * 1000;
+        const oscillationSpeed = 0.6;
+        const baseIntensity = 20;
+        const intensityHalfRadius = 3;
+        lamp.light.intensity = baseIntensity + (Math.sin(offset + (sunPos.y * oscillationSpeed))) * intensityHalfRadius;
+    }
+}
+
 //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\////\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
 //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\////\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
 
@@ -150,24 +246,27 @@ export async function populateWorldObjects(world) {
     const objects = [];
 
     // Load external models
-    const pip1Mesh =     await loadGLTF("/src/assets/pip_1.glb",         { x: -Math.PI/2, y: 0, z: 0 });
-    const house1aMesh =  await loadGLTF("/src/assets/house_1a.glb",      { x: -Math.PI/2, y: 0, z: 0 });
-    const house1bMesh =  await loadGLTF("/src/assets/house_1b.glb",      { x: -Math.PI/2, y: 0, z: 0 });
-    const house1cMesh =  await loadGLTF("/src/assets/house_1c.glb",      { x: -Math.PI/2, y: 0, z: 0 });
-    const house2Mesh =   await loadGLTF("src/assets/house_2.glb",        { x: -Math.PI/2, y: 0, z: 0 });
-    const house3Mesh =   await loadGLTF("/src/assets/house_3.glb",       { x: -Math.PI/2, y: 0, z: 0 });
-    const house4Mesh =   await loadGLTF("/src/assets/house_4.glb",       { x: -Math.PI/2, y: 0, z: 0 });
-    const tree1Mesh =    await loadGLTF("/src/assets/tree_1.glb",        { x: -Math.PI/2, y: 0, z: 0 });
-    const tree2Mesh =    await loadGLTF("/src/assets/tree_2.glb",        { x: -Math.PI/2, y: 0, z: 0 });
-    const tree3Mesh =    await loadGLTF("/src/assets/tree_3.glb",        { x: -Math.PI/2, y: 0, z: 0 });
-    const tree4Mesh =    await loadGLTF("/src/assets/tree_4.glb",        { x: -Math.PI/2, y: 0, z: 0 });
-    const fence1Mesh =   await loadGLTF("/src/assets/fence_1.glb",       { x: -Math.PI/2, y: 0, z: 0 });
-    const pumpkin1Mesh = await loadGLTF("/src/assets/pumpkin_1.glb",     { x: -Math.PI/2, y: 0, z: 0 });
-    const melon1Mesh =   await loadGLTF("/src/assets/melon_1.glb",       { x: -Math.PI/2, y: 0, z: 0 });
-    const stall1Mesh =   await loadGLTF("/src/assets/marketstall_1.glb", { x: -Math.PI/2, y: 0, z: 0 });
-    const stall2Mesh =   await loadGLTF("/src/assets/marketstall_2.glb", { x: -Math.PI/2, y: 0, z: 0 });
-    const statue1Mesh =  await loadGLTF("/src/assets/statue_1.glb",      { x: -Math.PI/2, y: 0, z: 0 });
-    const bench1Mesh =   await loadGLTF("/src/assets/bench_1.glb",       { x: -Math.PI/2, y: 0, z: 0 });
+    const pip1Mesh        = await loadGLTF("/src/assets/pip_1.glb",         { x: -Math.PI/2, y: 0, z: 0 });
+    const house1aMesh     = await loadGLTF("/src/assets/house_1a.glb",      { x: -Math.PI/2, y: 0, z: 0 });
+    const house1bMesh     = await loadGLTF("/src/assets/house_1b.glb",      { x: -Math.PI/2, y: 0, z: 0 });
+    const house1cMesh     = await loadGLTF("/src/assets/house_1c.glb",      { x: -Math.PI/2, y: 0, z: 0 });
+    const house2Mesh      = await loadGLTF("src/assets/house_2.glb",        { x: -Math.PI/2, y: 0, z: 0 });
+    const house3Mesh      = await loadGLTF("/src/assets/house_3.glb",       { x: -Math.PI/2, y: 0, z: 0 });
+    const house4Mesh      = await loadGLTF("/src/assets/house_4.glb",       { x: -Math.PI/2, y: 0, z: 0 });
+    const tree1Mesh       = await loadGLTF("/src/assets/tree_1.glb",        { x: -Math.PI/2, y: 0, z: 0 });
+    const tree2Mesh       = await loadGLTF("/src/assets/tree_2.glb",        { x: -Math.PI/2, y: 0, z: 0 });
+    const tree3Mesh       = await loadGLTF("/src/assets/tree_3.glb",        { x: -Math.PI/2, y: 0, z: 0 });
+    const tree4Mesh       = await loadGLTF("/src/assets/tree_4.glb",        { x: -Math.PI/2, y: 0, z: 0 });
+    const fence1Mesh      = await loadGLTF("/src/assets/fence_1.glb",       { x: -Math.PI/2, y: 0, z: 0 });
+    const pumpkin1Mesh    = await loadGLTF("/src/assets/pumpkin_1.glb",     { x: -Math.PI/2, y: 0, z: 0 });
+    const melon1Mesh      = await loadGLTF("/src/assets/melon_1.glb",       { x: -Math.PI/2, y: 0, z: 0 });
+    const stall1Mesh      = await loadGLTF("/src/assets/marketstall_1.glb", { x: -Math.PI/2, y: 0, z: 0 });
+    const stall2Mesh      = await loadGLTF("/src/assets/marketstall_2.glb", { x: -Math.PI/2, y: 0, z: 0 });
+    const statue1Mesh     = await loadGLTF("/src/assets/statue_1.glb",      { x: -Math.PI/2, y: 0, z: 0 });
+    const bench1Mesh      = await loadGLTF("/src/assets/bench_1.glb",       { x: -Math.PI/2, y: 0, z: 0 });
+    const streetlamp1Mesh = await loadGLTF("/src/assets/streetlamp_1.glb",  { x: -Math.PI/2, y: 0, z: 0 });
+    const lamp1Mesh       = await loadGLTF("/src/assets/lamp_1.glb",        { x: -Math.PI/2, y: 0, z: 0 });
+    const lamp2Mesh       = await loadGLTF("/src/assets/lamp_2.glb",        { x: -Math.PI/2, y: 0, z: 0 });
 
     // Player
     // TODO: Bevelling to get onto steps better
@@ -177,7 +276,8 @@ export async function populateWorldObjects(world) {
         rotation: { x: 0, y: 0, z: 0 },
         geometry: pip1Mesh.geometry,
         material: pip1Mesh.material,
-        colliderDesc: RAPIER.ColliderDesc.cuboid(0.1, 0.09, 0.05)
+        colliderDesc: RAPIER.ColliderDesc.cuboid(0.1, 0.09, 0.05),
+        colliderProps: { friction: 0.0, restitution: 0.2, density: 1 }
     }));
 
     // Ground
@@ -634,7 +734,7 @@ export async function populateWorldObjects(world) {
             material: new THREE.MeshToonMaterial({ color: 0xb5b5b5 }),
             colliderDesc: RAPIER.ColliderDesc.cuboid(5, 0.15, 5)
         }),
-        
+
         // Town square tiling border
         new PhysicsObject(world, {
             position: { x: -0.5, y: 0.6, z: -11.5 },
@@ -678,7 +778,7 @@ export async function populateWorldObjects(world) {
             geometry: new THREE.BoxGeometry(3, 0.5, 2.5),
             material: new THREE.MeshToonMaterial({ color: 0xbbbbbb }),
             colliderDesc: RAPIER.ColliderDesc.cuboid(1.5, 0.25, 1.25)
-        }), 
+        }),
 
         // Colliders
         new PhysicsObject(world, { // left
@@ -765,7 +865,19 @@ export async function populateWorldObjects(world) {
             geometry: new THREE.BoxGeometry(0, 0, 0),
             material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(1, 0.5, 1.2)
-        }),
+        }), new LightObject(world, { // floor lamp
+            isStatic: false,
+            castShadow: false,
+            position: { x: -18.5, y: 2.32, z: -41.85 },
+            scale: { x: 0.04, y: 0.04, z: 0.04 },
+            geometry: lamp1Mesh.geometry,
+            material: lamp1Mesh.material,
+            colliderDesc: RAPIER.ColliderDesc.cuboid(0.01, 0.0525, 0.01),
+            colliderProps: { friction: 1, restitution: 0.2, density: 10 },
+            light: new THREE.PointLight(0xf0b895, 2),
+            lightRelPos: { x: 0, y: 1, z: 0 },
+            lightCastShadow: true,
+        })
     ]);
 
     // House 1b
@@ -888,7 +1000,19 @@ export async function populateWorldObjects(world) {
             geometry: new THREE.BoxGeometry(0, 0, 0),
             material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(1, 0.35, 1.3)
-        }), 
+        }), new LightObject(world, { // floor lamp
+            isStatic: false,
+            castShadow: false,
+            position: { x: 33.55, y: 2.32, z: 3.5 },
+            scale: { x: 0.04, y: 0.04, z: 0.04 },
+            geometry: lamp1Mesh.geometry,
+            material: lamp1Mesh.material,
+            colliderDesc: RAPIER.ColliderDesc.cuboid(0.01, 0.0525, 0.01),
+            colliderProps: { friction: 1, restitution: 0.2, density: 10 },
+            light: new THREE.PointLight(0xf0b895, 2),
+            lightRelPos: { x: 0, y: 1, z: 0 },
+            lightCastShadow: true,
+        })
     ]);
 
     // House 1c
@@ -993,7 +1117,24 @@ export async function populateWorldObjects(world) {
             geometry: new THREE.BoxGeometry(0, 0, 0),
             material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(1, 0.35, 1.3)
-        }),
+        }), new PhysicsObject(world, { // kitchen counter
+            position: { x: 19.3, y: 1.5, z: 26.7 },
+            rotation: { x: 0, y: Math.PI/4, z: 0 },
+            geometry: new THREE.BoxGeometry(0, 0, 0),
+            material: new THREE.MeshToonMaterial(),
+            colliderDesc: RAPIER.ColliderDesc.cuboid(0.4, 0.5, 2.6)
+        }), new LightObject(world, { // table lamp
+            isStatic: false,
+            castShadow: false,
+            position: { x: 17.64, y: 2.4, z: 25.2 },
+            scale: { x: 0.05, y: 0.05, z: 0.05 },
+            geometry: lamp2Mesh.geometry,
+            material: lamp2Mesh.material,
+            colliderDesc: RAPIER.ColliderDesc.capsule(0.01, 0.01),
+            colliderProps: { friction: 1, restitution: 0.2, density: 10 },
+            light: new THREE.PointLight(0xf0e195, 3),
+            lightCastShadow: true,
+        }), 
     ]);
 
     // House 2
@@ -1221,6 +1362,23 @@ export async function populateWorldObjects(world) {
             geometry: new THREE.BoxGeometry(0, 0, 0),
             material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(0.8, 1, 2.4)
+        }), new PhysicsObject(world, { // [tv table] (F1)
+            position: { x: -7.1, y: 1.5, z: 18.4 },
+            rotation: { x: 0, y: Math.PI/4, z: 0 },
+            geometry: new THREE.BoxGeometry(0, 0, 0),
+            material: new THREE.MeshToonMaterial(),
+            colliderDesc: RAPIER.ColliderDesc.cuboid(0.75, 0.5, 3)
+        }), new LightObject(world, { // [table lamp] (F1)
+            isStatic: false,
+            castShadow: false,
+            position: { x: -5.35, y: 2.78, z: 19.85 },
+            scale: { x: 0.1, y: 0.1, z: 0.1 },
+            geometry: lamp2Mesh.geometry,
+            material: lamp2Mesh.material,
+            colliderDesc: RAPIER.ColliderDesc.capsule(0.03, 0.05),
+            colliderProps: { friction: 1, restitution: 0.2, density: 10 },
+            light: new THREE.PointLight(0xf0e195, 3),
+            lightCastShadow: true,
         }), new PhysicsObject(world, { // [stairs] (F1)
             position: { x: -8, y: 2, z: 21.3 }, // -x/-z > | -x/+z ^
             rotation: { x: 0, y: 0.75*Math.PI, z: -Math.PI/4 },
@@ -1341,6 +1499,18 @@ export async function populateWorldObjects(world) {
             geometry: new THREE.BoxGeometry(0, 0, 0),
             material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(1, 0.25, 2)
+        }), new LightObject(world, { // [floor lamp] model (F2)
+            isStatic: false,
+            castShadow: false,
+            position: { x: -9.95, y: 7.315, z: 13.87 },
+            scale: { x: 0.04, y: 0.04, z: 0.04 },
+            geometry: lamp1Mesh.geometry,
+            material: lamp1Mesh.material,
+            colliderDesc: RAPIER.ColliderDesc.cuboid(0.01, 0.0525, 0.01),
+            colliderProps: { friction: 1, restitution: 0.2, density: 10 },
+            light: new THREE.PointLight(0xf0b895, 2),
+            lightRelPos: { x: 0, y: 1, z: 0 },
+            lightCastShadow: true,
         }), new PhysicsObject(world, { // [bathroom sink] (F2)
             position: { x: 0.5, y: 6.5, z: 16.3 }, // -x/-z > | -x/+z ^
             rotation: { x: 0, y: 0.75*Math.PI, z: 0 },
@@ -1548,10 +1718,37 @@ export async function populateWorldObjects(world) {
             geometry: new THREE.BoxGeometry(0, 0, 0),
             material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(2, 0.5, 2)
+        }), new PhysicsObject(world, { // bedroom long shelf
+            position: { x: -40.64, y: 1.875, z: -9.07 },
+            geometry: new THREE.BoxGeometry(0, 0, 0),
+            material: new THREE.MeshToonMaterial(),
+            colliderDesc: RAPIER.ColliderDesc.cuboid(5.75, 0.125, 0.5)
+        }), new LightObject(world, { // floor lamp
+            isStatic: false,
+            castShadow: false,
+            position: { x: -33.5, y: 2.32, z: -17.88 },
+            scale: { x: 0.04, y: 0.04, z: 0.04 },
+            geometry: lamp1Mesh.geometry,
+            material: lamp1Mesh.material,
+            colliderDesc: RAPIER.ColliderDesc.cuboid(0.01, 0.0525, 0.01),
+            colliderProps: { friction: 1, restitution: 0.2, density: 10 },
+            light: new THREE.PointLight(0xf0b895, 2),
+            lightRelPos: { x: 0, y: 1, z: 0 },
+            lightCastShadow: true,
+        }), new LightObject(world, { // table lamp
+            isStatic: false,
+            castShadow: false,
+            position: { x: -41.14, y: 2.4, z: -9.06 },
+            scale: { x: 0.05, y: 0.05, z: 0.05 },
+            geometry: lamp2Mesh.geometry,
+            material: lamp2Mesh.material,
+            colliderDesc: RAPIER.ColliderDesc.capsule(0.01, 0.01),
+            colliderProps: { friction: 1, restitution: 0.2, density: 10 },
+            light: new THREE.PointLight(0xf0e195, 3),
+            lightCastShadow: true,
         }), 
     ]);
 
-    // TODO: Uncomment
     // Forest
     objects.push(...[
         // Trees
@@ -2010,26 +2207,30 @@ export async function populateWorldObjects(world) {
     for (const x of [29, 24, 19, 14, 9]) {
         const isMelon = (x % 2) === 0;
         for (const z of [-48, -45, -42, -39, -36, -33, -30, -28, -25, -22]) {
-            const cropScale = 0.15 + Math.random() * 0.1;
+            const minCropScale = 0.15;
+            const maxCropScale = 0.25;
+            const cropScale = minCropScale + Math.random() * (maxCropScale - minCropScale);
             if (isMelon) {
                 objects.push(new PhysicsObject(world, {
                     isStatic: false,
-                    position: { x: x, y: 2, z: z },
+                    position: { x: x, y: 1.39, z: z },
                     rotation: { x: 0, y: Math.random()*Math.PI, z: 0 },
                     scale: { x: cropScale, y: cropScale, z: cropScale },
                     geometry: melon1Mesh.geometry,
                     material: melon1Mesh.material,
-                    colliderDesc: RAPIER.ColliderDesc.capsule(0, cropScale-0.04).setDensity(50.0)
+                    colliderDesc: RAPIER.ColliderDesc.capsule(0, cropScale-0.04),
+                    colliderProps: { friction: 0.2, restitution: 0.2, density: 50 + (cropScale * 100) }
                 }));
             } else {
                 objects.push(new PhysicsObject(world, {
                     isStatic: false,
-                    position: { x: x, y: 2, z: z },
+                    position: { x: x, y: 1.39, z: z },
                     rotation: { x: 0, y: Math.random()*Math.PI, z: 0 },
                     scale: { x: cropScale, y: cropScale, z: cropScale },
                     geometry: pumpkin1Mesh.geometry,
                     material: pumpkin1Mesh.material,
-                    colliderDesc: RAPIER.ColliderDesc.capsule(0, cropScale-0.07).setDensity(50.0)
+                    colliderDesc: RAPIER.ColliderDesc.capsule(0, cropScale-0.07),
+                    colliderProps: { friction: 0.2, restitution: 0.2, density: 50 + (cropScale * 100) }
                 }));
             }
         }
@@ -2184,7 +2385,7 @@ export async function populateWorldObjects(world) {
             material: stemsMesh.material,
             colliderDesc: RAPIER.ColliderDesc.cuboid(-0.1, -0.1, -0.1)
         }));
-        
+
         for (const heads of headsList) {
             if (heads.mesh === null) continue;
             objects.push(new PhysicsObject(world, {
@@ -2558,6 +2759,171 @@ export async function populateWorldObjects(world) {
             material: new THREE.MeshToonMaterial({ color: 0x2b5c1f }),
             colliderDesc: RAPIER.ColliderDesc.cuboid(0.45, 0.05, 0.45)
         }), 
+    ]);
+
+    // Clouds
+    for (let x = -CLOUDGEN_RAD; x <= CLOUDGEN_RAD; x += CLOUDGEN_STRIDE) {
+        for (let z = -CLOUDGEN_RAD; z <= CLOUDGEN_RAD; z += CLOUDGEN_STRIDE) {
+            const offsetX = (Math.random() * CLOUDGEN_STRIDE) - CLOUDGEN_STRIDE/2;
+            const offsetZ = (Math.random() * CLOUDGEN_STRIDE) - CLOUDGEN_STRIDE/2;
+            const offsetY = (Math.random() * 30) - 15;
+            objects.push(new PhysicsObject(world, {
+                position: {
+                    x: x+offsetX,
+                    y: CLOUDGEN_BASE_Y+offsetY,
+                    z: z+offsetZ 
+                },
+                geometry: new THREE.BoxGeometry(
+                    5 + (Math.random() * 25),
+                    2 + (Math.random() * 5),
+                    5 + (Math.random() * 25)
+                ),
+                material: new THREE.MeshToonMaterial({ color: 0xffffff, transparent: true, opacity: 0.5 + (Math.random() * 0.4), depthWrite: false }),
+                colliderDesc: RAPIER.ColliderDesc.cuboid(-0.1, -0.1, -0.1),
+                onTick: function() { cloudOnTick(this, 0.02 + (Math.random() * 0.05)); }
+            }));
+        }
+    }
+
+    // Ambient light
+    objects.push(new LightObject(world, {
+        geometry: new THREE.BoxGeometry(0, 0, 0),
+        material: new THREE.MeshToonMaterial(),
+        colliderDesc: RAPIER.ColliderDesc.cuboid(-0.1, -0.1, -0.1),
+        light: new THREE.AmbientLight(0xffffff, 0.05)
+    }));
+
+    // Hemisphere light
+    const hemisphereLight = new THREE.HemisphereLight(0x455d75, 0xffc87a, 0.3);
+    const hemiObject = new LightObject(world, {
+        position: { x: 0, y: 30, z: 0 },
+        geometry: new THREE.BoxGeometry(0, 0, 0),
+        material: new THREE.MeshBasicMaterial(),
+        colliderDesc: RAPIER.ColliderDesc.cuboid(-0.1, -0.1, -0.1),
+        light: hemisphereLight
+    });
+
+    // Sun
+    const sunLight = new THREE.DirectionalLight(0xffecb3, 0.9);
+    sunLight.shadow.camera.left = -200;
+    sunLight.shadow.camera.right = 200;
+    sunLight.shadow.camera.top = 200;
+    sunLight.shadow.camera.bottom = -200;
+    sunLight.shadow.camera.near = 1;
+    sunLight.shadow.camera.far = 600;
+    sunLight.shadow.mapSize.width = SHADOW_QUALITY;
+    sunLight.shadow.mapSize.height = SHADOW_QUALITY;
+    const sunObject = new LightObject(world, {
+        position: SUN_INIT_POSITION,
+        geometry: new THREE.CapsuleGeometry(30, 0),
+        material: new THREE.MeshBasicMaterial({ color: 0xffdd75, transparent: true, opacity: 1.0 }),
+        colliderDesc: RAPIER.ColliderDesc.cuboid(-0.1, -0.1, -0.1),
+        light: sunLight,
+        lightCastShadow: true
+    });
+
+    // Moon
+    const moonLight = new THREE.DirectionalLight(0xffffff, 0.1);
+    moonLight.shadow.camera.left = -200;
+    moonLight.shadow.camera.right = 200;
+    moonLight.shadow.camera.top = 200;
+    moonLight.shadow.camera.bottom = -200;
+    moonLight.shadow.camera.near = 1;
+    moonLight.shadow.camera.far = 600;
+    moonLight.shadow.mapSize.width = SHADOW_QUALITY;
+    moonLight.shadow.mapSize.height = SHADOW_QUALITY;
+    const moonObject = new LightObject(world, {
+        position: { x: 200, y: -SUN_INIT_POSITION.y, z: -SUN_INIT_POSITION.z },
+        geometry: new THREE.CapsuleGeometry(10, 0),
+        material: new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 1.0 }),
+        colliderDesc: RAPIER.ColliderDesc.cuboid(-0.1, -0.1, -0.1),
+        light: moonLight,
+        lightCastShadow: true,
+        // FUTURE: Day/night cycle class so that we don't do the following:
+        onTick: function() { dayNightOnTick(sunObject, this, hemiObject); }
+    });
+
+    objects.push(...[sunObject, moonObject, hemiObject]);
+
+    // Outdoor lamps
+    const lampSeeds = Array.from({ length: 5 }, () => Math.random());
+    objects.push(...[
+        new PhysicsObject(world, { // model+hitbox
+            castShadow: false,
+            position: { x: 13.3, y: 4.25, z: -13.7 },
+            scale: { x: 0.1, y: 0.1, z: 0.1 },
+            geometry: streetlamp1Mesh.geometry,
+            material: streetlamp1Mesh.material,
+            colliderDesc: RAPIER.ColliderDesc.capsule(0.35, 0.05),
+        }), new LightObject(world, { // light
+            position: { x: 13.3, y: 7.25, z: -13.7 },
+            geometry: new THREE.CylinderGeometry(0.3, 0.3, 1),
+            material: new THREE.MeshToonMaterial({ color: 0xffb566 , transparent: true, opacity: 0.8 }),
+            colliderDesc: RAPIER.ColliderDesc.cuboid(-0.1, -0.1, -0.1),
+            light: new THREE.PointLight(0xffb566, 20),
+            lightCastShadow: true,
+            onTick: function() { streetLampOnTick(sunObject, this, lampSeeds[0]); }
+        }), new PhysicsObject(world, { // model+hitbox
+            castShadow: false,
+            position: { x: 6.3, y: 4.25, z: 19.2 },
+            scale: { x: 0.1, y: 0.1, z: 0.1 },
+            geometry: streetlamp1Mesh.geometry,
+            material: streetlamp1Mesh.material,
+            colliderDesc: RAPIER.ColliderDesc.capsule(0.35, 0.05),
+        }), new LightObject(world, { // light
+            position: { x: 6.3, y: 7.25, z: 19.2 },
+            geometry: new THREE.CylinderGeometry(0.3, 0.3, 1),
+            material: new THREE.MeshToonMaterial({ color: 0xffb566 , transparent: true, opacity: 0.8 }),
+            colliderDesc: RAPIER.ColliderDesc.cuboid(-0.1, -0.1, -0.1),
+            light: new THREE.PointLight(0xffb566, 20),
+            lightCastShadow: true,
+            onTick: function() { streetLampOnTick(sunObject, this, lampSeeds[1]); }
+        }), new PhysicsObject(world, { // model+hitbox
+            castShadow: false,
+            position: { x: -19.8, y: 4.25, z: -33 },
+            scale: { x: 0.1, y: 0.1, z: 0.1 },
+            geometry: streetlamp1Mesh.geometry,
+            material: streetlamp1Mesh.material,
+            colliderDesc: RAPIER.ColliderDesc.capsule(0.35, 0.05),
+        }), new LightObject(world, { // light
+            position: { x: -19.8, y: 7.25, z: -33 },
+            geometry: new THREE.CylinderGeometry(0.3, 0.3, 1),
+            material: new THREE.MeshToonMaterial({ color: 0xffb566 , transparent: true, opacity: 0.8 }),
+            colliderDesc: RAPIER.ColliderDesc.cuboid(-0.1, -0.1, -0.1),
+            light: new THREE.PointLight(0xffb566, 20),
+            lightCastShadow: true,
+            onTick: function() { streetLampOnTick(sunObject, this, lampSeeds[2]); }
+        }), new PhysicsObject(world, { // model+hitbox
+            castShadow: false,
+            position: { x: 33.5, y: 4.25, z: -7.6 },
+            scale: { x: 0.1, y: 0.1, z: 0.1 },
+            geometry: streetlamp1Mesh.geometry,
+            material: streetlamp1Mesh.material,
+            colliderDesc: RAPIER.ColliderDesc.capsule(0.35, 0.05),
+        }), new LightObject(world, { // light
+            position: { x: 33.5, y: 7.25, z: -7.6 },
+            geometry: new THREE.CylinderGeometry(0.3, 0.3, 1),
+            material: new THREE.MeshToonMaterial({ color: 0xffb566 , transparent: true, opacity: 0.8 }),
+            colliderDesc: RAPIER.ColliderDesc.cuboid(-0.1, -0.1, -0.1),
+            light: new THREE.PointLight(0xffb566, 20),
+            lightCastShadow: true,
+            onTick: function() { streetLampOnTick(sunObject, this, lampSeeds[3]); }
+        }), new PhysicsObject(world, { // model+hitbox
+            castShadow: false,
+            position: { x: -8, y: 4.25, z: 40.95 },
+            scale: { x: 0.1, y: 0.1, z: 0.1 },
+            geometry: streetlamp1Mesh.geometry,
+            material: streetlamp1Mesh.material,
+            colliderDesc: RAPIER.ColliderDesc.capsule(0.35, 0.05),
+        }), new LightObject(world, { // light
+            position: { x: -8, y: 7.25, z: 40.95 },
+            geometry: new THREE.CylinderGeometry(0.3, 0.3, 1),
+            material: new THREE.MeshToonMaterial({ color: 0xffb566 , transparent: true, opacity: 0.8 }),
+            colliderDesc: RAPIER.ColliderDesc.cuboid(-0.1, -0.1, -0.1),
+            light: new THREE.PointLight(0xffb566, 20),
+            lightCastShadow: true,
+            onTick: function() { streetLampOnTick(sunObject, this, lampSeeds[4]); }
+        }),
     ]);
 
     // Center lines
