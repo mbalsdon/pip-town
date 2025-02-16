@@ -1,5 +1,3 @@
-// FUTURE: refactor debug tools in a more sensical way (control-wise, mainly)
-
 import * as THREE from 'three';
 import { Gyroscope } from 'three/examples/jsm/Addons.js';
 
@@ -7,11 +5,7 @@ import { Gyroscope } from 'three/examples/jsm/Addons.js';
 //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\////\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
 
 let dbgConsoleElmt;
-let dbgCamElmt, dbgCharElmt;
-
-//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\////\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
-//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\////\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
-
+let dbgTickElmt, dbgCamElmt, dbgCharElmt, dbgDayNightElmt;
 export function createDbgConsole() {
     dbgConsoleElmt = document.createElement('div');
     dbgConsoleElmt.style.cssText = `
@@ -28,17 +22,21 @@ export function createDbgConsole() {
     `;
 
     const dbgAxesHelperElmt = document.createElement('div');
-    dbgAxesHelperElmt.innerText = `Axes:
+    dbgAxesHelperElmt.innerText = `-- Axes:
         Red = X | Green = Y | Blue = Z
 
     `;
 
+    dbgTickElmt = document.createElement('div');
     dbgCamElmt = document.createElement('div');
     dbgCharElmt = document.createElement('div');
+    dbgDayNightElmt = document.createElement('div')
 
     dbgConsoleElmt.appendChild(dbgAxesHelperElmt);
+    dbgConsoleElmt.appendChild(dbgTickElmt);
     dbgConsoleElmt.appendChild(dbgCamElmt);
     dbgConsoleElmt.appendChild(dbgCharElmt);
+    dbgConsoleElmt.appendChild(dbgDayNightElmt);
     document.body.appendChild(dbgConsoleElmt);
 }
 
@@ -68,7 +66,31 @@ export function dbgAxesHelper(mesh) {
     axesHelper.scale.set(1/mesh.scale.x, 1/mesh.scale.y, 1/mesh.scale.z);
 }
 
-export function dbgConsoleUpdateCam(camera) {
+let currTickTime = 0;
+const tickTimesCircleBuf = new Array(1000).fill(0);
+let tickIdx = 0;
+export function dbgConsoleTimeTicks() {
+    const lastTickTime = currTickTime;
+    currTickTime = performance.now();
+    const dt = currTickTime - lastTickTime;
+
+    tickTimesCircleBuf[tickIdx] = dt;
+    tickIdx = (tickIdx + 1) % 1000;
+
+    const nonZeroCount = tickTimesCircleBuf.filter(x => x !== 0).length;
+    let avg = 0;
+    for (let i = 0; i < nonZeroCount; ++i) {
+        avg += tickTimesCircleBuf[i];
+    }
+
+    dbgTickElmt.innerText = `-- Ticks:
+        Last:      ${Math.round(dt)}ms
+        Avg: \u00A0${Math.round(avg/nonZeroCount)}ms
+
+    `;
+}
+
+export function dbgConsoleCamera(camera) {
     const xPos = camera.position.x.toFixed(2);
     const yPos = camera.position.y.toFixed(2);
     const zPos = camera.position.z.toFixed(2);
@@ -78,7 +100,7 @@ export function dbgConsoleUpdateCam(camera) {
     const yRot = toDegrees(camera.rotation.y).toFixed(2);
     const zRot = toDegrees(camera.rotation.z).toFixed(2);
 
-    dbgCamElmt.innerText = `Camera:
+    dbgCamElmt.innerText = `-- Camera:
         x: ${xPos} ${xPos < 0 ? "" : "\u00A0"}| ${xRot}°
         y: ${yPos} ${yPos < 0 ? "" : "\u00A0"}| ${yRot}°
         z: ${zPos} ${zPos < 0 ? "" : "\u00A0"}| ${zRot}°
@@ -86,7 +108,7 @@ export function dbgConsoleUpdateCam(camera) {
     `;
 }
 
-export function dbgConsoleUpdateChar(characterMesh) {
+export function dbgConsoleCharacter(characterMesh) {
     const xPos = characterMesh.position.x.toFixed(2);
     const yPos = characterMesh.position.y.toFixed(2);
     const zPos = characterMesh.position.z.toFixed(2);
@@ -96,10 +118,22 @@ export function dbgConsoleUpdateChar(characterMesh) {
     const yRot = toDegrees(characterMesh.rotation.y).toFixed(2);
     const zRot = toDegrees(characterMesh.rotation.z).toFixed(2);
 
-    dbgCharElmt.innerText = `Character:
+    dbgCharElmt.innerText = `-- Character:
         x: ${xPos} ${xPos < 0 ? "" : "\u00A0"}| ${xRot}°
         y: ${yPos} ${yPos < 0 ? "" : "\u00A0"}| ${yRot}°
         z: ${zPos} ${zPos < 0 ? "" : "\u00A0"}| ${zRot}°
+
+    `;
+}
+
+export function dbgConsoleDayNightCycle(sun, moon, hemi) {
+    const sp = sun.getPosition();
+    const mp = moon.getPosition();
+    dbgDayNightElmt.innerText = `-- Day/Night:
+        Sun \u00A0(p/o/i): (${Math.round(sp.x)}, ${Math.round(sp.y)}, ${Math.round(sp.z)}) | ${Math.round(sun.mesh.material.opacity*100)}% | ${Math.round(sun.light.intensity*100)}%
+        Moon (p/o/i): (${Math.round(mp.x)}, ${Math.round(mp.y)}, ${Math.round(mp.z)}) | ${Math.round(moon.mesh.material.opacity*100)}% | ${Math.round(moon.light.intensity*100)}%
+        Hemi \u00A0\u00A0\u00A0\u00A0(i): ${Math.round(hemi.light.intensity*100)}%
+
     `;
 }
 
@@ -133,31 +167,52 @@ export function dbgAssertObject(mesh, rigidBody) {
     }
 }
 
+// optimizations by claude so optimizations may be suboptimal but still more optimal than optimizationless
+const dbgWireframeMaterial = new THREE.MeshBasicMaterial({ wireframe: true, color: 0xffff00 });
+const dbgWireframeGeometry = { box: new Map(), capsule: new Map() };
 export function dbgColliderMesh(mesh, collider) {
     let geometry;
-    const material = new THREE.MeshBasicMaterial({
-        wireframe: true,
-        color: 0xffff00
-    });
-
     const shape = collider.shapeType();
+
     if (shape === 1) { // cuboid
         const halfExtents = collider.halfExtents();
         const x = halfExtents.x * 2;
         const y = halfExtents.y * 2;
         const z = halfExtents.z * 2;
-        geometry = new THREE.BoxGeometry(x, y, z);
-    } else if (shape === 2) { // capsule
+        const key = `${x}_${y}_${z}`;
+
+        if (!dbgWireframeGeometry.box.has(key)) {
+            const boxGeom = new THREE.BoxGeometry(x, y, z);
+            geometry = new THREE.EdgesGeometry(boxGeom);
+            boxGeom.dispose();
+            dbgWireframeGeometry.box.set(key, geometry);
+        }
+        geometry = dbgWireframeGeometry.box.get(key);
+    }
+    else if (shape === 2) { // capsule
         const halfHeight = collider.halfHeight();
         const radius = collider.radius();
-        geometry = new THREE.CapsuleGeometry(radius, halfHeight * 2);
-    } else {
+        const key = `${radius}_${halfHeight}`;
+
+        if (!dbgWireframeGeometry.capsule.has(key)) {
+            const capsuleGeom = new THREE.CapsuleGeometry(radius, halfHeight * 2);
+            geometry = new THREE.EdgesGeometry(capsuleGeom);
+            capsuleGeom.dispose();
+            dbgWireframeGeometry.capsule.set(key, geometry);
+        }
+        geometry = dbgWireframeGeometry.capsule.get(key);
+    }
+    else {
         throw new Error(`dbgColliderMesh - unimplemented shape ${shape}`);
     }
 
-    // Must account for parent's scale
-    geometry.scale(1/mesh.scale.x, 1/mesh.scale.y, 1/mesh.scale.z);
-    mesh.add(new THREE.Mesh(geometry, material));
+    // Create a new geometry for this instance if we need to scale it
+    if (mesh.scale.x !== 1 || mesh.scale.y !== 1 || mesh.scale.z !== 1) {
+        geometry = geometry.clone();
+        geometry.scale(1/mesh.scale.x, 1/mesh.scale.y, 1/mesh.scale.z);
+    }
+
+    mesh.add(new THREE.LineSegments(geometry, dbgWireframeMaterial));
 }
 
 //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\////\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//

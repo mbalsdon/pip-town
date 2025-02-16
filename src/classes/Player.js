@@ -3,7 +3,7 @@ import * as THREE from 'three';
 import RAPIER from '@dimforge/rapier3d-compat';
 import { PhysicsObject } from './PhysicsObject';
 import { DEBUG, INIT_CHARACTER_ROTATION, JUMP_FORCE, JUMP_RAY_DISTANCE, MOVE_SPEED, ROTATION_SPEED, SPAWN_POSITION } from '../consts';
-import { dbgAssertObject, dbgAxesHelper, dbgConsoleUpdateChar, dbgRay } from '../debug';
+import { dbgAssertObject, dbgAxesHelper, dbgConsoleCharacter, dbgRay } from '../debug';
 
 //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\////\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
 //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\////\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
@@ -13,11 +13,15 @@ export class Player extends PhysicsObject {
         position = { x: 0, y: 0, z: 0 },
         rotation = { x: 0, y: 0, z: 0 },
         scale = { x: 1, y: 1, z: 1 },
-        geometry,
-        material,
+        mesh,
         colliderDesc,
         colliderProps = { friction: (isStatic ? 0.0 : 0.1), restitution: 0.2, density: 1 }
     }) {
+        if (mesh === null)
+            throw new Error("Player::constructor - mesh cannot be null");
+        if (colliderDesc === null)
+            throw new Error("Player::constructor - colliderDesc cannot be null");
+
         super(world, {
             isStatic: false,
             castShadow: true,
@@ -25,8 +29,7 @@ export class Player extends PhysicsObject {
             position,
             rotation,
             scale,
-            geometry,
-            material,
+            mesh,
             colliderDesc,
             colliderProps,
             onTick: null
@@ -112,7 +115,7 @@ export class Player extends PhysicsObject {
 
         if (DEBUG) {
             dbgRay(this.world.scene, rayOrigin, rayDirection, JUMP_RAY_DISTANCE);
-            dbgConsoleUpdateChar(this.mesh)
+            dbgConsoleCharacter(this.mesh)
             dbgAssertObject(this.mesh, this.rigidBody);
         }
     }

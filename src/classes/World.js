@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import * as RAPIER from '@dimforge/rapier3d-compat';
 import { OrbitControls } from 'three/examples/jsm/Addons.js';
-import { createDbgConsole, dbgConsoleUpdateCam } from '../debug';
+import { createDbgConsole, dbgConsoleCamera, dbgConsoleTimeTicks } from '../debug';
 import { CAMERA_FOV, CAMERA_MAX_DISTANCE, INIT_CAMERA_POSITION, DEBUG, FPS, GRAVITY } from '../consts'
 
 //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\////\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
@@ -63,7 +63,8 @@ export class World {
             this.lastTime = currentTime;
 
             if (DEBUG) {
-                dbgConsoleUpdateCam(this.camera);
+                dbgConsoleCamera(this.camera);
+                dbgConsoleTimeTicks();
             }
         }
     }

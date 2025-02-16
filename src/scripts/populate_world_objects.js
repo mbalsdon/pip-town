@@ -3,14 +3,15 @@ import * as RAPIER from '@dimforge/rapier3d-compat';
 import { PhysicsObject } from '../classes/PhysicsObject';
 import { Player } from '../classes/Player';
 import { BufferGeometryUtils, GLTFLoader } from 'three/examples/jsm/Addons.js';
-import { DEBUG, SHADOW_QUALITY, SPAWN_POSITION, CLOUDGEN_STRIDE, CLOUDGEN_RAD, CLOUDGEN_BASE_Y, SUN_TICK_ROTATION, SUN_INIT_POSITION } from '../consts';
+import { DEBUG, DIRECTIONAL_LIGHT_SHADOW_QUALITY, SPAWN_POSITION, CLOUDGEN_STRIDE, CLOUDGEN_RAD, CLOUDGEN_BASE_Y, SUN_TICK_ROTATION, SUN_INIT_POSITION } from '../consts';
 import { LightObject } from '../classes/LightObject';
+import { dbgConsoleDayNightCycle } from '../debug';
 
 //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\////\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
 //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\////\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
 
+const loader = new GLTFLoader();
 async function loadGLTF(path, initialRotation) {
-    const loader = new GLTFLoader();
     const gltf = await loader.loadAsync(path);
     const mesh = new THREE.Mesh(gltf.scene.children[0].children[0].geometry.clone(), gltf.scene.children[0].children[0].material.clone());
 
@@ -174,7 +175,7 @@ function dayNightOnTick(sun, moon, hemi) {
     } else if (sunPos.y < minOpacityY) {
         sun.mesh.material.opacity = 0;
     } else {
-        sun.mesh.material.opacity = (sunPos.y + Math.abs(minOpacityY)) / Math.abs(maxOpacityY);
+        sun.mesh.material.opacity = Math.min(1, (sunPos.y + Math.abs(minOpacityY)) / Math.abs(maxOpacityY));
     }
 
     // Fade sun intensity in/out
@@ -186,13 +187,12 @@ function dayNightOnTick(sun, moon, hemi) {
     sun.setPosition(sunPos.x, newSunY, newSunZ);
 
     // Fade moon object in/out
-
     if (moonPos.y > maxOpacityY) {
         moon.mesh.material.opacity = 1;
     } else if (moonPos.y < minOpacityY) {
         moon.mesh.material.opacity = 0;
     } else {
-        moon.mesh.material.opacity = (moonPos.y + Math.abs(minOpacityY)) / Math.abs(maxOpacityY);
+        moon.mesh.material.opacity = Math.min(1, (moonPos.y + Math.abs(minOpacityY)) / Math.abs(maxOpacityY));
     }
 
     // Fade moon intensity in/out
@@ -223,6 +223,9 @@ function dayNightOnTick(sun, moon, hemi) {
     }
 
     // TODO: dbg sunpos, moonpos, opacities, intensities
+    if (DEBUG) {
+        dbgConsoleDayNightCycle(sun, moon, hemi);
+    }
 }
 
 function streetLampOnTick(sun, lamp, seed) {
@@ -274,8 +277,7 @@ export async function populateWorldObjects(world) {
         position: SPAWN_POSITION,
         scale: { x: 0.1, y: 0.1, z: 0.1 },
         rotation: { x: 0, y: 0, z: 0 },
-        geometry: pip1Mesh.geometry,
-        material: pip1Mesh.material,
+        mesh: pip1Mesh,
         colliderDesc: RAPIER.ColliderDesc.cuboid(0.1, 0.09, 0.05),
         colliderProps: { friction: 0.0, restitution: 0.2, density: 1 }
     }));
@@ -284,8 +286,7 @@ export async function populateWorldObjects(world) {
     objects.push(...[
         new PhysicsObject(world, { // base
             position: { x: 0, y: -1.5, z: 0 },
-            geometry: new THREE.BoxGeometry(100, 1, 100),
-            material: new THREE.MeshToonMaterial({ color: 0x2d5518 }),
+            mesh: new THREE.Mesh(new THREE.BoxGeometry(100, 1, 100), new THREE.MeshToonMaterial({ color: 0x2d5518 })),
             colliderDesc: RAPIER.ColliderDesc.cuboid(50, 0.5, 50)
         }),
 
@@ -293,38 +294,32 @@ export async function populateWorldObjects(world) {
         new PhysicsObject(world, {
             position: { x: -34.25, y: -0.25, z: -25 },
             rotation: { x: 0, y: 0, z: 0 },
-            geometry: new THREE.BoxGeometry(31.5, 1.5, 50),
-            material: new THREE.MeshToonMaterial({ color: 0x2d5518 }),
+            mesh: new THREE.Mesh(new THREE.BoxGeometry(31.5, 1.5, 50), new THREE.MeshToonMaterial({ color: 0x2d5518 })),
             colliderDesc: RAPIER.ColliderDesc.cuboid(15.75, 0.75, 25)
         }), new PhysicsObject(world, {
             position: { x: -44, y: -0.25, z: 6 },
             rotation: { x: 0, y: 0, z: 0 },
-            geometry: new THREE.BoxGeometry(12, 1.5, 14),
-            material: new THREE.MeshToonMaterial({ color: 0x2d5518 }),
+            mesh: new THREE.Mesh(new THREE.BoxGeometry(12, 1.5, 14), new THREE.MeshToonMaterial({ color: 0x2d5518 })),
             colliderDesc: RAPIER.ColliderDesc.cuboid(6, 0.75, 7)
         }), new PhysicsObject(world, {
             position: { x: -35, y: -0.25, z: 4 },
             rotation: { x: 0, y: Math.PI/8, z: 0 },
-            geometry: new THREE.BoxGeometry(14, 1.5, 14),
-            material: new THREE.MeshToonMaterial({ color: 0x2d5518 }),
+            mesh: new THREE.Mesh(new THREE.BoxGeometry(14, 1.5, 14), new THREE.MeshToonMaterial({ color: 0x2d5518 })),
             colliderDesc: RAPIER.ColliderDesc.cuboid(7, 0.75, 7)
         }), new PhysicsObject(world, {
             position: { x: -25.5, y: -0.25, z: 1.3 },
             rotation: { x: 0, y: Math.PI/4, z: 0 },
-            geometry: new THREE.BoxGeometry(12, 1.5, 8),
-            material: new THREE.MeshToonMaterial({ color: 0x2d5518 }),
+            mesh: new THREE.Mesh(new THREE.BoxGeometry(12, 1.5, 8), new THREE.MeshToonMaterial({ color: 0x2d5518 })),
             colliderDesc: RAPIER.ColliderDesc.cuboid(6, 0.75, 4)
         }), new PhysicsObject(world, {
             position: { x: -19, y: -0.25, z: -25.5 },
             rotation: { x: 0, y: -Math.PI/8, z: 0 },
-            geometry: new THREE.BoxGeometry(12, 1.5, 32),
-            material: new THREE.MeshToonMaterial({ color: 0x2d5518 }),
+            mesh: new THREE.Mesh(new THREE.BoxGeometry(12, 1.5, 32), new THREE.MeshToonMaterial({ color: 0x2d5518 })),
             colliderDesc: RAPIER.ColliderDesc.cuboid(6, 0.75, 16)
         }), new PhysicsObject(world, {
             position: { x: -15, y: -0.25, z: -44 },
             rotation: { x: 0, y: 0, z: 0 },
-            geometry: new THREE.BoxGeometry(15, 1.5, 12),
-            material: new THREE.MeshToonMaterial({ color: 0x2d5518 }),
+            mesh: new THREE.Mesh(new THREE.BoxGeometry(15, 1.5, 12), new THREE.MeshToonMaterial({ color: 0x2d5518 })),
             colliderDesc: RAPIER.ColliderDesc.cuboid(7.5, 0.75, 6)
         }),
 
@@ -332,57 +327,48 @@ export async function populateWorldObjects(world) {
         new PhysicsObject(world, {
             position: { x: -44, y: -0.25, z: 34 },
             rotation: { x: 0, y: 0, z: 0 },
-            geometry: new THREE.BoxGeometry(12, 1.5, 32),
-            material: new THREE.MeshToonMaterial({ color: 0x2d5518 }),
+            mesh: new THREE.Mesh(new THREE.BoxGeometry(12, 1.5, 32), new THREE.MeshToonMaterial({ color: 0x2d5518 })),
             colliderDesc: RAPIER.ColliderDesc.cuboid(6, 0.75, 16)
         }),
         new PhysicsObject(world, {
             position: { x: -29, y: -0.25, z: 36.5 },
             rotation: { x: 0, y: 0, z: 0 },
-            geometry: new THREE.BoxGeometry(19, 1.5, 27),
-            material: new THREE.MeshToonMaterial({ color: 0x2d5518 }),
+            mesh: new THREE.Mesh(new THREE.BoxGeometry(19, 1.5, 27), new THREE.MeshToonMaterial({ color: 0x2d5518 })),
             colliderDesc: RAPIER.ColliderDesc.cuboid(9.5, 0.75, 13.5)
         }), new PhysicsObject(world, {
             position: { x: -38, y: -0.25, z: 23 },
             rotation: { x: 0, y: Math.PI/4, z: 0 },
-            geometry: new THREE.BoxGeometry(7, 1.5, 7),
-            material: new THREE.MeshToonMaterial({ color: 0x2d5518 }),
+            mesh: new THREE.Mesh(new THREE.BoxGeometry(7, 1.5, 7), new THREE.MeshToonMaterial({ color: 0x2d5518 })),
             colliderDesc: RAPIER.ColliderDesc.cuboid(3.5, 0.75, 3.5)
         }), new PhysicsObject(world, {
             position: { x: -5, y: -0.25, z: 46.25 },
             rotation: { x: 0, y: 0, z: 0 },
-            geometry: new THREE.BoxGeometry(48, 1.5, 7.5),
-            material: new THREE.MeshToonMaterial({ color: 0x2d5518 }),
+            mesh: new THREE.Mesh(new THREE.BoxGeometry(48, 1.5, 7.5), new THREE.MeshToonMaterial({ color: 0x2d5518 })),
             colliderDesc: RAPIER.ColliderDesc.cuboid(24, 0.75, 3.75)
         }), new PhysicsObject(world, {
             position: { x: -12.5, y: -0.25, z: 36.4 },
             rotation: { x: 0, y: -Math.PI/4, z: 0 },
-            geometry: new THREE.BoxGeometry(29, 1.5, 9.25),
-            material: new THREE.MeshToonMaterial({ color: 0x2d5518 }),
+            mesh: new THREE.Mesh(new THREE.BoxGeometry(29, 1.5, 9.25), new THREE.MeshToonMaterial({ color: 0x2d5518 })),
             colliderDesc: RAPIER.ColliderDesc.cuboid(14.5, 0.75, 4.675)
         }), new PhysicsObject(world, {
             position: { x: -17, y: -0.25, z: 40 },
             rotation: { x: 0, y: 0, z: 0 },
-            geometry: new THREE.BoxGeometry(10, 1.5, 10),
-            material: new THREE.MeshToonMaterial({ color: 0x2d5518 }),
+            mesh: new THREE.Mesh(new THREE.BoxGeometry(10, 1.5, 10), new THREE.MeshToonMaterial({ color: 0x2d5518 })),
             colliderDesc: RAPIER.ColliderDesc.cuboid(5, 0.75, 5)
         }), new PhysicsObject(world, {
             position: { x: 30, y: -0.25, z: 48.75 },
             rotation: { x: 0, y: 0, z: 0 },
-            geometry: new THREE.BoxGeometry(40, 1.5, 2.5),
-            material: new THREE.MeshToonMaterial({ color: 0x2d5518 }),
+            mesh: new THREE.Mesh(new THREE.BoxGeometry(40, 1.5, 2.5), new THREE.MeshToonMaterial({ color: 0x2d5518 })),
             colliderDesc: RAPIER.ColliderDesc.cuboid(20, 0.75, 1.25)
         }), new PhysicsObject(world, {
             position: { x: 23.5, y: -0.25, z: 46 },
             rotation: { x: 0, y: -Math.PI/8, z: 0 },
-            geometry: new THREE.BoxGeometry(13, 1.5, 2.6),
-            material: new THREE.MeshToonMaterial({ color: 0x2d5518 }),
+            mesh: new THREE.Mesh(new THREE.BoxGeometry(13, 1.5, 2.6), new THREE.MeshToonMaterial({ color: 0x2d5518 })),
             colliderDesc: RAPIER.ColliderDesc.cuboid(6.5, 0.75, 1.3)
         }), new PhysicsObject(world, {
             position: { x: 21, y: -0.25, z: 47 },
             rotation: { x: 0, y: 0, z: 0 },
-            geometry: new THREE.BoxGeometry(6, 1.5, 3),
-            material: new THREE.MeshToonMaterial({ color: 0x2d5518 }),
+            mesh: new THREE.Mesh(new THREE.BoxGeometry(6, 1.5, 3), new THREE.MeshToonMaterial({ color: 0x2d5518 })),
             colliderDesc: RAPIER.ColliderDesc.cuboid(3, 0.75, 1.5)
         }),
 
@@ -390,80 +376,67 @@ export async function populateWorldObjects(world) {
         new PhysicsObject(world, {
             position: { x: 23.75, y: -0.25, z: -10 },
             rotation: { x: 0, y: 0, z: 0 },
-            geometry: new THREE.BoxGeometry(52.5, 1.5, 80),
-            material: new THREE.MeshToonMaterial({ color: 0x2d5518 }),
+            mesh: new THREE.Mesh(new THREE.BoxGeometry(52.5, 1.5, 80), new THREE.MeshToonMaterial({ color: 0x2d5518 })),
             colliderDesc: RAPIER.ColliderDesc.cuboid(26.25, 0.75, 40)
         }), new PhysicsObject(world, {
             position: { x: -7, y: -0.25, z: 5 },
             rotation: { x: 0, y: 0, z: 0 },
-            geometry: new THREE.BoxGeometry(13, 1.5, 31),
-            material: new THREE.MeshToonMaterial({ color: 0x2d5518 }),
+            mesh: new THREE.Mesh(new THREE.BoxGeometry(13, 1.5, 31), new THREE.MeshToonMaterial({ color: 0x2d5518 })),
             colliderDesc: RAPIER.ColliderDesc.cuboid(6.5, 0.75, 15.5)
         }), new PhysicsObject(world, {
             position: { x: 26, y: -0.25, z: 33 },
             rotation: { x: 0, y: 0, z: 0 },
-            geometry: new THREE.BoxGeometry(48, 1.5, 9),
-            material: new THREE.MeshToonMaterial({ color: 0x2d5518 }),
+            mesh: new THREE.Mesh(new THREE.BoxGeometry(48, 1.5, 9), new THREE.MeshToonMaterial({ color: 0x2d5518 })),
             colliderDesc: RAPIER.ColliderDesc.cuboid(24, 0.75, 4.5)
         }), new PhysicsObject(world, {
             position: { x: 0, y: -0.25, z: -20 },
             rotation: { x: 0, y: 3*Math.PI/8, z: 0 },
-            geometry: new THREE.BoxGeometry(29, 1.5, 17.5),
-            material: new THREE.MeshToonMaterial({ color: 0x2d5518 }),
+            mesh: new THREE.Mesh(new THREE.BoxGeometry(29, 1.5, 17.5), new THREE.MeshToonMaterial({ color: 0x2d5518 })),
             colliderDesc: RAPIER.ColliderDesc.cuboid(14.5, 0.75, 8.75)
         }), new PhysicsObject(world, {
             position: { x: -4.5, y: -0.25, z: 24.4 },
             rotation: { x: 0, y: -Math.PI/4, z: 0 },
-            geometry: new THREE.BoxGeometry(28, 1.5, 9.1),
-            material: new THREE.MeshToonMaterial({ color: 0x2d5518 }),
+            mesh: new THREE.Mesh(new THREE.BoxGeometry(28, 1.5, 9.1), new THREE.MeshToonMaterial({ color: 0x2d5518 })),
             colliderDesc: RAPIER.ColliderDesc.cuboid(14, 0.75, 4.55)
         }), new PhysicsObject(world, {
             position: { x: 40.5, y: -0.25, z: 40 },
             rotation: { x: 0, y: 0, z: 0 },
-            geometry: new THREE.BoxGeometry(19, 1.5, 5),
-            material: new THREE.MeshToonMaterial({ color: 0x2d5518 }),
+            mesh: new THREE.Mesh(new THREE.BoxGeometry(19, 1.5, 5), new THREE.MeshToonMaterial({ color: 0x2d5518 })),
             colliderDesc: RAPIER.ColliderDesc.cuboid(9.5, 0.75, 2.5)
         }), new PhysicsObject(world, {
             position: { x: 27, y: -0.25, z: 36.5 },
             rotation: { x: 0, y: -Math.PI/8, z: 0 },
-            geometry: new THREE.BoxGeometry(14, 1.5, 7.5),
-            material: new THREE.MeshToonMaterial({ color: 0x2d5518 }),
+            mesh: new THREE.Mesh(new THREE.BoxGeometry(14, 1.5, 7.5), new THREE.MeshToonMaterial({ color: 0x2d5518 })),
             colliderDesc: RAPIER.ColliderDesc.cuboid(7, 0.75, 3.75)
         }), new PhysicsObject(world, {
             position: { x: -19.5, y: -0.25, z: 17 },
             rotation: { x: 0, y: 0, z: 0 },
-            geometry: new THREE.BoxGeometry(23, 1.5, 3),
-            material: new THREE.MeshToonMaterial({ color: 0x2d5518 }),
+            mesh: new THREE.Mesh(new THREE.BoxGeometry(23, 1.5, 3), new THREE.MeshToonMaterial({ color: 0x2d5518 })),
             colliderDesc: RAPIER.ColliderDesc.cuboid(11.5, 0.75, 1.5)
         }), new PhysicsObject(world, {
             position: { x: -31, y: -0.25, z: 16.5 },
             rotation: { x: 0, y: Math.PI/4, z: 0 },
-            geometry: new THREE.BoxGeometry(2, 1.5, 2),
-            material: new THREE.MeshToonMaterial({ color: 0x2d5518 }),
+            mesh: new THREE.Mesh(new THREE.BoxGeometry(2, 1.5, 2), new THREE.MeshToonMaterial({ color: 0x2d5518 })),
             colliderDesc: RAPIER.ColliderDesc.cuboid(1, 0.75, 1)
         }), new PhysicsObject(world, {
             position: { x: -25, y: -0.25, z: 14 },
             rotation: { x: 0, y: Math.PI/8, z: 0 },
-            geometry: new THREE.BoxGeometry(12, 1.5, 2.25),
-            material: new THREE.MeshToonMaterial({ color: 0x2d5518 }),
+            mesh: new THREE.Mesh(new THREE.BoxGeometry(12, 1.5, 2.25), new THREE.MeshToonMaterial({ color: 0x2d5518 })),
             colliderDesc: RAPIER.ColliderDesc.cuboid(6, 0.75, 1.125)
         }), new PhysicsObject(world, {
             position: { x: -18, y: -0.25, z: 9 },
             rotation: { x: 0, y: Math.PI/4, z: 0 },
-            geometry: new THREE.BoxGeometry(22, 1.5, 3.5),
-            material: new THREE.MeshToonMaterial({ color: 0x2d5518 }),
+            mesh: new THREE.Mesh(new THREE.BoxGeometry(22, 1.5, 3.5), new THREE.MeshToonMaterial({ color: 0x2d5518 })),
             colliderDesc: RAPIER.ColliderDesc.cuboid(11, 0.75, 1.75)
         }), new PhysicsObject(world, {
             position: { x: -15.5, y: -0.25, z: 11.5 },
             rotation: { x: 0, y: Math.PI/4, z: 0 },
-            geometry: new THREE.BoxGeometry(15, 1.5, 4),
-            material: new THREE.MeshToonMaterial({ color: 0x2d5518 }),
+            mesh: new THREE.Mesh(new THREE.BoxGeometry(15, 1.5, 4), new THREE.MeshToonMaterial({ color: 0x2d5518 })),
             colliderDesc: RAPIER.ColliderDesc.cuboid(7.5, 0.75, 2)
         }), new PhysicsObject(world, {
             position: { x: -13, y: -0.25, z: 14 },
             rotation: { x: 0, y: Math.PI/4, z: 0 },
-            geometry: new THREE.BoxGeometry(10, 1.5, 4),
-            material: new THREE.MeshToonMaterial({ color: 0x2d5518 }),
+            mesh: new THREE.Mesh(new THREE.BoxGeometry(10, 1.5, 4), new THREE.MeshToonMaterial({ color: 0x2d5518 })),
             colliderDesc: RAPIER.ColliderDesc.cuboid(5, 0.75, 2)
         }),
     ]);
@@ -471,9 +444,7 @@ export async function populateWorldObjects(world) {
     // River
     objects.push(new PhysicsObject(world, {
         position: { x: 0, y: -0.5, z: 0 },
-        geometry: new THREE.BoxGeometry(99.9, 1, 99.9),
-        material: new THREE.MeshToonMaterial({ color: 0x60bbe6, transparent: true, opacity: 0.5, depthWrite: false }),
-        colliderDesc: RAPIER.ColliderDesc.cuboid(-0.1, -0.1, -0.1)
+        mesh: new THREE.Mesh(new THREE.BoxGeometry(99.9, 1, 99.9), new THREE.MeshToonMaterial({ color: 0x60bbe6, transparent: true, opacity: 0.5, depthWrite: false })),
     }));
 
     // FUTURE: may need to use these for river pushing
@@ -484,44 +455,37 @@ export async function populateWorldObjects(world) {
     //         rotation: { x: 0, y: 0, z: 0 },
     //         geometry: new THREE.BoxGeometry(20, 1, 5),
     //         material: new THREE.MeshToonMaterial({ color: 0x60bbe6, transparent: true, opacity: 0.5, depthWrite: false }),
-    //         colliderDesc: RAPIER.ColliderDesc.cuboid(-0.1, -0.1, -0.1)
-    //     }), new PhysicsObject(world, {
+    //    //     }), new PhysicsObject(world, {
     //         position: { x: 25, y: -0.5, z: 42.5 },
     //         rotation: { x: 0, y: -Math.PI/8, z: 0 },
     //         geometry: new THREE.BoxGeometry(15, 1, 5),
     //         material: new THREE.MeshToonMaterial({ color: 0x60bbe6, transparent: true, opacity: 0.5, depthWrite: false }),
-    //         colliderDesc: RAPIER.ColliderDesc.cuboid(-0.1, -0.1, -0.1)
-    //     }), new PhysicsObject(world, {
+    //    //     }), new PhysicsObject(world, {
     //         position: { x: 10, y: -0.5, z: 40 },
     //         rotation: { x: 0, y: 0, z: 0 },
     //         geometry: new THREE.BoxGeometry(20, 1, 5),
     //         material: new THREE.MeshToonMaterial({ color: 0x60bbe6, transparent: true, opacity: 0.5, depthWrite: false }),
-    //         colliderDesc: RAPIER.ColliderDesc.cuboid(-0.1, -0.1, -0.1)
-    //     }), new PhysicsObject(world, {
+    //    //     }), new PhysicsObject(world, {
     //         position: { x: -8.5, y: -0.5, z: 30.4 },
     //         rotation: { x: 0, y: -Math.PI/4, z: 0 },
     //         geometry: new THREE.BoxGeometry(29.5, 1, 5),
     //         material: new THREE.MeshToonMaterial({ color: 0x60bbe6, transparent: true, opacity: 0.5, depthWrite: false }),
-    //         colliderDesc: RAPIER.ColliderDesc.cuboid(-0.1, -0.1, -0.1)
-    //     }), new PhysicsObject(world, {
+    //    //     }), new PhysicsObject(world, {
     //         position: { x: -25, y: -0.5, z: 20.75 },
     //         rotation: { x: 0, y: 0, z: 0 },
     //         geometry: new THREE.BoxGeometry(15.5, 1, 5),
     //         material: new THREE.MeshToonMaterial({ color: 0x60bbe6, transparent: true, opacity: 0.5, depthWrite: false }),
-    //         colliderDesc: RAPIER.ColliderDesc.cuboid(-0.1, -0.1, -0.1)
-    //     }), new PhysicsObject(world, {
+    //    //     }), new PhysicsObject(world, {
     //         position: { x: -34.5, y: -0.5, z: 18 },
     //         rotation: { x: 0, y: -Math.PI/4, z: 0 },
     //         geometry: new THREE.BoxGeometry(10, 1, 5),
     //         material: new THREE.MeshToonMaterial({ color: 0x60bbe6, transparent: true, opacity: 0.5, depthWrite: false }),
-    //         colliderDesc: RAPIER.ColliderDesc.cuboid(-0.1, -0.1, -0.1)
-    //     }), new PhysicsObject(world, {
+    //    //     }), new PhysicsObject(world, {
     //         position: { x: -43, y: -0.5, z: 15.5 },
     //         rotation: { x: 0, y: 0, z: 0 },
     //         geometry: new THREE.BoxGeometry(14, 1, 5),
     //         material: new THREE.MeshToonMaterial({ color: 0x60bbe6, transparent: true, opacity: 0.5, depthWrite: false }),
-    //         colliderDesc: RAPIER.ColliderDesc.cuboid(-0.1, -0.1, -0.1)
-    //     }),
+    //    //     }),
 
     //     // S-to-W
     //     new PhysicsObject(world, {
@@ -529,36 +493,31 @@ export async function populateWorldObjects(world) {
     //         rotation: { x: 0, y: Math.PI/8, z: 0 },
     //         geometry: new THREE.BoxGeometry(14, 1, 5),
     //         material: new THREE.MeshToonMaterial({ color: 0x60bbe6, transparent: true, opacity: 0.5, depthWrite: false }),
-    //         colliderDesc: RAPIER.ColliderDesc.cuboid(-0.1, -0.1, -0.1)
-    //     }), new PhysicsObject(world, {
+    //    //     }), new PhysicsObject(world, {
     //         position: { x: -21, y: -0.5, z: 6 },
     //         rotation: { x: 0, y: Math.PI/4, z: 0 },
     //         geometry: new THREE.BoxGeometry(15, 1, 5),
     //         material: new THREE.MeshToonMaterial({ color: 0x60bbe6, transparent: true, opacity: 0.5, depthWrite: false }),
-    //         colliderDesc: RAPIER.ColliderDesc.cuboid(-0.1, -0.1, -0.1)
-    //     }), new PhysicsObject(world, {
+    //    //     }), new PhysicsObject(world, {
     //         position: { x: -16, y: -0.5, z: -5 },
     //         rotation: { x: 0, y: Math.PI/2, z: 0 },
     //         geometry: new THREE.BoxGeometry(15, 1, 5),
     //         material: new THREE.MeshToonMaterial({ color: 0x60bbe6, transparent: true, opacity: 0.5, depthWrite: false }),
-    //         colliderDesc: RAPIER.ColliderDesc.cuboid(-0.1, -0.1, -0.1)
-    //     }), new PhysicsObject(world, {
+    //    //     }), new PhysicsObject(world, {
     //         castShadow: false,
     //         receiveShadow: false,
     //         position: { x: -10, y: -0.5, z: -25 },
     //         rotation: { x: 0, y: 3*Math.PI/8, z: 0 },
     //         geometry: new THREE.BoxGeometry(30, 1, 5),
     //         material: new THREE.MeshToonMaterial({ color: 0x60bbe6, transparent: true, opacity: 0.5, depthWrite: false }),
-    //         colliderDesc: RAPIER.ColliderDesc.cuboid(-0.1, -0.1, -0.1)
-    //     }), new PhysicsObject(world, {
+    //    //     }), new PhysicsObject(world, {
     //         castShadow: false,
     //         receiveShadow: false,
     //         position: { x: -5, y: -0.5, z: -43 },
     //         rotation: { x: 0, y: Math.PI/2, z: 0 },
     //         geometry: new THREE.BoxGeometry(14, 1, 5),
     //         material: new THREE.MeshToonMaterial({ color: 0x60bbe6, transparent: true, opacity: 0.5, depthWrite: false }),
-    //         colliderDesc: RAPIER.ColliderDesc.cuboid(-0.1, -0.1, -0.1)
-    //     }),
+    //    //     }),
     // ]);
 
     // Paths
@@ -568,56 +527,47 @@ export async function populateWorldObjects(world) {
         new PhysicsObject(world, {
             position: { x: -45, y: 0.6, z: -36 },
             rotation: { x: 0, y: Math.PI/2, z: 0 },
-            geometry: new THREE.BoxGeometry(6, 0.9, 10),
-            material: new THREE.MeshToonMaterial({ color: 0xaaaaaa }),
+            mesh: new THREE.Mesh(new THREE.BoxGeometry(6, 0.9, 10), new THREE.MeshToonMaterial({ color: 0xaaaaaa })),
             colliderDesc: RAPIER.ColliderDesc.cuboid(3, 0.45, 5)
         }), new PhysicsObject(world, {
             position: { x: -35, y: 0.5, z: -35 },
             rotation: { x: 0, y: Math.PI/2.25, z: 0 },
-            geometry: new THREE.BoxGeometry(5, 0.4, 15),
-            material: new THREE.MeshToonMaterial({ color: 0xcccccc }),
+            mesh: new THREE.Mesh(new THREE.BoxGeometry(5, 0.4, 15), new THREE.MeshToonMaterial({ color: 0xcccccc })),
             colliderDesc: RAPIER.ColliderDesc.cuboid(2.5, 0.2, 7.5)
         }), new PhysicsObject(world, {
             position: { x: -26, y: 0.7, z: -32 },
             rotation: { x: 0, y: Math.PI/2.4, z: 0 },
-            geometry: new THREE.BoxGeometry(5, 0.56, 7),
-            material: new THREE.MeshToonMaterial({ color: 0xaaaaaa }),
+            mesh: new THREE.Mesh(new THREE.BoxGeometry(5, 0.56, 7), new THREE.MeshToonMaterial({ color: 0xaaaaaa })),
             colliderDesc: RAPIER.ColliderDesc.cuboid(2.5, 0.28, 3.5)
         }), new PhysicsObject(world, {
             position: { x: -21, y: 0.57, z: -29 },
             rotation: { x: 0, y: Math.PI/3.3, z: 0 },
-            geometry: new THREE.BoxGeometry(5.2, 0.24, 7),
-            material: new THREE.MeshToonMaterial({ color: 0xbbbbbb }),
+            mesh: new THREE.Mesh(new THREE.BoxGeometry(5.2, 0.24, 7), new THREE.MeshToonMaterial({ color: 0xbbbbbb })),
             colliderDesc: RAPIER.ColliderDesc.cuboid(2.6, 0.12, 3.5)
         }), new PhysicsObject(world, {
             position: { x: -15, y: 0.74, z: -27 },
             rotation: { x: 0, y: Math.PI/2.5, z: 0 },
-            geometry: new THREE.BoxGeometry(5, 0.7, 9.2),
-            material: new THREE.MeshToonMaterial({ color: 0x999999 }),
+            mesh: new THREE.Mesh(new THREE.BoxGeometry(5, 0.7, 9.2), new THREE.MeshToonMaterial({ color: 0x999999 })),
             colliderDesc: RAPIER.ColliderDesc.cuboid(2.5, 0.35, 4.6)
         }), new PhysicsObject(world, {
             position: { x: -6, y: 0.74, z: -23 },
             rotation: { x: 0, y: Math.PI/2.9, z: 0 },
-            geometry: new THREE.BoxGeometry(4.9, 0.4, 11.2),
-            material: new THREE.MeshToonMaterial({ color: 0xaaaaaa }),
+            mesh: new THREE.Mesh(new THREE.BoxGeometry(4.9, 0.4, 11.2), new THREE.MeshToonMaterial({ color: 0xaaaaaa })),
             colliderDesc: RAPIER.ColliderDesc.cuboid(2.45, 0.2, 5.6)
         }), new PhysicsObject(world, {
             position: { x: 2, y: 0.74, z: -17 },
             rotation: { x: 0, y: Math.PI/3.4, z: 0 },
-            geometry: new THREE.BoxGeometry(4.4, 0.82, 9.5),
-            material: new THREE.MeshToonMaterial({ color: 0xbbbbbb }),
+            mesh: new THREE.Mesh(new THREE.BoxGeometry(4.4, 0.82, 9.5), new THREE.MeshToonMaterial({ color: 0xbbbbbb })),
             colliderDesc: RAPIER.ColliderDesc.cuboid(2.2, 0.41, 4.75)
         }), new PhysicsObject(world, {
             position: { x: 8, y: 0.74, z: -12 },
             rotation: { x: 0, y: Math.PI/4, z: 0 },
-            geometry: new THREE.BoxGeometry(4.8, 0.36, 7.9),
-            material: new THREE.MeshToonMaterial({ color: 0x999999 }),
+            mesh: new THREE.Mesh(new THREE.BoxGeometry(4.8, 0.36, 7.9), new THREE.MeshToonMaterial({ color: 0x999999 })),
             colliderDesc: RAPIER.ColliderDesc.cuboid(2.4, 0.18, 3.85)
         }), new PhysicsObject(world, {
             position: { x: 14, y: 0.74, z: -6 },
             rotation: { x: 0, y: Math.PI/4.5, z: 0 },
-            geometry: new THREE.BoxGeometry(5.2, 0.68, 10.8),
-            material: new THREE.MeshToonMaterial({ color: 0xaaaaaa }),
+            mesh: new THREE.Mesh(new THREE.BoxGeometry(5.2, 0.68, 10.8), new THREE.MeshToonMaterial({ color: 0xaaaaaa })),
             colliderDesc: RAPIER.ColliderDesc.cuboid(2.6, 0.34, 5.4)
         }),
 
@@ -625,74 +575,62 @@ export async function populateWorldObjects(world) {
         new PhysicsObject(world, {
             position: { x: 45, y: 0.78, z: -17 },
             rotation: { x: 0, y: 0.1, z: 0 },
-            geometry: new THREE.BoxGeometry(10, 0.3, 5),
-            material: new THREE.MeshToonMaterial({ color: 0xaaaaaa }),
+            mesh: new THREE.Mesh(new THREE.BoxGeometry(10, 0.3, 5), new THREE.MeshToonMaterial({ color: 0xaaaaaa })),
             colliderDesc: RAPIER.ColliderDesc.cuboid(5, 0.15, 2.5)
         }), new PhysicsObject(world, {
             position: { x: 37, y: 0.5, z: -15 },
             rotation: { x: 0, y: 0.3, z: 0 },
-            geometry: new THREE.BoxGeometry(9, 0.6, 4.5),
-            material: new THREE.MeshToonMaterial({ color: 0x999999 }),
+            mesh: new THREE.Mesh(new THREE.BoxGeometry(9, 0.6, 4.5), new THREE.MeshToonMaterial({ color: 0x999999 })),
             colliderDesc: RAPIER.ColliderDesc.cuboid(4.5, 0.3, 2.25)
         }), new PhysicsObject(world, {
             position: { x: 28, y: 0.65, z: -9.5 },
             rotation: { x: 0, y: 0.6, z: 0 },
-            geometry: new THREE.BoxGeometry(14, 0.6, 5.2),
-            material: new THREE.MeshToonMaterial({ color: 0xb6b6b6 }),
+            mesh: new THREE.Mesh(new THREE.BoxGeometry(14, 0.6, 5.2), new THREE.MeshToonMaterial({ color: 0xb6b6b6 })),
             colliderDesc: RAPIER.ColliderDesc.cuboid(7, 0.3, 2.6)
         }), new PhysicsObject(world, {
             position: { x: 20, y: 0.4, z: -2 },
             rotation: { x: 0, y: Math.PI/3, z: 0 },
-            geometry: new THREE.BoxGeometry(10, 0.6, 5.5),
-            material: new THREE.MeshToonMaterial({ color: 0x9a9a9a }),
+            mesh: new THREE.Mesh(new THREE.BoxGeometry(10, 0.6, 5.5), new THREE.MeshToonMaterial({ color: 0x9a9a9a })),
             colliderDesc: RAPIER.ColliderDesc.cuboid(5, 0.3, 2.75)
         }), new PhysicsObject(world, {
             position: { x: 17, y: 0.68, z: 6 },
             rotation: { x: 0, y: 0.1, z: 0 },
-            geometry: new THREE.BoxGeometry(4.8, 0.6, 10),
-            material: new THREE.MeshToonMaterial({ color: 0xbbbbbb }),
+            mesh: new THREE.Mesh(new THREE.BoxGeometry(4.8, 0.6, 10), new THREE.MeshToonMaterial({ color: 0xbbbbbb })),
             colliderDesc: RAPIER.ColliderDesc.cuboid(2.5, 0.3, 5)
         }), new PhysicsObject(world, {
             position: { x: 16, y: 0.43, z: 15 },
             rotation: { x: 0, y: -0.35, z: 0 },
-            geometry: new THREE.BoxGeometry(5, 0.6, 8.8),
-            material: new THREE.MeshToonMaterial({ color: 0x8f8f8f }),
+            mesh: new THREE.Mesh(new THREE.BoxGeometry(5, 0.6, 8.8), new THREE.MeshToonMaterial({ color: 0x8f8f8f })),
             colliderDesc: RAPIER.ColliderDesc.cuboid(2.5, 0.3, 4.4)
         }), new PhysicsObject(world, {
             position: { x: 11, y: 0.64, z: 22 },
             rotation: { x: 0, y: -Math.PI/4, z: 0 },
-            geometry: new THREE.BoxGeometry(4.4, 0.6, 10.4),
-            material: new THREE.MeshToonMaterial({ color: 0xaeaeae }),
+            mesh: new THREE.Mesh(new THREE.BoxGeometry(4.4, 0.6, 10.4), new THREE.MeshToonMaterial({ color: 0xaeaeae })),
             colliderDesc: RAPIER.ColliderDesc.cuboid(2.2, 0.3, 5.2)
         }), new PhysicsObject(world, {
             position: { x: 4, y: 0.43, z: 26 },
             rotation: { x: 0, y: 0.1+Math.PI/2, z: 0 },
-            geometry: new THREE.BoxGeometry(5.6, 0.6, 10.4),
-            material: new THREE.MeshToonMaterial({ color: 0xa1a1a1 }),
+            mesh: new THREE.Mesh(new THREE.BoxGeometry(5.6, 0.6, 10.4), new THREE.MeshToonMaterial({ color: 0xa1a1a1 })),
             colliderDesc: RAPIER.ColliderDesc.cuboid(2.8, 0.3, 5.2)
         }), new PhysicsObject(world, {
             position: { x: -2, y: 0.7, z: 28 },
             rotation: { x: 0, y: -1.2, z: 0 },
-            geometry: new THREE.BoxGeometry(5.6, 0.6, 7.6),
-            material: new THREE.MeshToonMaterial({ color: 0xb6b6b6 }),
+            mesh: new THREE.Mesh(new THREE.BoxGeometry(5.6, 0.6, 7.6), new THREE.MeshToonMaterial({ color: 0xb6b6b6 })),
             colliderDesc: RAPIER.ColliderDesc.cuboid(2.8, 0.3, 3.8)
         }), new PhysicsObject(world, {
             position: { x: -8, y: 0.35, z: 32 },
             rotation: { x: 0, y: -Math.PI/4, z: 0 },
-            geometry: new THREE.BoxGeometry(5.2, 0.6, 11.2),
-            material: new THREE.MeshToonMaterial({ color: 0x9f9f9f }),
+            mesh: new THREE.Mesh(new THREE.BoxGeometry(5.2, 0.6, 11.2), new THREE.MeshToonMaterial({ color: 0x9f9f9f })),
             colliderDesc: RAPIER.ColliderDesc.cuboid(2.6, 0.3, 5.6)
         }), new PhysicsObject(world, {
             position: { x: -12.5, y: 0.55, z: 40 },
             rotation: { x: 0, y: -0.2, z: 0 },
-            geometry: new THREE.BoxGeometry(5.8, 0.6, 10.8),
-            material: new THREE.MeshToonMaterial({ color: 0xacacac }),
+            mesh: new THREE.Mesh(new THREE.BoxGeometry(5.8, 0.6, 10.8), new THREE.MeshToonMaterial({ color: 0xacacac })),
             colliderDesc: RAPIER.ColliderDesc.cuboid(2.9, 0.3, 5.4)
         }), new PhysicsObject(world, {
             position: { x: -13, y: 0.4, z: 47 },
             rotation: { x: 0, y: 0, z: 0 },
-            geometry: new THREE.BoxGeometry(6, 0.6, 6),
-            material: new THREE.MeshToonMaterial({ color: 0xa1a1a1 }),
+            mesh: new THREE.Mesh(new THREE.BoxGeometry(6, 0.6, 6), new THREE.MeshToonMaterial({ color: 0xa1a1a1 })),
             colliderDesc: RAPIER.ColliderDesc.cuboid(3, 0.3, 3)
         }),
 
@@ -700,38 +638,32 @@ export async function populateWorldObjects(world) {
         new PhysicsObject(world, {
             position: { x: 3, y: 0.6, z: -10 },
             rotation: { x: 0, y: 0, z: 0 },
-            geometry: new THREE.BoxGeometry(7.5, 0.3, 7.5),
-            material: new THREE.MeshToonMaterial({ color: 0xa4a4a4 }),
+            mesh: new THREE.Mesh(new THREE.BoxGeometry(7.5, 0.3, 7.5), new THREE.MeshToonMaterial({ color: 0xa4a4a4 })),
             colliderDesc: RAPIER.ColliderDesc.cuboid(3.75, 0.15, 3.75)
         }), new PhysicsObject(world, {
             position: { x: 7, y: 0.4, z: -5 },
             rotation: { x: 0, y: Math.PI/4, z: 0 },
-            geometry: new THREE.BoxGeometry(7.5, 0.3, 7.5),
-            material: new THREE.MeshToonMaterial({ color: 0x8f8f8f }),
+            mesh: new THREE.Mesh(new THREE.BoxGeometry(7.5, 0.3, 7.5), new THREE.MeshToonMaterial({ color: 0x8f8f8f })),
             colliderDesc: RAPIER.ColliderDesc.cuboid(3.75, 0.15, 3.75)
         }), new PhysicsObject(world, {
             position: { x: 12, y: 0.5, z: -1 },
             rotation: { x: 0, y: 0, z: 0 },
-            geometry: new THREE.BoxGeometry(7.5, 0.3, 7.5),
-            material: new THREE.MeshToonMaterial({ color: 0xb1b1b1 }),
+            mesh: new THREE.Mesh(new THREE.BoxGeometry(7.5, 0.3, 7.5), new THREE.MeshToonMaterial({ color: 0xb1b1b1 })),
             colliderDesc: RAPIER.ColliderDesc.cuboid(3.75, 0.15, 3.75)
         }), new PhysicsObject(world, {
             position: { x: 11, y: 0.6, z: 4 },
             rotation: { x: 0, y: Math.PI/4, z: 0 },
-            geometry: new THREE.BoxGeometry(7.5, 0.3, 7.5),
-            material: new THREE.MeshToonMaterial({ color: 0xa2a2a2 }),
+            mesh: new THREE.Mesh(new THREE.BoxGeometry(7.5, 0.3, 7.5), new THREE.MeshToonMaterial({ color: 0xa2a2a2 })),
             colliderDesc: RAPIER.ColliderDesc.cuboid(3.75, 0.15, 3.75)
         }), new PhysicsObject(world, {
             position: { x: 12, y: 0.45, z: 9 },
             rotation: { x: 0, y: 0, z: 0 },
-            geometry: new THREE.BoxGeometry(7.5, 0.3, 7.5),
-            material: new THREE.MeshToonMaterial({ color: 0x959595 }),
+            mesh: new THREE.Mesh(new THREE.BoxGeometry(7.5, 0.3, 7.5), new THREE.MeshToonMaterial({ color: 0x959595 })),
             colliderDesc: RAPIER.ColliderDesc.cuboid(3.75, 0.15, 3.75)
         }), new PhysicsObject(world, {
             position: { x: 6, y: 0.57, z: -2 },
             rotation: { x: 0, y: 0, z: 0 },
-            geometry: new THREE.BoxGeometry(10, 0.3, 10),
-            material: new THREE.MeshToonMaterial({ color: 0xb5b5b5 }),
+            mesh: new THREE.Mesh(new THREE.BoxGeometry(10, 0.3, 10), new THREE.MeshToonMaterial({ color: 0xb5b5b5 })),
             colliderDesc: RAPIER.ColliderDesc.cuboid(5, 0.15, 5)
         }),
 
@@ -739,26 +671,22 @@ export async function populateWorldObjects(world) {
         new PhysicsObject(world, {
             position: { x: -0.5, y: 0.6, z: -11.5 },
             rotation: { x: 0, y: -0.4, z: 0 },
-            geometry: new THREE.BoxGeometry(4, 0.5, 11),
-            material: new THREE.MeshToonMaterial({ color: 0x919191 }),
+            mesh: new THREE.Mesh(new THREE.BoxGeometry(4, 0.5, 11), new THREE.MeshToonMaterial({ color: 0x919191 })),
             colliderDesc: RAPIER.ColliderDesc.cuboid(2, 0.25, 5.5)
         }), new PhysicsObject(world, {
             position: { x: 0, y: 0.49, z: -3 },
             rotation: { x: 0, y: 0.4, z: 0 },
-            geometry: new THREE.BoxGeometry(5, 0.6, 10),
-            material: new THREE.MeshToonMaterial({ color: 0xaeaeae }),
+            mesh: new THREE.Mesh(new THREE.BoxGeometry(5, 0.6, 10), new THREE.MeshToonMaterial({ color: 0xaeaeae })),
             colliderDesc: RAPIER.ColliderDesc.cuboid(2.5, 0.3, 5)
         }), new PhysicsObject(world, {
             position: { x: 3.5, y: 0.72, z: 4.5 },
             rotation: { x: 0, y: 0.5, z: 0 },
-            geometry: new THREE.BoxGeometry(7, 0.5, 10),
-            material: new THREE.MeshToonMaterial({ color: 0x939393 }),
+            mesh: new THREE.Mesh(new THREE.BoxGeometry(7, 0.5, 10), new THREE.MeshToonMaterial({ color: 0x939393 })),
             colliderDesc: RAPIER.ColliderDesc.cuboid(3.5, 0.25, 5)
         }), new PhysicsObject(world, {
             position: { x: 9.5, y: 0.64, z: 12.5 },
             rotation: { x: 0, y: Math.PI/4, z: 0 },
-            geometry: new THREE.BoxGeometry(7, 0.6, 12),
-            material: new THREE.MeshToonMaterial({ color: 0xb2b2b2 }),
+            mesh: new THREE.Mesh(new THREE.BoxGeometry(7, 0.6, 12), new THREE.MeshToonMaterial({ color: 0xb2b2b2 })),
             colliderDesc: RAPIER.ColliderDesc.cuboid(3.5, 0.3, 6)
         }),
     ]);
@@ -769,14 +697,11 @@ export async function populateWorldObjects(world) {
             position: { x: -22, y: 0.5, z: -42 },
             scale: { x: 0.5, y: 0.5, z: 0.5 },
             rotation: { x: 0, y: -Math.PI/8, z: 0 },
-            geometry: house1aMesh.geometry,
-            material: house1aMesh.material,
-            colliderDesc: RAPIER.ColliderDesc.cuboid(-0.1, -0.1, -0.1)
+            mesh: house1aMesh.clone(),
         }), new PhysicsObject(world, { // path connector
             position: { x: -23.5, y: 0.35, z: -34.5 },
             rotation: { x: 0, y: 3*Math.PI/8, z: 0 },
-            geometry: new THREE.BoxGeometry(3, 0.5, 2.5),
-            material: new THREE.MeshToonMaterial({ color: 0xbbbbbb }),
+            mesh: new THREE.Mesh(new THREE.BoxGeometry(3, 0.5, 2.5), new THREE.MeshToonMaterial({ color: 0xbbbbbb })),
             colliderDesc: RAPIER.ColliderDesc.cuboid(1.5, 0.25, 1.25)
         }),
 
@@ -784,94 +709,65 @@ export async function populateWorldObjects(world) {
         new PhysicsObject(world, { // left
             position: { x: -26, y: 2.5, z: -43 },
             rotation: { x: 0, y: -Math.PI/8, z: 0 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(0.75, 2.5, 4.5)
         }), new PhysicsObject(world, { // right
             position: { x: -18, y: 2.5, z: -40 },
             rotation: { x: 0, y: -Math.PI/8, z: 0 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(0.75, 2.5, 4.5)
         }), new PhysicsObject(world, { // back
             position: { x: -20, y: 2.5, z: -46 },
             rotation: { x: 0, y: 3*Math.PI/8, z: 0 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(0.25, 2.5, 4.5)
         }), new PhysicsObject(world, { // front left
             position: { x: -26, y: 2.5, z: -39 },
             rotation: { x: 0, y: 3*Math.PI/8, z: 0 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(0.5, 2.5, 2.3)
         }), new PhysicsObject(world, { // front right
             position: { x: -20, y: 2.5, z: -36 },
             rotation: { x: 0, y: 3*Math.PI/8, z: 0 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(0.5, 2.5, 1.1)
         }), new PhysicsObject(world, { // front top
             position: { x: -22.5, y: 4, z: -37.5 },
             rotation: { x: 0, y: 3*Math.PI/8, z: 0 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(0.5, 1, 1.75)
         }), new PhysicsObject(world, { // floor
             position: { x: -22, y: 0.75, z: -42 },
             rotation: { x: 0, y: 3*Math.PI/8, z: 0 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(5, 0.25, 5)
         }), new PhysicsObject(world, { // entrance step
             position: { x: -22.5, y: 0.5, z: -36.65 },
             rotation: { x: 0, y: 3*Math.PI/8, z: 0 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(0.75, 0.25, 1.5)
         }), new PhysicsObject(world, { // inner roof
             position: { x: -22, y: 5, z: -42 },
             rotation: { x: 0, y: 3*Math.PI/8, z: 0 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(5, 0.25, 5)
         }), new PhysicsObject(world, { // left outer roof
             position: { x: -25, y: 7, z: -43 },
             rotation: { x: 0, y: -Math.PI/8, z: Math.PI/6 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(4, 0.4, 6)
         }), new PhysicsObject(world, { // right outer roof
             position: { x: -19, y: 7, z: -41 },
             rotation: { x: 0, y: -Math.PI/8, z: -Math.PI/6 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(4, 0.4, 6)
         }), new PhysicsObject(world, { // front outer roof
             position: { x: -24, y: 6, z: -37.25 },
             rotation: { x: 0, y: -Math.PI/8, z: 0 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(3, 1, 0.5)
         }), new PhysicsObject(world, { // back outer roof
             position: { x: -20, y: 6, z: -46.5 },
             rotation: { x: 0, y: -Math.PI/8, z: 0 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(3, 1, 0.5)
         }), new PhysicsObject(world, { // bed
             position: { x: -18.5, y: 1.25, z: -44 },
             rotation: { x: 0, y: 3*Math.PI/8, z: 0 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(1, 0.5, 1.2)
         }), new LightObject(world, { // floor lamp
             isStatic: false,
             castShadow: false,
             position: { x: -18.5, y: 2.32, z: -41.85 },
             scale: { x: 0.04, y: 0.04, z: 0.04 },
-            geometry: lamp1Mesh.geometry,
-            material: lamp1Mesh.material,
+            mesh: lamp1Mesh.clone(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(0.01, 0.0525, 0.01),
             colliderProps: { friction: 1, restitution: 0.2, density: 10 },
             light: new THREE.PointLight(0xf0b895, 2),
@@ -886,14 +782,11 @@ export async function populateWorldObjects(world) {
             position: { x: 30, y: 0.5, z: 2 },
             scale: { x: 0.5, y: 0.5, z: 0.5 },
             rotation: { x: 0, y: 1.25*Math.PI, z: 0 },
-            geometry: house1bMesh.geometry,
-            material: house1bMesh.material,
-            colliderDesc: RAPIER.ColliderDesc.cuboid(-0.1, -0.1, -0.1)
+            mesh: house1bMesh.clone(),
         }), new PhysicsObject(world, { // path connector
             position: { x: 24, y: 0.35, z: -2 },
             rotation: { x: 0, y: 1.25*Math.PI, z: 0 },
-            geometry: new THREE.BoxGeometry(3, 0.5, 2.5),
-            material: new THREE.MeshToonMaterial({ color: 0xbbbbbb }),
+            mesh: new THREE.Mesh(new THREE.BoxGeometry(3, 0.5, 2.5), new THREE.MeshToonMaterial({ color: 0xbbbbbb })),
             colliderDesc: RAPIER.ColliderDesc.cuboid(1.5, 0.25, 1.25)
         }),
 
@@ -901,112 +794,77 @@ export async function populateWorldObjects(world) {
         new PhysicsObject(world, { // left
             position: { x: 33.4, y: 3, z: -1.4 }, // -x/+z > | +x/+z ^
             rotation: { x: 0, y: 1.25*Math.PI, z: 0 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(0.25, 2, 5)
         }), new PhysicsObject(world, { // right
             position: { x: 26.6, y: 3, z: 5.4 }, // -x/+z > | +x/+z ^
             rotation: { x: 0, y: 1.25*Math.PI, z: 0 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(0.25, 2, 5)
         }), new PhysicsObject(world, { // back
             position: { x: 33.4, y: 3, z: 5.4 }, // -x/+z > | +x/+z ^
             rotation: { x: 0, y: 0.75*Math.PI, z: 0 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(0.25, 2, 5)
         }), new PhysicsObject(world, { // front left
             position: { x: 28.3, y: 3, z: -3.1 }, // -x/+z > | +x/+z ^
             rotation: { x: 0, y: 0.75*Math.PI, z: 0 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(0.25, 2, 2.5)
         }), new PhysicsObject(world, { // front right
             position: { x: 23.8, y: 3, z: 1.4 }, // -x/+z > | +x/+z ^
             rotation: { x: 0, y: 0.75*Math.PI, z: 0 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(0.25, 2, 0.95)
         }), new PhysicsObject(world, { // front top
             position: { x: 25.5, y: 4.1, z: -0.3 }, // -x/+z > | +x/+z ^
             rotation: { x: 0, y: 0.75*Math.PI, z: 0 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(0.25, 0.9, 1.9)
         }), new PhysicsObject(world, { // floor
             position: { x: 30, y: 0.75, z: 2 },
             rotation: { x: 0, y: 1.25*Math.PI, z: 0 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(5, 0.25, 5)
         }), new PhysicsObject(world, { // entrance step
             position: { x: 25.1, y: 0.5, z: -0.8 },
             rotation: { x: 0, y: 1.25*Math.PI, z: 0 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(1.5, 0.25, 0.5)
         }), new PhysicsObject(world, { // inner roof
             position: { x: 30, y: 5.2, z: 2 },
             rotation: { x: 0, y: 1.25*Math.PI, z: 0 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(5, 0.25, 5)
         }), new PhysicsObject(world, { // left outer roof
             position: { x: 32, y: 7, z: 0 }, // -x/+z >
             rotation: { x: 0, y: 1.25*Math.PI, z: Math.PI/6 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(4, 0.5, 6)
         }), new PhysicsObject(world, { // right outer roof
             position: { x: 28, y: 7, z: 4 }, // -x/+z >
             rotation: { x: 0, y: 1.25*Math.PI, z: -Math.PI/6 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(4, 0.5, 6)
         }), new PhysicsObject(world, { // front outer roof
             position: { x: 26.45, y: 6.2, z: -1.95 },
             rotation: { x: 0, y: 1.25*Math.PI, z: 0 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(3.5, 1, 0.25)
         }), new PhysicsObject(world, { // back outer roof
             position: { x: 33.55, y: 6.2, z: 5.95 },
             rotation: { x: 0, y: 1.25*Math.PI, z: 0 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(3.5, 1, 0.25)
         }), new PhysicsObject(world, { // right tree
             position: { x: 21.4, y: 2, z: 4.3 },
             rotation: { x: 0, y: 0, z: 0 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.capsule(2, 0.25)
         }), new PhysicsObject(world, { // back tree
             position: { x: 31.87, y: 1.7, z: 10.54 },
             rotation: { x: 0, y: 0, z: 0 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.capsule(1.3, 0.25)
         }), new PhysicsObject(world, { // left dead tree
             position: { x: 36.25, y: 1.4, z: -3.96 },
             rotation: { x: 0, y: 0, z: 0 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.capsule(0.9, 0.2)
         }), new PhysicsObject(world, { // bed
             position: { x: 32, y: 1.4, z: 4.7 }, // -x/+z > | +x/+z ^
             rotation: { x: 0, y: 1.25*Math.PI, z: 0 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(1, 0.35, 1.3)
         }), new LightObject(world, { // floor lamp
             isStatic: false,
             castShadow: false,
             position: { x: 33.55, y: 2.32, z: 3.5 },
             scale: { x: 0.04, y: 0.04, z: 0.04 },
-            geometry: lamp1Mesh.geometry,
-            material: lamp1Mesh.material,
+            mesh: lamp1Mesh.clone(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(0.01, 0.0525, 0.01),
             colliderProps: { friction: 1, restitution: 0.2, density: 10 },
             light: new THREE.PointLight(0xf0b895, 2),
@@ -1021,14 +879,11 @@ export async function populateWorldObjects(world) {
             position: { x: 17, y: 0.5, z: 30 },
             scale: { x: 0.5, y: 0.5, z: 0.5 },
             rotation: { x: 0, y: 1.25*Math.PI, z: 0 },
-            geometry: house1cMesh.geometry,
-            material: house1cMesh.material,
-            colliderDesc: RAPIER.ColliderDesc.cuboid(-0.1, -0.1, -0.1)
+            mesh: house1cMesh.clone(),
         }), new PhysicsObject(world, { // path connector
             position: { x: 11, y: 0.35, z: 26 },
             rotation: { x: 0, y: 1.25*Math.PI, z: 0 },
-            geometry: new THREE.BoxGeometry(2.5, 0.5, 2.5),
-            material: new THREE.MeshToonMaterial({ color: 0x9f9f9f }),
+            mesh: new THREE.Mesh(new THREE.BoxGeometry(2.5, 0.5, 2.5), new THREE.MeshToonMaterial({ color: 0x9f9f9f })),
             colliderDesc: RAPIER.ColliderDesc.cuboid(1.25, 0.25, 1.25)
         }),
 
@@ -1036,105 +891,74 @@ export async function populateWorldObjects(world) {
         new PhysicsObject(world, { // left
             position: { x: 20.4, y: 3, z: 26.6 },
             rotation: { x: 0, y: 1.25*Math.PI, z: 0 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(0.25, 2, 5)
         }), new PhysicsObject(world, { // right
             position: { x: 13.6, y: 3, z: 33.4 },
             rotation: { x: 0, y: 1.25*Math.PI, z: 0 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(0.25, 2, 5)
         }), new PhysicsObject(world, { // back
             position: { x: 20.4, y: 3, z: 33.4 },
             rotation: { x: 0, y: 0.75*Math.PI, z: 0 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(0.25, 2, 5)
         }), new PhysicsObject(world, { // front left
             position: { x: 15.3, y: 3, z: 24.9 },
             rotation: { x: 0, y: 0.75*Math.PI, z: 0 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(0.25, 2, 2.5)
         }), new PhysicsObject(world, { // front right
             position: { x: 10.8, y: 3, z: 29.4 },
             rotation: { x: 0, y: 0.75*Math.PI, z: 0 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(0.25, 2, 0.95)
         }), new PhysicsObject(world, { // front top
             position: { x: 12.5, y: 4.1, z: 27.7 },
             rotation: { x: 0, y: 0.75*Math.PI, z: 0 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(0.25, 0.9, 1.9)
         }), new PhysicsObject(world, { // floor
             position: { x: 17, y: 0.75, z: 30 },
             rotation: { x: 0, y: 1.25*Math.PI, z: 0 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(5, 0.25, 5)
         }), new PhysicsObject(world, { // entrance step
             position: { x: 12.1, y: 0.5, z: 27.2 },
             rotation: { x: 0, y: 1.25*Math.PI, z: 0 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(1.5, 0.25, 0.5)
         }), new PhysicsObject(world, { // inner roof
             position: { x: 17, y: 5.2, z: 30 },
             rotation: { x: 0, y: 1.25*Math.PI, z: 0 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(5, 0.25, 5)
         }), new PhysicsObject(world, { // left outer roof
             position: { x: 19, y: 7, z: 28 },
             rotation: { x: 0, y: 1.25*Math.PI, z: Math.PI/6 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(4, 0.5, 6)
         }), new PhysicsObject(world, { // right outer roof
             position: { x: 15, y: 7, z: 32 },
             rotation: { x: 0, y: 1.25*Math.PI, z: -Math.PI/6 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(4, 0.5, 6)
         }), new PhysicsObject(world, { // front outer roof
             position: { x: 13.45, y: 6.2, z: 26.05 },
             rotation: { x: 0, y: 1.25*Math.PI, z: 0 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(3.5, 1, 0.25)
         }), new PhysicsObject(world, { // back outer roof
             position: { x: 20.55, y: 6.2, z: 33.95 },
             rotation: { x: 0, y: 1.25*Math.PI, z: 0 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(3.5, 1, 0.25)
         }), new PhysicsObject(world, { // bed
             position: { x: 19, y: 1.4, z: 32.7 },
             rotation: { x: 0, y: 1.25*Math.PI, z: 0 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(1, 0.35, 1.3)
         }), new PhysicsObject(world, { // kitchen counter
             position: { x: 19.3, y: 1.5, z: 26.7 },
             rotation: { x: 0, y: Math.PI/4, z: 0 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(0.4, 0.5, 2.6)
         }), new LightObject(world, { // table lamp
             isStatic: false,
             castShadow: false,
             position: { x: 17.64, y: 2.4, z: 25.2 },
             scale: { x: 0.05, y: 0.05, z: 0.05 },
-            geometry: lamp2Mesh.geometry,
-            material: lamp2Mesh.material,
+            mesh: lamp2Mesh.clone(),
             colliderDesc: RAPIER.ColliderDesc.capsule(0.01, 0.01),
             colliderProps: { friction: 1, restitution: 0.2, density: 10 },
             light: new THREE.PointLight(0xf0e195, 3),
             lightCastShadow: true,
-        }), 
+        }),
     ]);
 
     // House 2
@@ -1143,14 +967,11 @@ export async function populateWorldObjects(world) {
             position: { x: 28, y: 0.5, z: 20 },
             scale: { x: 0.5, y: 0.5, z: 0.5 },
             rotation: { x: 0, y: 1.25*Math.PI, z: 0 },
-            geometry: house2Mesh.geometry,
-            material: house2Mesh.material,
-            colliderDesc: RAPIER.ColliderDesc.cuboid(-0.1, -0.1, -0.1)
+            mesh: house2Mesh.clone(),
         }), new PhysicsObject(world, { // path connector
             position: { x: 20, y: 0.35, z: 14.75 },
             rotation: { x: 0, y: 1.25*Math.PI, z: 0 },
-            geometry: new THREE.BoxGeometry(2.5, 0.6, 4),
-            material: new THREE.MeshToonMaterial({ color: 0xbbbbbb }),
+            mesh: new THREE.Mesh(new THREE.BoxGeometry(2.5, 0.6, 4), new THREE.MeshToonMaterial({ color: 0xbbbbbb })),
             colliderDesc: RAPIER.ColliderDesc.cuboid(1.25, 0.3, 2)
         }),
 
@@ -1158,118 +979,80 @@ export async function populateWorldObjects(world) {
         new PhysicsObject(world, { // left
             position: { x: 31.4, y: 4, z: 16.6 }, // -x/+z > | +x/+z ^
             rotation: { x: 0, y: 1.25*Math.PI, z: 0 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(0.25, 3, 7)
         }), new PhysicsObject(world, { // right
             position: { x: 24.6, y: 4, z: 23.4 }, // -x/+z > | +x/+z ^
             rotation: { x: 0, y: 1.25*Math.PI, z: 0 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(0.25, 3, 7)
         }), new PhysicsObject(world, { // back
             position: { x: 32.95, y: 4, z: 24.95 }, // -x/+z > | +x/+z ^
             rotation: { x: 0, y: 0.75*Math.PI, z: 0 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(0.25, 3, 5)
         }), new PhysicsObject(world, { // front left
             position: { x: 24.5, y: 4, z: 13.6 }, // -x/+z > | +x/+z ^
             rotation: { x: 0, y: 0.75*Math.PI, z: 0 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(0.25, 3, 2.5)
         }), new PhysicsObject(world, { // front right
             position: { x: 20.1, y: 4, z: 18 }, // -x/+z > | +x/+z ^
             rotation: { x: 0, y: 0.75*Math.PI, z: 0 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(0.25, 3, 0.75)
         }), new PhysicsObject(world, { // front top
             position: { x: 21.7, y: 5.5, z: 16.4 }, // -x/+z > | +x/+z ^
             rotation: { x: 0, y: 0.75*Math.PI, z: 0 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(0.25, 1.5, 1.4)
         }), new PhysicsObject(world, { // inside left
             position: { x: 32.75, y: 4, z: 18.75 }, // -x/+z > | +x/+z ^
             rotation: { x: 0, y: 0.75*Math.PI, z: 0 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(0.25, 3, 0.75)
         }), new PhysicsObject(world, { // inside right
             position: { x: 28.35, y: 4, z: 23.15 }, // -x/+z > | +x/+z ^
             rotation: { x: 0, y: 0.75*Math.PI, z: 0 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(0.25, 3, 2.5)
         }), new PhysicsObject(world, { // inside top
             position: { x: 31.2, y: 5.5, z: 20.3 }, // -x/+z > | +x/+z ^
             rotation: { x: 0, y: 0.75*Math.PI, z: 0 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(0.25, 1.5, 1.6)
         }), new PhysicsObject(world, { // floor
             position: { x: 28, y: 0.75, z: 20 },
             rotation: { x: 0, y: 1.25*Math.PI, z: 0 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(5, 0.25, 7.25)
         }), new PhysicsObject(world, { // entrance step
             position: { x: 21.1, y: 0.5, z: 15.9 },
             rotation: { x: 0, y: 1.25*Math.PI, z: 0 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(1.5, 0.25, 0.5)
         }), new PhysicsObject(world, { // inner roof
             position: { x: 28, y: 6.75, z: 20 },
             rotation: { x: 0, y: 1.25*Math.PI, z: 0 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(5, 0.25, 7.25)
         }), new PhysicsObject(world, { // left outer roof
             position: { x: 30, y: 9, z: 18 }, // -x/+z > | +x/+z ^
             rotation: { x: 0, y: 1.25*Math.PI, z: Math.PI/6 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(4, 0.25, 8.25)
         }), new PhysicsObject(world, { // right outer roof
             position: { x: 26, y: 9, z: 22 }, // -x/+z > | +x/+z ^
             rotation: { x: 0, y: 1.25*Math.PI, z: -Math.PI/6 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(4, 0.25, 8.25)
         }), new PhysicsObject(world, { // front outer roof
             position: { x: 23, y: 8, z: 15 }, // -x/+z > | +x/+z ^
             rotation: { x: 0, y: 0.75*Math.PI, z: 0 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(0.25, 1, 3)
         }), new PhysicsObject(world, { // back outer roof
             position: { x: 32.95, y: 8, z: 24.95 }, // -x/+z > | +x/+z ^
             rotation: { x: 0, y: 0.75*Math.PI, z: 0 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(0.25, 1, 3)
         }), new PhysicsObject(world, { // sink
             position: { x: 34.5, y: 1.5, z: 22.2 }, // -x/+z > | +x/+z ^
             rotation: { x: 0, y: 0.75*Math.PI, z: 0 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(0.7, 0.5, 1.5)
         }), new PhysicsObject(world, { // toilet
             position: { x: 27.9, y: 1.5, z: 25.1 }, // -x/+z > | +x/+z ^
             rotation: { x: 0, y: 0.75*Math.PI, z: 0 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(0.3, 0.5, 0.3)
         }), new PhysicsObject(world, { // shower (floor)
             position: { x: 30.3, y: 1.2, z: 26.2 }, // -x/+z > | +x/+z ^
             rotation: { x: 0, y: 0.75*Math.PI, z: 0 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(0.5, 0.1, 1.5)
-        }), 
+        }),
     ]);
 
     // House 3
@@ -1278,14 +1061,11 @@ export async function populateWorldObjects(world) {
             position: { x: -8.5, y: 0.5, z: 13 },
             scale: { x: 0.5, y: 0.5, z: 0.5 },
             rotation: { x: 0, y: -1.25*Math.PI, z: 0 },
-            geometry: house3Mesh.geometry,
-            material: house3Mesh.material,
-            colliderDesc: RAPIER.ColliderDesc.cuboid(-0.1, -0.1, -0.1)
+            mesh: house3Mesh.clone(),
         }), new PhysicsObject(world, { // path connector
             position: { x: 1.7, y: 0.35, z: 10.9 },
             rotation: { x: 0, y: 0.75*Math.PI, z: 0 },
-            geometry: new THREE.BoxGeometry(2.5, 0.6, 4),
-            material: new THREE.MeshToonMaterial({ color: 0x9f9f9f }),
+            mesh: new THREE.Mesh(new THREE.BoxGeometry(2.5, 0.6, 4), new THREE.MeshToonMaterial({ color: 0x9f9f9f })),
             colliderDesc: RAPIER.ColliderDesc.cuboid(1.25, 0.3, 2)
         }),
 
@@ -1293,88 +1073,61 @@ export async function populateWorldObjects(world) {
         new PhysicsObject(world, { // [floor] (F1)
             position: { x: -6.4, y: 0.75, z: 15.1 }, // -x/-z > | -x/+z ^
             rotation: { x: 0, y: 0.75*Math.PI, z: 0 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(6.7, 0.25, 7.5)
         }), new PhysicsObject(world, { // [entrance step] (F1)
             position: { x: 1.25, y: 0.5, z: 11.4 },
             rotation: { x: 0, y: 0.75*Math.PI, z: 0 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(1.5, 0.25, 0.5)
         }), new PhysicsObject(world, { // [outer wall] left (F1)
             position: { x: -1.8, y: 3, z: 19.7 }, // -x/-z > | -x/+z ^
             rotation: { x: 0, y: 0.75*Math.PI, z: 0 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(0.25, 2.5, 7.5)
         }), new PhysicsObject(world, { // [outer wall] right (F1)
             position: { x: -11, y: 3, z: 10.5 }, // -x/-z > | -x/+z ^
             rotation: { x: 0, y: 0.75*Math.PI, z: 0 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(0.25, 2.5, 7.5)
         }), new PhysicsObject(world, { // [outer wall] back (F1)
             position: { x: -11.5, y: 3, z: 20.2 }, // -x/-z > | -x/+z ^
             rotation: { x: 0, y: 0.25*Math.PI, z: 0 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(0.25, 2.5, 6.5)
         }), new PhysicsObject(world, { // [outer wall] front-left (F1)
             position: { x: 2.5, y: 3, z: 13.75 }, // -x/-z > | -x/+z ^
             rotation: { x: 0, y: 0.25*Math.PI, z: 0 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(0.25, 2.5, 1)
         }), new PhysicsObject(world, { // [outer wall] front-right (F1)
             position: { x: -3.05, y: 3, z: 8.2 }, // -x/-z > | -x/+z ^
             rotation: { x: 0, y: 0.25*Math.PI, z: 0 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(0.25, 2.5, 3.75)
         }), new PhysicsObject(world, { // [outer wall] front-top (F1)
             position: { x: 0.7, y: 4.75, z: 11.95 }, // -x/-z > | -x/+z ^
             rotation: { x: 0, y: 0.25*Math.PI, z: 0 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(0.25, 0.75, 1.6)
         }), new PhysicsObject(world, { // [inner wall] left (F1)
             position: { x: -7.4, y: 3, z: 19.4 }, // -x/-z > | -x/+z ^
             rotation: { x: 0, y: 0.25*Math.PI, z: 0 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(0.25, 2.5, 4)
         }), new PhysicsObject(world, { // [inner wall] top (F1)
             position: { x: -11.3, y: 4.75, z: 15.5 }, // -x/-z > | -x/+z ^
             rotation: { x: 0, y: 0.25*Math.PI, z: 0 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(0.25, 0.75, 1.6)
         }), new PhysicsObject(world, { // [inner wall] right (F1)
             position: { x: -13, y: 3, z: 13.8 }, // -x/-z > | -x/+z ^
             rotation: { x: 0, y: 0.25*Math.PI, z: 0 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(0.25, 2.5, 0.9)
         }), new PhysicsObject(world, { // [kitchen counter] (F1)
             position: { x: -8.8, y: 1.5, z: 9.8 }, // -x/-z > | -x/+z ^
             rotation: { x: 0, y: 0.75*Math.PI, z: 0 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(0.8, 1, 2.4)
         }), new PhysicsObject(world, { // [tv table] (F1)
             position: { x: -7.1, y: 1.5, z: 18.4 },
             rotation: { x: 0, y: Math.PI/4, z: 0 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(0.75, 0.5, 3)
         }), new LightObject(world, { // [table lamp] (F1)
             isStatic: false,
             castShadow: false,
             position: { x: -5.35, y: 2.78, z: 19.85 },
             scale: { x: 0.1, y: 0.1, z: 0.1 },
-            geometry: lamp2Mesh.geometry,
-            material: lamp2Mesh.material,
+            mesh: lamp2Mesh.clone(),
             colliderDesc: RAPIER.ColliderDesc.capsule(0.03, 0.05),
             colliderProps: { friction: 1, restitution: 0.2, density: 10 },
             light: new THREE.PointLight(0xf0e195, 3),
@@ -1382,130 +1135,89 @@ export async function populateWorldObjects(world) {
         }), new PhysicsObject(world, { // [stairs] (F1)
             position: { x: -8, y: 2, z: 21.3 }, // -x/-z > | -x/+z ^
             rotation: { x: 0, y: 0.75*Math.PI, z: -Math.PI/4 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(4.5, 0.25, 1.6)
         }), new PhysicsObject(world, { // [floor] large (F2)
             position: { x: -5.2, y: 5.75, z: 13.9 }, // -x/-z > | -x/+z ^
             rotation: { x: 0, y: 0.75*Math.PI, z: 0 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(6.7, 0.25, 5.75)
         }), new PhysicsObject(world, { // [floor] stair-adj (F2)
             position: { x: -12.8, y: 5.75, z: 16.9 }, // -x/-z > | -x/+z ^
             rotation: { x: 0, y: 0.75*Math.PI, z: 0 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(3.45, 0.25, 1.75)
         }), new PhysicsObject(world, { // [floor] balcony (F2)
             position: { x: -12.5, y: 5.75, z: 9 }, // -x/-z > | -x/+z ^
             rotation: { x: 0, y: 0.75*Math.PI, z: 0 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(2.5, 0.25, 7.5)
         }), new PhysicsObject(world, { // [outer wall] left (F2)
             position: { x: -1.8, y: 9, z: 19.7 }, // -x/-z > | -x/+z ^
             rotation: { x: 0, y: 0.75*Math.PI, z: 0 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(0.25, 3, 7.5)
         }), new PhysicsObject(world, { // [outer wall] right-left (F2)
             position: { x: -9.4, y: 9, z: 8.9 }, // -x/-z > | -x/+z ^
             rotation: { x: 0, y: 0.75*Math.PI, z: 0 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(0.25, 3, 5.25)
         }), new PhysicsObject(world, { // [outer wall] right-top  (F2)
             position: { x: -14.18, y: 10.5, z: 13.67 }, // -x/-z > | -x/+z ^
             rotation: { x: 0, y: 0.75*Math.PI, z: 0 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(0.25, 1.5, 1.5)
         }), new PhysicsObject(world, { // [outer wall] right-right  (F2)
             position: { x: -15.5, y: 9, z: 15.1 }, // -x/-z > | -x/+z ^
             rotation: { x: 0, y: 0.75*Math.PI, z: 0 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(0.25, 3, 0.5)
         }), new PhysicsObject(world, { // [outer wall] front (F2)
             position: { x: -1.3, y: 9, z: 10.0 }, // -x/-z > | -x/+z ^
             rotation: { x: 0, y: 0.25*Math.PI, z: 0 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(0.25, 3, 6.5)
         }), new PhysicsObject(world, { // [outer wall] back (F2)
             position: { x: -11.5, y: 9, z: 20.2 }, // -x/-z > | -x/+z ^
             rotation: { x: 0, y: 0.25*Math.PI, z: 0 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(0.25, 3, 6.5)
         }), new PhysicsObject(world, { // [inner wall] stair_bed-left (F2)
             position: { x: -12.7, y: 9, z: 17.9 }, // -x/-z > | -x/+z ^
             rotation: { x: 0, y: 0.75*Math.PI, z: 0 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(0.25, 3, 0.5)
         }), new PhysicsObject(world, { // [outer wall] stair_bed-top  (F2)
             position: { x: -11.3, y: 10.5, z: 16.5 }, // -x/-z > | -x/+z ^
             rotation: { x: 0, y: 0.75*Math.PI, z: 0 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(0.25, 1.5, 1.5)
         }), new PhysicsObject(world, { // [inner wall] stair_bed-right/bath_bed-right (F2)
             position: { x: -9.45, y: 9, z: 14.6 }, // -x/-z > | -x/+z ^
             rotation: { x: 0, y: 0.75*Math.PI, z: 0 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(0.25, 3, 1.25)
         }), new PhysicsObject(world, { // [outer wall] bath_bed-top  (F2)
             position: { x: -7.5, y: 10.5, z: 12.6 }, // -x/-z > | -x/+z ^
             rotation: { x: 0, y: 0.75*Math.PI, z: 0 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(0.25, 1.5, 1.5)
         }), new PhysicsObject(world, { // [inner wall] bath_bed-left (F2)
             position: { x: -4.8, y: 9, z: 9.95 }, // -x/-z > | -x/+z ^
             rotation: { x: 0, y: 0.75*Math.PI, z: 0 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(0.25, 3, 2.3)
         }), new PhysicsObject(world, { // [inner wall] stair_bed (F2)
             position: { x: -6.1, y: 9, z: 17.9 }, // -x/-z > | -x/+z ^
             rotation: { x: 0, y: 0.25*Math.PI, z: 0 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(0.25, 3, 4.5)
         }), new PhysicsObject(world, { // [balcony fence] left (F2)
             position: { x: -17.6, y: 6.5, z: 14 }, // -x/-z > | -x/+z ^
             rotation: { x: 0, y: 0.75*Math.PI, z: 0 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(2, 0.5, 0.25)
         }), new PhysicsObject(world, { // [balcony fence] right (F2)
             position: { x: -7.4, y: 6.5, z: 3.8 }, // -x/-z > | -x/+z ^
             rotation: { x: 0, y: 0.75*Math.PI, z: 0 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(2, 0.5, 0.25)
         }), new PhysicsObject(world, { // [balcony fence] right (F2)
             position: { x: -14.3, y: 6.5, z: 7.55 }, // -x/-z > | -x/+z ^
             rotation: { x: 0, y: 0.25*Math.PI, z: 0 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(7, 0.5, 0.25)
         }), new PhysicsObject(world, { // [bed] (F2)
             position: { x: -6.4, y: 6.25, z: 8.1 }, // -x/-z > | -x/+z ^
             rotation: { x: 0, y: 0.75*Math.PI, z: 0 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(1, 0.25, 2)
         }), new LightObject(world, { // [floor lamp] model (F2)
             isStatic: false,
             castShadow: false,
             position: { x: -9.95, y: 7.315, z: 13.87 },
             scale: { x: 0.04, y: 0.04, z: 0.04 },
-            geometry: lamp1Mesh.geometry,
-            material: lamp1Mesh.material,
+            mesh: lamp1Mesh.clone(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(0.01, 0.0525, 0.01),
             colliderProps: { friction: 1, restitution: 0.2, density: 10 },
             light: new THREE.PointLight(0xf0b895, 2),
@@ -1514,64 +1226,44 @@ export async function populateWorldObjects(world) {
         }), new PhysicsObject(world, { // [bathroom sink] (F2)
             position: { x: 0.5, y: 6.5, z: 16.3 }, // -x/-z > | -x/+z ^
             rotation: { x: 0, y: 0.75*Math.PI, z: 0 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(0.75, 0.5, 1.5)
         }), new PhysicsObject(world, { // [toilet] (F2)
             position: { x: -4.55, y: 6.5, z: 18.4 }, // -x/-z > | -x/+z ^
             rotation: { x: 0, y: 0.75*Math.PI, z: 0 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(0.4, 0.3, 0.5)
         }), new PhysicsObject(world, { // [post] front
             position: { x: -9, y: 5.75, z: 2.3 }, // -x/-z > | -x/+z ^
             rotation: { x: 0, y: 0.75*Math.PI, z: 0 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(0.25, 5.5, 0.25)
         }), new PhysicsObject(world, { // [post] back
             position: { x: -19.35, y: 5.75, z: 12.55 }, // -x/-z > | -x/+z ^
             rotation: { x: 0, y: 0.75*Math.PI, z: 0 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(0.25, 5.5, 0.25)
         }), new PhysicsObject(world, { // [inner roof] main
             position: { x: -6.4, y: 11.75, z: 15.1 }, // -x/-z > | -x/+z ^
             rotation: { x: 0, y: 0.75*Math.PI, z: 0 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(6.7, 0.25, 7.5)
         }), new PhysicsObject(world, { // [inner roof] balcony
             position: { x: -12.5, y: 11.75, z: 9 }, // -x/-z > | -x/+z ^
             rotation: { x: 0, y: 0.75*Math.PI, z: 0 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(2.5, 0.25, 7.5)
         }), new PhysicsObject(world, { // [outer roof] front (F1)
             position: { x: -3, y: 13.75, z: 7.7 }, // -x/-z > | -x/+z ^
             rotation: { x: 0, y: 0.75*Math.PI, z: 0 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(6, 2, 0.4)
         }), new PhysicsObject(world, { // [outer roof] back (F1)
             position: { x: -13.5, y: 13.75, z: 18.2 }, // -x/-z > | -x/+z ^
             rotation: { x: 0, y: 0.75*Math.PI, z: 0 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(6, 2, 0.5)
         }), new PhysicsObject(world, { // [outer roof] left (F1)
             position: { x: -4.5, y: 15.5, z: 17 }, // -x/-z > | -x/+z ^
             rotation: { x: 0, y: 0.75*Math.PI, z: Math.PI/6 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(6.5, 0.5, 8)
         }), new PhysicsObject(world, { // [outer roof] right (F1)
             position: { x: -12.5, y: 15.5, z: 9 }, // -x/-z > | -x/+z ^
             rotation: { x: 0, y: 0.75*Math.PI, z: -Math.PI/6 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(6.5, 0.5, 8)
-        }), 
+        }),
     ]);
 
     // House 4
@@ -1580,14 +1272,11 @@ export async function populateWorldObjects(world) {
             position: { x: -37, y: 0.5, z: -18 },
             scale: { x: 0.5, y: 0.5, z: 0.5 },
             rotation: { x: 0, y: Math.PI, z: 0 },
-            geometry: house4Mesh.geometry,
-            material: house4Mesh.material,
-            colliderDesc: RAPIER.ColliderDesc.cuboid(-0.1, -0.1, -0.1)
+            mesh: house4Mesh.clone(),
         }), new PhysicsObject(world, { // path connector
             position: { x: -31, y: 0.35, z: -30 },
             rotation: { x: 0, y: 0, z: 0 },
-            geometry: new THREE.BoxGeometry(2.5, 0.6, 4),
-            material: new THREE.MeshToonMaterial({ color: 0x9f9f9f }),
+            mesh: new THREE.Mesh(new THREE.BoxGeometry(2.5, 0.6, 4), new THREE.MeshToonMaterial({ color: 0x9f9f9f })),
             colliderDesc: RAPIER.ColliderDesc.cuboid(1.25, 0.3, 2)
         }),
 
@@ -1595,141 +1284,96 @@ export async function populateWorldObjects(world) {
         new PhysicsObject(world, { // left
             position: { x: -27.3, y: 3, z: -18 },
             rotation: { x: 0, y: 0, z: 0 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(0.25, 2, 10)
         }), new PhysicsObject(world, { // right
             position: { x: -46.7, y: 3, z: -18 },
             rotation: { x: 0, y: 0, z: 0 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(0.25, 2, 10)
         }), new PhysicsObject(world, { // back
             position: { x: -37, y: 3, z: -8.3 },
             rotation: { x: 0, y: Math.PI/2, z: 0 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(0.25, 2, 10)
         }), new PhysicsObject(world, { // front left
             position: { x: -28.2, y: 3, z: -27.7 },
             rotation: { x: 0, y: Math.PI/2, z: 0 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(0.25, 2, 1)
         }), new PhysicsObject(world, { // front right
             position: { x: -39.5, y: 3, z: -27.7 },
             rotation: { x: 0, y: Math.PI/2, z: 0 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(0.25, 2, 7.2)
         }), new PhysicsObject(world, { // front top
             position: { x: -30.7, y: 4.3, z: -27.7 },
             rotation: { x: 0, y: Math.PI/2, z: 0 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(0.25, 0.7, 1.7)
         }), new PhysicsObject(world, { // inside long left
             position: { x: -34.65, y: 3, z: -15.8 },
             rotation: { x: 0, y: 0, z: 0 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(0.25, 2, 7.3)
         }), new PhysicsObject(world, { // inside long top
             position: { x: -34.65, y: 4.2, z: -24.6 },
             rotation: { x: 0, y: 0, z: 0 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(0.25, 0.7, 1.6)
         }), new PhysicsObject(world, { // inside long right
             position: { x: -34.65, y: 3, z: -26.9 },
             rotation: { x: 0, y: 0, z: 0 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(0.25, 2, 0.65)
         }), new PhysicsObject(world, { // inside short left
             position: { x: -38.5, y: 3, z: -18.8 },
             rotation: { x: 0, y: Math.PI/2, z: 0 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(0.25, 2, 4)
         }), new PhysicsObject(world, { // inside short top
             position: { x: -44, y: 4.2, z: -18.8 },
             rotation: { x: 0, y: Math.PI/2, z: 0 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(0.25, 0.7, 1.6)
         }), new PhysicsObject(world, { // inside short top
             position: { x: -46.2, y: 3, z: -18.8 },
             rotation: { x: 0, y: Math.PI/2, z: 0 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(0.25, 2, 0.6)
         }), new PhysicsObject(world, { // floor
             position: { x: -37, y: 0.75, z: -18 },
             rotation: { x: 0, y: 0, z: 0 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(10, 0.25, 10)
         }), new PhysicsObject(world, { // entrance step
             position: { x: -30.7, y: 0.5, z: -28.6 },
             rotation: { x: 0, y: 0, z: 0 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(1.5, 0.25, 0.5)
         }), new PhysicsObject(world, { // inner roof
             position: { x: -37, y: 5.2, z: -18 },
             rotation: { x: 0, y: 0, z: 0 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(10, 0.25, 10)
         }), new PhysicsObject(world, { // left outer roof
             position: { x: -31, y: 7.2, z: -18 },
             rotation: { x: 0, y: 0, z: -Math.PI/8 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(7, 0.5, 11)
         }), new PhysicsObject(world, { // right outer roof
             position: { x: -43, y: 7.2, z: -18 },
             rotation: { x: 0, y: Math.PI, z: -Math.PI/8 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(7, 0.5, 11)
         }), new PhysicsObject(world, { // front outer roof
             position: { x: -37, y: 6, z: -27.7 },
             rotation: { x: 0, y: Math.PI/2, z: 0 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(0.25, 1.2, 6)
         }), new PhysicsObject(world, { // back outer roof
             position: { x: -37, y: 6, z: -8.3 },
             rotation: { x: 0, y: Math.PI/2, z: 0 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(0.25, 1.2, 6)
         }), new PhysicsObject(world, { // dining table
             position: { x: -37.7, y: 1.7, z: -21.1 },
             rotation: { x: 0, y: Math.PI/2, z: 0 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(0.8, 0.7, 1.35)
         }), new PhysicsObject(world, { // dining table
             position: { x: -44, y: 1.3, z: -12.7 },
             rotation: { x: 0, y: Math.PI/2, z: 0 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(2, 0.5, 2)
         }), new PhysicsObject(world, { // bedroom long shelf
             position: { x: -40.64, y: 1.875, z: -9.07 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(5.75, 0.125, 0.5)
         }), new LightObject(world, { // floor lamp
             isStatic: false,
             castShadow: false,
             position: { x: -33.5, y: 2.32, z: -17.88 },
             scale: { x: 0.04, y: 0.04, z: 0.04 },
-            geometry: lamp1Mesh.geometry,
-            material: lamp1Mesh.material,
+            mesh: lamp1Mesh.clone(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(0.01, 0.0525, 0.01),
             colliderProps: { friction: 1, restitution: 0.2, density: 10 },
             light: new THREE.PointLight(0xf0b895, 2),
@@ -1740,13 +1384,12 @@ export async function populateWorldObjects(world) {
             castShadow: false,
             position: { x: -41.14, y: 2.4, z: -9.06 },
             scale: { x: 0.05, y: 0.05, z: 0.05 },
-            geometry: lamp2Mesh.geometry,
-            material: lamp2Mesh.material,
+            mesh: lamp2Mesh.clone(),
             colliderDesc: RAPIER.ColliderDesc.capsule(0.01, 0.01),
             colliderProps: { friction: 1, restitution: 0.2, density: 10 },
             light: new THREE.PointLight(0xf0e195, 3),
             lightCastShadow: true,
-        }), 
+        }),
     ]);
 
     // Forest
@@ -1755,286 +1398,187 @@ export async function populateWorldObjects(world) {
         new PhysicsObject(world, { // model
             position: { x: -44, y: 0, z: 7.5 },
             scale: { x: 0.75, y: 0.75, z: 0.75 },
-            geometry: tree1Mesh.geometry,
-            material: tree1Mesh.material,
-            colliderDesc: RAPIER.ColliderDesc.cuboid(-0.1, -0.1, -0.1)
+            mesh: tree1Mesh.clone(),
         }), new PhysicsObject(world, { // hitbox
             position: { x: -44.5, y: 12, z: 7.3 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.capsule(12, 1.5)
         }), new PhysicsObject(world, { // model
             position: { x: -34.75, y: 0, z: 0 },
             scale: { x: 0.25, y: 0.25, z: 0.25 },
-            geometry: tree2Mesh.geometry,
-            material: tree2Mesh.material,
-            colliderDesc: RAPIER.ColliderDesc.cuboid(-0.1, -0.1, -0.1)
+            mesh: tree2Mesh.clone(),
         }), new PhysicsObject(world, { // hitbox
             position: { x: -34.75, y: 3, z: 0 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.capsule(3, 0.5)
         }), new PhysicsObject(world, { // model
             position: { x: -36.25, y: 0, z: 9.25 },
             scale: { x: 0.4, y: 0.4, z: 0.4 },
-            geometry: tree3Mesh.geometry,
-            material: tree3Mesh.material,
-            colliderDesc: RAPIER.ColliderDesc.cuboid(-0.1, -0.1, -0.1)
+            mesh: tree3Mesh.clone(),
         }), new PhysicsObject(world, { // hitbox
             position: { x: -36.25, y: 6, z: 9.25 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.capsule(6, 1.5)
         }), new PhysicsObject(world, { // model
             position: { x: -42.75, y: 0, z: -2 },
             scale: { x: 0.2, y: 0.2, z: 0.2 },
-            geometry: tree3Mesh.geometry,
-            material: tree3Mesh.material,
-            colliderDesc: RAPIER.ColliderDesc.cuboid(-0.1, -0.1, -0.1)
+            mesh: tree3Mesh.clone(),
         }), new PhysicsObject(world, { // hitbox
             position: { x: -42.75, y: 2.5, z: -2 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.capsule(2.6, 1)
         }), new PhysicsObject(world, { // model
             position: { x: -27, y: 0, z: 4 },
             scale: { x: 0.25, y: 0.25, z: 0.25 },
-            geometry: tree1Mesh.geometry,
-            material: tree1Mesh.material,
-            colliderDesc: RAPIER.ColliderDesc.cuboid(-0.1, -0.1, -0.1)
+            mesh: tree1Mesh.clone(),
         }), new PhysicsObject(world, { // hitbox
             position: { x: -27, y: 3, z: 4 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.capsule(3, 0.75)
         }), new PhysicsObject(world, { // model
             position: { x: -47.25, y: 0, z: 20.75 },
             scale: { x: 0.3, y: 0.3, z: 0.3 },
-            geometry: tree2Mesh.geometry,
-            material: tree2Mesh.material,
-            colliderDesc: RAPIER.ColliderDesc.cuboid(-0.1, -0.1, -0.1)
+            mesh: tree2Mesh.clone(),
         }), new PhysicsObject(world, { // hitbox
             position: { x: -47.25, y: 4, z: 20.75 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.capsule(4, 0.75)
         }), new PhysicsObject(world, { // model
             position: { x: -40.35, y: 0, z: 19.75 },
             scale: { x: 0.3, y: 0.6, z: 0.3 },
-            geometry: tree1Mesh.geometry,
-            material: tree1Mesh.material,
-            colliderDesc: RAPIER.ColliderDesc.cuboid(-0.1, -0.1, -0.1)
+            mesh: tree1Mesh.clone(),
         }), new PhysicsObject(world, { // hitbox
             position: { x: -40.35, y: 10, z: 19.75 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.capsule(10, 0.75)
         }), new PhysicsObject(world, { // model
             position: { x: -41.65, y: 0, z: 27 },
             scale: { x: 0.25, y: 0.4, z: 0.25 },
-            geometry: tree3Mesh.geometry,
-            material: tree3Mesh.material,
-            colliderDesc: RAPIER.ColliderDesc.cuboid(-0.1, -0.1, -0.1)
+            mesh: tree3Mesh.clone(),
         }), new PhysicsObject(world, { // hitbox
             position: { x: -41.65, y: 6, z: 27 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.capsule(6, 0.75)
         }), new PhysicsObject(world, { // model
             position: { x: -32.85, y: 0, z: 25.5 },
             scale: { x: 0.4, y: 0.2, z: 0.4 },
-            geometry: tree1Mesh.geometry,
-            material: tree1Mesh.material,
-            colliderDesc: RAPIER.ColliderDesc.cuboid(-0.1, -0.1, -0.1)
+            mesh: tree1Mesh.clone(),
         }), new PhysicsObject(world, { // hitbox
             position: { x: -32.85, y: 3, z: 25.5 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.capsule(3, 0.75)
         }), new PhysicsObject(world, { // model
             position: { x: -47.15, y: 0, z: 31.8 },
             scale: { x: 0.3, y: 0.6, z: 0.3 },
-            geometry: tree3Mesh.geometry,
-            material: tree3Mesh.material,
-            colliderDesc: RAPIER.ColliderDesc.cuboid(-0.1, -0.1, -0.1)
+            mesh: tree3Mesh.clone(),
         }), new PhysicsObject(world, { // hitbox
             position: { x: -47.15, y: 10, z: 31.8 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.capsule(10, 1)
         }), new PhysicsObject(world, { // model
             position: { x: -37.5, y: 0, z: 32.4 },
             scale: { x: 0.4, y: 0.4, z: 0.4 },
-            geometry: tree1Mesh.geometry,
-            material: tree1Mesh.material,
-            colliderDesc: RAPIER.ColliderDesc.cuboid(-0.1, -0.1, -0.1)
+            mesh: tree1Mesh.clone(),
         }), new PhysicsObject(world, { // hitbox
             position: { x: -37.5, y: 7, z: 32.4 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.capsule(7, 1)
         }), new PhysicsObject(world, { // model
             position: { x: -28, y: 0, z: 32.6 },
             scale: { x: 0.5, y: 0.9, z: 0.5 },
-            geometry: tree3Mesh.geometry,
-            material: tree3Mesh.material,
-            colliderDesc: RAPIER.ColliderDesc.cuboid(-0.1, -0.1, -0.1)
+            mesh: tree3Mesh.clone(),
         }), new PhysicsObject(world, { // hitbox
             position: { x: -28, y: 15, z: 32.6 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.capsule(15, 1.5)
         }), new PhysicsObject(world, { // model
             position: { x: -22.5, y: 0, z: 26 },
             scale: { x: 0.3, y: 0.3, z: 0.3 },
-            geometry: tree1Mesh.geometry,
-            material: tree1Mesh.material,
-            colliderDesc: RAPIER.ColliderDesc.cuboid(-0.1, -0.1, -0.1)
+            mesh: tree1Mesh.clone(),
         }), new PhysicsObject(world, { // hitbox
             position: { x: -22.5, y: 5, z: 26 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.capsule(5, 0.75)
         }), new PhysicsObject(world, { // model
             position: { x: -43.8, y: 0, z: 37.3 },
             scale: { x: 0.2, y: 0.3, z: 0.2 },
-            geometry: tree2Mesh.geometry,
-            material: tree2Mesh.material,
-            colliderDesc: RAPIER.ColliderDesc.cuboid(-0.1, -0.1, -0.1)
+            mesh: tree2Mesh.clone(),
         }), new PhysicsObject(world, { // hitbox
             position: { x: -43.8, y: 4, z: 37.3 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.capsule(4, 0.5)
         }), new PhysicsObject(world, { // model
             position: { x: -47.4, y: 0, z: 41.3 },
             scale: { x: 0.2, y: 0.5, z: 0.2 },
-            geometry: tree1Mesh.geometry,
-            material: tree1Mesh.material,
-            colliderDesc: RAPIER.ColliderDesc.cuboid(-0.1, -0.1, -0.1)
+            mesh: tree1Mesh.clone(),
         }), new PhysicsObject(world, { // hitbox
             position: { x: -47.4, y: 8, z: 41.3 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.capsule(8, 0.5)
         }), new PhysicsObject(world, { // model
             position: { x: -41.8, y: 0, z: 43 },
             scale: { x: 0.4, y: 0.4, z: 0.4 },
-            geometry: tree3Mesh.geometry,
-            material: tree3Mesh.material,
-            colliderDesc: RAPIER.ColliderDesc.cuboid(-0.1, -0.1, -0.1)
+            mesh: tree3Mesh.clone(),
         }), new PhysicsObject(world, { // hitbox
             position: { x: -41.8, y: 8, z: 43 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.capsule(8, 0.5)
         }), new PhysicsObject(world, { // model
             position: { x: -33.5, y: 0, z: 40.8 },
             scale: { x: 0.3, y: 0.5, z: 0.3 },
-            geometry: tree2Mesh.geometry,
-            material: tree2Mesh.material,
-            colliderDesc: RAPIER.ColliderDesc.cuboid(-0.1, -0.1, -0.1)
+            mesh: tree2Mesh.clone(),
         }), new PhysicsObject(world, { // hitbox
             position: { x: -33.5, y: 8, z: 40.8 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.capsule(8, 0.5)
         }), new PhysicsObject(world, { // model
             position: { x: -34.85, y: 0, z: 48.45 },
             scale: { x: 0.3, y: 0.6, z: 0.3 },
-            geometry: tree1Mesh.geometry,
-            material: tree1Mesh.material,
-            colliderDesc: RAPIER.ColliderDesc.cuboid(-0.1, -0.1, -0.1)
+            mesh: tree1Mesh.clone(),
         }), new PhysicsObject(world, { // hitbox
             position: { x: -34.85, y: 12, z: 48.45 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.capsule(12, 0.5)
         }), new PhysicsObject(world, { // model
             position: { x: -47.5, y: 0, z: 47.7 },
             scale: { x: 0.25, y: 0.3, z: 0.25 },
-            geometry: tree1Mesh.geometry,
-            material: tree1Mesh.material,
-            colliderDesc: RAPIER.ColliderDesc.cuboid(-0.1, -0.1, -0.1)
+            mesh: tree1Mesh.clone(),
         }), new PhysicsObject(world, { // hitbox
             position: { x: -47.5, y: 6, z: 47.7 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.capsule(6, 0.75)
         }), new PhysicsObject(world, { // model
             position: { x: -28.5, y: 0, z: 45.5 },
             scale: { x: 0.25, y: 0.3, z: 0.25 },
-            geometry: tree3Mesh.geometry,
-            material: tree3Mesh.material,
-            colliderDesc: RAPIER.ColliderDesc.cuboid(-0.1, -0.1, -0.1)
+            mesh: tree3Mesh.clone(),
         }), new PhysicsObject(world, { // hitbox
             position: { x: -28.5, y: 5, z: 45.5 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.capsule(5, 0.75)
         }), new PhysicsObject(world, { // model
             position: { x: -24.2, y: 0, z: 14.5 },
             scale: { x: 0.25, y: 0.3, z: 0.25 },
-            geometry: tree1Mesh.geometry,
-            material: tree1Mesh.material,
-            colliderDesc: RAPIER.ColliderDesc.cuboid(-0.1, -0.1, -0.1)
+            mesh: tree1Mesh.clone(),
         }), new PhysicsObject(world, { // hitbox
             position: { x: -24.2, y: 5, z: 14.5 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.capsule(5, 0.5)
         }), new PhysicsObject(world, { // model
             position: { x: -21.1, y: 0, z: 17.5 },
             scale: { x: 0.1, y: 0.25, z: 0.1 },
-            geometry: tree2Mesh.geometry,
-            material: tree2Mesh.material,
-            colliderDesc: RAPIER.ColliderDesc.cuboid(-0.1, -0.1, -0.1)
+            mesh: tree2Mesh.clone(),
         }), new PhysicsObject(world, { // hitbox
             position: { x: -21.1, y: 3, z: 17.5 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.capsule(3, 0.4)
         }), new PhysicsObject(world, { // model
             position: { x: -28.4, y: 0, z: 16.3 },
             scale: { x: 0.3, y: 0.5, z: 0.3 },
-            geometry: tree3Mesh.geometry,
-            material: tree3Mesh.material,
-            colliderDesc: RAPIER.ColliderDesc.cuboid(-0.1, -0.1, -0.1)
+            mesh: tree3Mesh.clone(),
         }), new PhysicsObject(world, { // hitbox
             position: { x: -28.4, y: 6, z: 16.3 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.capsule(6, 0.7)
         }), new PhysicsObject(world, { // model
             position: { x: -22.3, y: 0, z: 39.2 },
             scale: { x: 0.3, y: 0.4, z: 0.3 },
-            geometry: tree2Mesh.geometry,
-            material: tree2Mesh.material,
-            colliderDesc: RAPIER.ColliderDesc.cuboid(-0.1, -0.1, -0.1)
+            mesh: tree2Mesh.clone(),
         }), new PhysicsObject(world, { // hitbox
             position: { x: -22.3, y: 6, z: 39.2 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.capsule(6, 0.7)
-        }), 
+        }),
 
         // Rock path across river
         new PhysicsObject(world, {
             position: { x: -42.1, y: -1, z: 17 },
             rotation: { x: 0, y: Math.PI/6, z: 0 },
-            geometry: new THREE.CapsuleGeometry(0.8, 1, 2, 4),
-            material: new THREE.MeshToonMaterial({ color: 0x8f8f8f }),
+            mesh: new THREE.Mesh(new THREE.CapsuleGeometry(0.8, 1, 2, 4), new THREE.MeshToonMaterial({ color: 0x8f8f8f })),
             colliderDesc: RAPIER.ColliderDesc.capsule(0.5, 0.8)
         }), new PhysicsObject(world, {
             position: { x: -42.75, y: -1, z: 15.1 },
             rotation: { x: 0, y: -Math.PI/4, z: 0 },
-            geometry: new THREE.CapsuleGeometry(0.8, 1, 2, 4),
-            material: new THREE.MeshToonMaterial({ color: 0x8f8f8f }),
+            mesh: new THREE.Mesh(new THREE.CapsuleGeometry(0.8, 1, 2, 4), new THREE.MeshToonMaterial({ color: 0x8f8f8f })),
             colliderDesc: RAPIER.ColliderDesc.capsule(0.5, 0.8)
         }), new PhysicsObject(world, {
             position: { x: -42.1, y: -1, z: 13.5 },
-            geometry: new THREE.CapsuleGeometry(0.8, 1, 2, 4),
-            material: new THREE.MeshToonMaterial({ color: 0x8f8f8f }),
+            mesh: new THREE.Mesh(new THREE.CapsuleGeometry(0.8, 1, 2, 4), new THREE.MeshToonMaterial({ color: 0x8f8f8f })),
             colliderDesc: RAPIER.ColliderDesc.capsule(0.5, 0.8)
         })
     ]);
@@ -2044,53 +1588,43 @@ export async function populateWorldObjects(world) {
         // Land
         new PhysicsObject(world, {
             position: { x: 5, y: 0.3, z: -35 },
-            geometry: new THREE.BoxGeometry(3, 0.5, 30),
-            material: new THREE.MeshToonMaterial({ color: 0x5e3d27 }),
+            mesh: new THREE.Mesh(new THREE.BoxGeometry(3, 0.5, 30), new THREE.MeshToonMaterial({ color: 0x5e3d27 })),
             colliderDesc: RAPIER.ColliderDesc.cuboid(1.5, 0.25, 15)
         }), new PhysicsObject(world, {
             position: { x: 8, y: 0.3, z: -34.5 },
-            geometry: new THREE.BoxGeometry(3, 0.5, 31),
-            material: new THREE.MeshToonMaterial({ color: 0x875737 }),
+            mesh: new THREE.Mesh(new THREE.BoxGeometry(3, 0.5, 31), new THREE.MeshToonMaterial({ color: 0x875737 })),
             colliderDesc: RAPIER.ColliderDesc.cuboid(1.5, 0.25, 15.5)
         }), new PhysicsObject(world, {
             position: { x: 11, y: 0.3, z: -34 },
-            geometry: new THREE.BoxGeometry(3, 0.5, 32),
-            material: new THREE.MeshToonMaterial({ color: 0x5e3d27 }),
+            mesh: new THREE.Mesh(new THREE.BoxGeometry(3, 0.5, 32), new THREE.MeshToonMaterial({ color: 0x5e3d27 })),
             colliderDesc: RAPIER.ColliderDesc.cuboid(1.5, 0.25, 16)
         }), new PhysicsObject(world, {
             position: { x: 14, y: 0.3, z: -33.5 },
-            geometry: new THREE.BoxGeometry(3, 0.5, 33),
-            material: new THREE.MeshToonMaterial({ color: 0x875737 }),
+            mesh: new THREE.Mesh(new THREE.BoxGeometry(3, 0.5, 33), new THREE.MeshToonMaterial({ color: 0x875737 })),
             colliderDesc: RAPIER.ColliderDesc.cuboid(1.5, 0.25, 16.5)
         }), new PhysicsObject(world, {
             position: { x: 17, y: 0.3, z: -33 },
-            geometry: new THREE.BoxGeometry(3, 0.5, 34),
-            material: new THREE.MeshToonMaterial({ color: 0x5e3d27 }),
+            mesh: new THREE.Mesh(new THREE.BoxGeometry(3, 0.5, 34), new THREE.MeshToonMaterial({ color: 0x5e3d27 })),
             colliderDesc: RAPIER.ColliderDesc.cuboid(1.5, 0.25, 17)
         }), new PhysicsObject(world, {
             position: { x: 20, y: 0.3, z: -32.5 },
-            geometry: new THREE.BoxGeometry(3, 0.5, 35),
-            material: new THREE.MeshToonMaterial({ color: 0x875737 }),
+            mesh: new THREE.Mesh(new THREE.BoxGeometry(3, 0.5, 35), new THREE.MeshToonMaterial({ color: 0x875737 })),
             colliderDesc: RAPIER.ColliderDesc.cuboid(1.5, 0.25, 17.5)
         }), new PhysicsObject(world, {
             position: { x: 23, y: 0.3, z: -32.5 },
-            geometry: new THREE.BoxGeometry(3, 0.5, 35),
-            material: new THREE.MeshToonMaterial({ color: 0x5e3d27 }),
+            mesh: new THREE.Mesh(new THREE.BoxGeometry(3, 0.5, 35), new THREE.MeshToonMaterial({ color: 0x5e3d27 })),
             colliderDesc: RAPIER.ColliderDesc.cuboid(1.5, 0.25, 17.5)
         }), new PhysicsObject(world, {
             position: { x: 26, y: 0.3, z: -33 },
-            geometry: new THREE.BoxGeometry(3, 0.5, 34),
-            material: new THREE.MeshToonMaterial({ color: 0x875737 }),
+            mesh: new THREE.Mesh(new THREE.BoxGeometry(3, 0.5, 34), new THREE.MeshToonMaterial({ color: 0x875737 })),
             colliderDesc: RAPIER.ColliderDesc.cuboid(1.5, 0.25, 17)
         }), new PhysicsObject(world, {
             position: { x: 29, y: 0.3, z: -33.5 },
-            geometry: new THREE.BoxGeometry(3, 0.5, 33),
-            material: new THREE.MeshToonMaterial({ color: 0x5e3d27 }),
+            mesh: new THREE.Mesh(new THREE.BoxGeometry(3, 0.5, 33), new THREE.MeshToonMaterial({ color: 0x5e3d27 })),
             colliderDesc: RAPIER.ColliderDesc.cuboid(1.5, 0.25, 16.5)
         }), new PhysicsObject(world, {
             position: { x: 32, y: 0.3, z: -34 },
-            geometry: new THREE.BoxGeometry(3, 0.5, 32),
-            material: new THREE.MeshToonMaterial({ color: 0x875737 }),
+            mesh: new THREE.Mesh(new THREE.BoxGeometry(3, 0.5, 32), new THREE.MeshToonMaterial({ color: 0x875737 })),
             colliderDesc: RAPIER.ColliderDesc.cuboid(1.5, 0.25, 16)
         }),
 
@@ -2099,106 +1633,91 @@ export async function populateWorldObjects(world) {
             position: { x: 3, y: 1.5, z: -47.5 },
             rotation: { x: 0, y: Math.PI/2, z: 0 },
             scale: { x: 0.25, y: 0.25, z: 0.25 },
-            geometry: fence1Mesh.geometry,
-            material: fence1Mesh.material,
+            mesh: fence1Mesh.clone(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(0.6, 0.3, 0.07)
         }), new PhysicsObject(world, {
             position: { x: 3, y: 1.5, z: -43 },
             rotation: { x: 0, y: Math.PI/2, z: 0 },
             scale: { x: 0.25, y: 0.25, z: 0.25 },
-            geometry: fence1Mesh.geometry,
-            material: fence1Mesh.material,
+            mesh: fence1Mesh.clone(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(0.6, 0.3, 0.07)
         }), new PhysicsObject(world, {
             position: { x: 3, y: 1.5, z: -38.5 },
             rotation: { x: 0, y: Math.PI/2, z: 0 },
             scale: { x: 0.25, y: 0.25, z: 0.25 },
-            geometry: fence1Mesh.geometry,
-            material: fence1Mesh.material,
+            mesh: fence1Mesh.clone(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(0.6, 0.3, 0.07)
         }), new PhysicsObject(world, {
             position: { x: 3, y: 1.5, z: -34 },
             rotation: { x: 0, y: Math.PI/2, z: 0 },
             scale: { x: 0.25, y: 0.25, z: 0.25 },
-            geometry: fence1Mesh.geometry,
-            material: fence1Mesh.material,
+            mesh: fence1Mesh.clone(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(0.6, 0.3, 0.07)
         }), new PhysicsObject(world, {
             position: { x: 3, y: 1.5, z: -29.5 },
             rotation: { x: 0, y: Math.PI/2, z: 0 },
             scale: { x: 0.25, y: 0.25, z: 0.25 },
-            geometry: fence1Mesh.geometry,
-            material: fence1Mesh.material,
+            mesh: fence1Mesh.clone(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(0.6, 0.3, 0.07)
         }), new PhysicsObject(world, {
             position: { x: 3, y: 1.5, z: -25 },
             rotation: { x: 0, y: Math.PI/2, z: 0 },
             scale: { x: 0.25, y: 0.25, z: 0.25 },
-            geometry: fence1Mesh.geometry,
-            material: fence1Mesh.material,
+            mesh: fence1Mesh.clone(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(0.6, 0.3, 0.07)
         }), new PhysicsObject(world, {
             position: { x: 4.5, y: 1.5, z: -21 },
             rotation: { x: 0, y: -Math.PI/4, z: 0 },
             scale: { x: 0.25, y: 0.25, z: 0.25 },
-            geometry: fence1Mesh.geometry,
-            material: fence1Mesh.material,
+            mesh: fence1Mesh.clone(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(0.6, 0.3, 0.07)
         }), new PhysicsObject(world, {
             position: { x: 8, y: 1.5, z: -18.5 },
             rotation: { x: 0, y: -Math.PI/6, z: 0 },
             scale: { x: 0.25, y: 0.25, z: 0.25 },
-            geometry: fence1Mesh.geometry,
-            material: fence1Mesh.material,
+            mesh: fence1Mesh.clone(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(0.6, 0.3, 0.07)
         }), new PhysicsObject(world, {
             position: { x: 12.2, y: 1.5, z: -16.6 },
             rotation: { x: 0, y: -Math.PI/8, z: 0 },
             scale: { x: 0.25, y: 0.25, z: 0.25 },
-            geometry: fence1Mesh.geometry,
-            material: fence1Mesh.material,
+            mesh: fence1Mesh.clone(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(0.6, 0.3, 0.07)
         }), new PhysicsObject(world, {
             position: { x: 22, y: 1.5, z: -15.6 },
             rotation: { x: 0, y: 0, z: 0 },
             scale: { x: 0.25, y: 0.25, z: 0.25 },
-            geometry: fence1Mesh.geometry,
-            material: fence1Mesh.material,
+            mesh: fence1Mesh.clone(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(0.6, 0.3, 0.07)
         }), new PhysicsObject(world, {
             position: { x: 26.7, y: 1.5, z: -16.8 },
             rotation: { x: 0, y: Math.PI/6, z: 0 },
             scale: { x: 0.25, y: 0.25, z: 0.25 },
-            geometry: fence1Mesh.geometry,
-            material: fence1Mesh.material,
+            mesh: fence1Mesh.clone(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(0.6, 0.3, 0.07)
         }), new PhysicsObject(world, {
             position: { x: 30.8, y: 1.5, z: -18.8 },
             rotation: { x: 0, y: Math.PI/8, z: 0 },
             scale: { x: 0.25, y: 0.25, z: 0.25 },
-            geometry: fence1Mesh.geometry,
-            material: fence1Mesh.material,
+            mesh: fence1Mesh.clone(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(0.6, 0.3, 0.07)
         }), new PhysicsObject(world, {
             position: { x: 33.8, y: 1.5, z: -22 },
             rotation: { x: 0, y: Math.PI/2.6, z: 0 },
             scale: { x: 0.25, y: 0.25, z: 0.25 },
-            geometry: fence1Mesh.geometry,
-            material: fence1Mesh.material,
+            mesh: fence1Mesh.clone(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(0.6, 0.3, 0.07)
         }), new PhysicsObject(world, {
             position: { x: 34.7, y: 1.5, z: -26.5 },
             rotation: { x: 0, y: Math.PI/2, z: 0 },
             scale: { x: 0.25, y: 0.25, z: 0.25 },
-            geometry: fence1Mesh.geometry,
-            material: fence1Mesh.material,
+            mesh: fence1Mesh.clone(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(0.6, 0.3, 0.07)
         }), new PhysicsObject(world, {
             position: { x: 34.7, y: 1.5, z: -47.5 },
             rotation: { x: 0, y: Math.PI/2, z: 0 },
             scale: { x: 0.25, y: 0.25, z: 0.25 },
-            geometry: fence1Mesh.geometry,
-            material: fence1Mesh.material,
+            mesh: fence1Mesh.clone(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(0.6, 0.3, 0.07)
         })
     ]);
@@ -2216,8 +1735,7 @@ export async function populateWorldObjects(world) {
                     position: { x: x, y: 1.39, z: z },
                     rotation: { x: 0, y: Math.random()*Math.PI, z: 0 },
                     scale: { x: cropScale, y: cropScale, z: cropScale },
-                    geometry: melon1Mesh.geometry,
-                    material: melon1Mesh.material,
+                    mesh: melon1Mesh.clone(),
                     colliderDesc: RAPIER.ColliderDesc.capsule(0, cropScale-0.04),
                     colliderProps: { friction: 0.2, restitution: 0.2, density: 50 + (cropScale * 100) }
                 }));
@@ -2227,8 +1745,7 @@ export async function populateWorldObjects(world) {
                     position: { x: x, y: 1.39, z: z },
                     rotation: { x: 0, y: Math.random()*Math.PI, z: 0 },
                     scale: { x: cropScale, y: cropScale, z: cropScale },
-                    geometry: pumpkin1Mesh.geometry,
-                    material: pumpkin1Mesh.material,
+                    mesh: pumpkin1Mesh.clone(),
                     colliderDesc: RAPIER.ColliderDesc.capsule(0, cropScale-0.07),
                     colliderProps: { friction: 0.2, restitution: 0.2, density: 50 + (cropScale * 100) }
                 }));
@@ -2242,115 +1759,99 @@ export async function populateWorldObjects(world) {
             position: { x: 47.5, y: 1.5, z: -13 },
             rotation: { x: 0, y: 0, z: 0 },
             scale: { x: 0.25, y: 0.25, z: 0.25 },
-            geometry: fence1Mesh.geometry,
-            material: fence1Mesh.material,
+            mesh: fence1Mesh.clone(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(0.6, 0.3, 0.07)
         }), new PhysicsObject(world, {
             position: { x: 38.4, y: 1.5, z: -12 },
             rotation: { x: 0, y: Math.PI/8, z: 0 },
             scale: { x: 0.25, y: 0.25, z: 0.25 },
-            geometry: fence1Mesh.geometry,
-            material: fence1Mesh.material,
+            mesh: fence1Mesh.clone(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(0.6, 0.3, 0.07)
         }), new PhysicsObject(world, {
             position: { x: 36.3, y: 1.5, z: -8.7 },
             rotation: { x: 0, y: Math.PI/2, z: 0 },
             scale: { x: 0.25, y: 0.25, z: 0.25 },
-            geometry: fence1Mesh.geometry,
-            material: fence1Mesh.material,
+            mesh: fence1Mesh.clone(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(0.6, 0.3, 0.07)
         }), new PhysicsObject(world, {
             position: { x: 37.5, y: 1.5, z: -4.5 },
             rotation: { x: 0, y: -Math.PI/3, z: 0 },
             scale: { x: 0.25, y: 0.25, z: 0.25 },
-            geometry: fence1Mesh.geometry,
-            material: fence1Mesh.material,
+            mesh: fence1Mesh.clone(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(0.6, 0.3, 0.07)
         }), new PhysicsObject(world, {
             position: { x: 38.8, y: 1.5, z: 0.1 },
             rotation: { x: 0, y: Math.PI/2, z: 0 },
             scale: { x: 0.25, y: 0.25, z: 0.25 },
-            geometry: fence1Mesh.geometry,
-            material: fence1Mesh.material,
+            mesh: fence1Mesh.clone(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(0.6, 0.3, 0.07)
         }), new PhysicsObject(world, {
             position: { x: 37, y: 1.5, z: 4.3 },
             rotation: { x: 0, y: Math.PI/4, z: 0 },
             scale: { x: 0.25, y: 0.25, z: 0.25 },
-            geometry: fence1Mesh.geometry,
-            material: fence1Mesh.material,
+            mesh: fence1Mesh.clone(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(0.6, 0.3, 0.07)
         }), new PhysicsObject(world, {
             position: { x: 35.3, y: 1.5, z: 8.4 },
             rotation: { x: 0, y: Math.PI/2, z: 0 },
             scale: { x: 0.25, y: 0.25, z: 0.25 },
-            geometry: fence1Mesh.geometry,
-            material: fence1Mesh.material,
+            mesh: fence1Mesh.clone(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(0.6, 0.3, 0.07)
         }), new PhysicsObject(world, {
             position: { x: 35.3, y: 1.5, z: 12.9 },
             rotation: { x: 0, y: Math.PI/2, z: 0 },
             scale: { x: 0.25, y: 0.25, z: 0.25 },
-            geometry: fence1Mesh.geometry,
-            material: fence1Mesh.material,
+            mesh: fence1Mesh.clone(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(0.6, 0.3, 0.07)
         }), new PhysicsObject(world, {
             position: { x: 37, y: 1.5, z: 17 },
             rotation: { x: 0, y: -Math.PI/4, z: 0 },
             scale: { x: 0.25, y: 0.25, z: 0.25 },
-            geometry: fence1Mesh.geometry,
-            material: fence1Mesh.material,
+            mesh: fence1Mesh.clone(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(0.6, 0.3, 0.07)
         }), new PhysicsObject(world, {
             position: { x: 38.8, y: 1.5, z: 21 },
             rotation: { x: 0, y: Math.PI/2, z: 0 },
             scale: { x: 0.25, y: 0.25, z: 0.25 },
-            geometry: fence1Mesh.geometry,
-            material: fence1Mesh.material,
+            mesh: fence1Mesh.clone(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(0.6, 0.3, 0.07)
         }), new PhysicsObject(world, {
             position: { x: 37, y: 1.5, z: 25 },
             rotation: { x: 0, y: Math.PI/4, z: 0 },
             scale: { x: 0.25, y: 0.25, z: 0.25 },
-            geometry: fence1Mesh.geometry,
-            material: fence1Mesh.material,
+            mesh: fence1Mesh.clone(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(0.6, 0.3, 0.07)
         }), new PhysicsObject(world, {
             position: { x: 33.8, y: 1.5, z: 28.2 },
             rotation: { x: 0, y: Math.PI/4, z: 0 },
             scale: { x: 0.25, y: 0.25, z: 0.25 },
-            geometry: fence1Mesh.geometry,
-            material: fence1Mesh.material,
+            mesh: fence1Mesh.clone(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(0.6, 0.3, 0.07)
         }), new PhysicsObject(world, {
             position: { x: 32.2, y: 1.5, z: 32 },
             rotation: { x: 0, y: Math.PI/2, z: 0 },
             scale: { x: 0.25, y: 0.25, z: 0.25 },
-            geometry: fence1Mesh.geometry,
-            material: fence1Mesh.material,
+            mesh: fence1Mesh.clone(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(0.6, 0.3, 0.07)
         }), new PhysicsObject(world, {
             position: { x: 38.5, y: 1.5, z: 39.7 },
             rotation: { x: 0, y: -Math.PI/6, z: 0 },
             scale: { x: 0.25, y: 0.25, z: 0.25 },
-            geometry: fence1Mesh.geometry,
-            material: fence1Mesh.material,
+            mesh: fence1Mesh.clone(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(0.6, 0.3, 0.07)
         }), new PhysicsObject(world, {
             position: { x: 43, y: 1.5, z: 41 },
             rotation: { x: 0, y: 0, z: 0 },
             scale: { x: 0.25, y: 0.25, z: 0.25 },
-            geometry: fence1Mesh.geometry,
-            material: fence1Mesh.material,
+            mesh: fence1Mesh.clone(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(0.6, 0.3, 0.07)
         }), new PhysicsObject(world, {
             position: { x: 47.5, y: 1.5, z: 41 },
             rotation: { x: 0, y: 0, z: 0 },
             scale: { x: 0.25, y: 0.25, z: 0.25 },
-            geometry: fence1Mesh.geometry,
-            material: fence1Mesh.material,
+            mesh: fence1Mesh.clone(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(0.6, 0.3, 0.07)
-        }), 
+        }),
     ]);
 
     // Garden patches
@@ -2372,8 +1873,7 @@ export async function populateWorldObjects(world) {
         objects.push(new PhysicsObject(world, {
             position: data.pos,
             rotation: data.rot,
-            geometry: groundMesh.geometry,
-            material: groundMesh.material,
+            mesh: groundMesh.clone(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(data.dim.x/2, data.dim.y/2, data.dim.z/2)
         }));
 
@@ -2381,9 +1881,7 @@ export async function populateWorldObjects(world) {
         objects.push(new PhysicsObject(world, {
             position: data.pos,
             rotation: data.rot,
-            geometry: stemsMesh.geometry,
-            material: stemsMesh.material,
-            colliderDesc: RAPIER.ColliderDesc.cuboid(-0.1, -0.1, -0.1)
+            mesh: stemsMesh.clone(),
         }));
 
         for (const heads of headsList) {
@@ -2391,9 +1889,7 @@ export async function populateWorldObjects(world) {
             objects.push(new PhysicsObject(world, {
                 position: data.pos,
                 rotation: data.rot,
-                geometry: heads.mesh.geometry,
-                material: heads.mesh.material,
-                colliderDesc: RAPIER.ColliderDesc.cuboid(-0.1, -0.1, -0.1)
+                mesh: heads.mesh.clone(),
             }));
         }
     }
@@ -2405,20 +1901,14 @@ export async function populateWorldObjects(world) {
             position: { x: 9.3, y: 4.25, z: 0.8 },
             rotation: { x: 0, y: 0.75*Math.PI, z: 0 },
             scale: { x: 0.25, y: 0.25, z: 0.25 },
-            geometry: statue1Mesh.geometry,
-            material: statue1Mesh.material,
-            colliderDesc: RAPIER.ColliderDesc.cuboid(-0.1, -0.1, -0.1)
+            mesh: statue1Mesh.clone(),
         }), new PhysicsObject(world, {
             position: { x: 9.3, y: 1.5, z: 0.8 },
             rotation: { x: 0, y: 0.75*Math.PI, z: 0 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(2.25, 1.5, 1.5)
         }), new PhysicsObject(world, {
             position: { x: 9.3, y: 5.5, z: 0.8 },
             rotation: { x: 0, y: 0.75*Math.PI, z: 0 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(2, 2.5, 1.25)
         }),
 
@@ -2427,68 +1917,48 @@ export async function populateWorldObjects(world) {
             position: { x: -5, y: 3.5, z: -13.5 },
             rotation: { x: 0, y: Math.PI/3, z: 0 },
             scale: { x: 0.3, y: 0.3, z: 0.3 },
-            geometry: stall1Mesh.geometry,
-            material: stall1Mesh.material,
-            colliderDesc: RAPIER.ColliderDesc.cuboid(-0.1, -0.1, -0.1)
+            mesh: stall1Mesh.clone(),
         }), new PhysicsObject(world, { // front
             position: { x: -3.92, y: 1, z: -12.69 },
             rotation: { x: 0, y: Math.PI/3, z: 0 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(2.75, 1, 0.7)
         }), new PhysicsObject(world, { // back
             position: { x: -6.67, y: 1, z: -14.29 },
             rotation: { x: 0, y: Math.PI/3, z: 0 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(2.75, 1, 0.15)
         }), new PhysicsObject(world, { // side
             position: { x: -3.54, y: 1, z: -15.74 },
             rotation: { x: 0, y: Math.PI*(5/6), z: 0 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(1.75, 1, 0.15)
         }), new PhysicsObject(world, { // roof
             position: { x: -5, y: 5, z: -13.5 },
             rotation: { x: 0, y: Math.PI/3, z: 0 },
             scale: { x: 0.3, y: 0.3, z: 0.3 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(1, 0.15, 0.75)
-        }), 
+        }),
 
         // Stall 2
         new PhysicsObject(world, {
             position: { x: -7.3, y: 3.5, z: -5.8 },
             rotation: { x: 0, y: Math.PI/2, z: 0 },
             scale: { x: 0.3, y: 0.3, z: 0.3 },
-            geometry: stall2Mesh.geometry,
-            material: stall2Mesh.material,
-            colliderDesc: RAPIER.ColliderDesc.cuboid(-0.1, -0.1, -0.1)
+            mesh: stall2Mesh.clone(),
         }), new PhysicsObject(world, { // front
             position: { x: -5.9, y: 1, z: -5.75 },
             rotation: { x: 0, y: Math.PI/2, z: 0 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(2.75, 1, 0.7)
         }), new PhysicsObject(world, { // back
             position: { x: -9.08, y: 1, z: -5.80 },
             rotation: { x: 0, y: Math.PI/2, z: 0 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(2.75, 1, 0.15)
         }), new PhysicsObject(world, { // side
             position: { x: -7.37, y: 1, z: -8.51 },
             rotation: { x: 0, y: Math.PI, z: 0 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(1.75, 1, 0.15)
         }), new PhysicsObject(world, { // roof
             position: { x: -7.3, y: 5, z: -5.8 },
             rotation: { x: 0, y: Math.PI/2, z: 0 },
             scale: { x: 0.3, y: 0.3, z: 0.3 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(1, 0.15, 0.75)
         }),
 
@@ -2497,40 +1967,28 @@ export async function populateWorldObjects(world) {
             position: { x: -3, y: 2, z: 2.15 },
             rotation: { x: 0, y: Math.PI/1.6, z: 0 },
             scale: { x: 0.2, y: 0.2, z: 0.2 },
-            geometry: bench1Mesh.geometry,
-            material: bench1Mesh.material,
-            colliderDesc: RAPIER.ColliderDesc.cuboid(-0.1, -0.1, -0.1)
+            mesh: bench1Mesh.clone(),
         }), new PhysicsObject(world, {
             position: { x: -3, y: 1, z: 2.15 },
             rotation: { x: 0, y: Math.PI/1.6, z: 0 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(2.4, 0.75, 1)
         }), new PhysicsObject(world, {
             position: { x: 14.88, y: 2.4, z: -6.73 },
             rotation: { x: 0, y: -Math.PI/4, z: 0 },
             scale: { x: 0.2, y: 0.2, z: 0.2 },
-            geometry: bench1Mesh.geometry,
-            material: bench1Mesh.material,
-            colliderDesc: RAPIER.ColliderDesc.cuboid(-0.1, -0.1, -0.1)
+            mesh: bench1Mesh.clone(),
         }), new PhysicsObject(world, {
             position: { x: 14.88, y: 1.4, z: -6.73 },
             rotation: { x: 0, y: -Math.PI/4, z: 0 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(2.4, 0.75, 1)
         }), new PhysicsObject(world, {
             position: { x: 8.41, y: 2.4, z: 14.54 },
             rotation: { x: 0, y: 0.75*Math.PI, z: 0 },
             scale: { x: 0.2, y: 0.2, z: 0.2 },
-            geometry: bench1Mesh.geometry,
-            material: bench1Mesh.material,
-            colliderDesc: RAPIER.ColliderDesc.cuboid(-0.1, -0.1, -0.1)
+            mesh: bench1Mesh.clone(),
         }), new PhysicsObject(world, {
             position: { x: 8.41, y: 1.4, z: 14.54 },
             rotation: { x: 0, y: 0.75*Math.PI, z: 0 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(2.4, 0.75, 1)
         })
     ]);
@@ -2579,9 +2037,7 @@ export async function populateWorldObjects(world) {
             objects.push(new PhysicsObject(world, {
                 position: data.pos,
                 rotation: data.rot,
-                geometry: grasses.mesh.geometry,
-                material: grasses.mesh.material,
-                colliderDesc: RAPIER.ColliderDesc.cuboid(-0.1, -0.1, -0.1)
+                mesh: grasses.mesh.clone(),
             }));
         }
     }
@@ -2592,40 +2048,28 @@ export async function populateWorldObjects(world) {
             position: { x: -8, y: 2, z: 45.7 },
             rotation: { x: 0, y: -Math.PI/2, z: 0 },
             scale: { x: 0.2, y: 0.2, z: 0.2 },
-            geometry: bench1Mesh.geometry,
-            material: bench1Mesh.material,
-            colliderDesc: RAPIER.ColliderDesc.cuboid(-0.1, -0.1, -0.1)
+            mesh: bench1Mesh.clone(),
         }), new PhysicsObject(world, { // hitbox
             position: { x: -8, y: 1, z: 45.7 },
             rotation: { x: 0, y: -Math.PI/2, z: 0 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(2.4, 0.75, 1)
         }), new PhysicsObject(world, { // model
             position: { x: -35.2, y: 2, z: -40.6 },
             rotation: { x: 0, y: -Math.PI/12, z: 0 },
             scale: { x: 0.2, y: 0.2, z: 0.2 },
-            geometry: bench1Mesh.geometry,
-            material: bench1Mesh.material,
-            colliderDesc: RAPIER.ColliderDesc.cuboid(-0.1, -0.1, -0.1)
+            mesh: bench1Mesh.clone(),
         }), new PhysicsObject(world, { // hitbox
             position: { x: -35.2, y: 1, z: -40.6 },
             rotation: { x: 0, y: -Math.PI/12, z: 0 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(2.4, 0.75, 1)
         }), new PhysicsObject(world, { // model
             position: { x: 0, y: 2, z: -44 },
             rotation: { x: 0, y: -Math.PI/2, z: 0 },
             scale: { x: 0.2, y: 0.2, z: 0.2 },
-            geometry: bench1Mesh.geometry,
-            material: bench1Mesh.material,
-            colliderDesc: RAPIER.ColliderDesc.cuboid(-0.1, -0.1, -0.1)
+            mesh: bench1Mesh.clone(),
         }), new PhysicsObject(world, { // hitbox
             position: { x: 0, y: 1, z: -44 },
             rotation: { x: 0, y: -Math.PI/2, z: 0 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(2.4, 0.75, 1)
         })
     ]);
@@ -2635,59 +2079,39 @@ export async function populateWorldObjects(world) {
         new PhysicsObject(world, { // model
             position: { x: -32.05, y: 0, z: -45.45 },
             scale: { x: 0.15, y: 0.3, z: 0.15 },
-            geometry: tree3Mesh.geometry,
-            material: tree3Mesh.material,
-            colliderDesc: RAPIER.ColliderDesc.cuboid(-0.1, -0.1, -0.1)
+            mesh: tree3Mesh.clone(),
         }), new PhysicsObject(world, { // hitbox
             position: { x: -32.05, y: 4.5, z: -45.45 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.capsule(4.5, 0.5)
         }), new PhysicsObject(world, { // model
             position: { x: -19.8, y: 0, z: -16.4 },
             scale: { x: 0.15, y: 0.2, z: 0.15 },
-            geometry: tree2Mesh.geometry,
-            material: tree2Mesh.material,
-            colliderDesc: RAPIER.ColliderDesc.cuboid(-0.1, -0.1, -0.1)
+            mesh: tree2Mesh.clone(),
         }), new PhysicsObject(world, { // hitbox
             position: { x: -19.8, y: 3, z: -16.4 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.capsule(3, 0.5)
         }), new PhysicsObject(world, { // model
             position: { x: -1, y: 0, z: -28 },
             scale: { x: 0.3, y: 0.4, z: 0.3 },
-            geometry: tree1Mesh.geometry,
-            material: tree1Mesh.material,
-            colliderDesc: RAPIER.ColliderDesc.cuboid(-0.1, -0.1, -0.1)
+            mesh: tree1Mesh.clone(),
         }), new PhysicsObject(world, { // hitbox
             position: { x: -1, y: 6, z: -28 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.capsule(6, 0.5)
         }), new PhysicsObject(world, { // model
             position: { x: 9.4, y: 0, z: 35.75 },
             scale: { x: 0.15, y: 0.3, z: 0.15 },
-            geometry: tree3Mesh.geometry,
-            material: tree3Mesh.material,
-            colliderDesc: RAPIER.ColliderDesc.cuboid(-0.1, -0.1, -0.1)
+            mesh: tree3Mesh.clone(),
         }), new PhysicsObject(world, { // hitbox
             position: { x: 9.4, y: 4.5, z: 35.75 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.capsule(4.5, 0.5)
         }), new PhysicsObject(world, { // model
             position: { x: 23.25, y: 0, z: -12.25 },
             scale: { x: 0.1, y: 0.2, z: 0.1 },
-            geometry: tree2Mesh.geometry,
-            material: tree2Mesh.material,
-            colliderDesc: RAPIER.ColliderDesc.cuboid(-0.1, -0.1, -0.1)
+            mesh: tree2Mesh.clone(),
         }), new PhysicsObject(world, { // hitbox
             position: { x: 23.25, y: 3, z: -12.25 },
-            geometry: new THREE.BoxGeometry(0, 0, 0),
-            material: new THREE.MeshToonMaterial(),
             colliderDesc: RAPIER.ColliderDesc.capsule(3, 0.5)
-        }), 
+        }),
     ]);
 
     // Lilypads
@@ -2695,70 +2119,59 @@ export async function populateWorldObjects(world) {
         new PhysicsObject(world, {
             position: { x: -45.6, y: 0, z: 14.6 },
             rotation: { x: 0, y: Math.PI/6, z: 0 },
-            geometry: new THREE.BoxGeometry(1, 0.1, 1),
-            material: new THREE.MeshToonMaterial({ color: 0x2b5c1f }),
+            mesh: new THREE.Mesh(new THREE.BoxGeometry(1, 0.1, 1), new THREE.MeshToonMaterial({ color: 0x2b5c1f })),
             colliderDesc: RAPIER.ColliderDesc.cuboid(0.5, 0.05, 0.5)
         }), new PhysicsObject(world, {
             position: { x: -33.2, y: 0, z: 13.9 },
             rotation: { x: 0, y: Math.PI/6, z: 0 },
-            geometry: new THREE.BoxGeometry(1.2, 0.1, 1.2),
-            material: new THREE.MeshToonMaterial({ color: 0x49823b }),
+            mesh: new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.1, 1.2), new THREE.MeshToonMaterial({ color: 0x49823b })),
             colliderDesc: RAPIER.ColliderDesc.cuboid(0.6, 0.05, 0.6)
         }), new PhysicsObject(world, {
             position: { x: -19.7, y: 0, z: 6.5 },
             rotation: { x: 0, y: Math.PI/4, z: 0 },
-            geometry: new THREE.BoxGeometry(1, 0.1, 1),
-            material: new THREE.MeshToonMaterial({ color: 0x2b5c1f }),
+            mesh: new THREE.Mesh(new THREE.BoxGeometry(1, 0.1, 1), new THREE.MeshToonMaterial({ color: 0x2b5c1f })),
             colliderDesc: RAPIER.ColliderDesc.cuboid(0.5, 0.05, 0.5)
         }), new PhysicsObject(world, {
             position: { x: -16.3, y: 0, z: -13 },
             rotation: { x: 0, y: Math.PI/4, z: 0 },
-            geometry: new THREE.BoxGeometry(1.4, 0.1, 1.4),
-            material: new THREE.MeshToonMaterial({ color: 0x49823b }),
+            mesh: new THREE.Mesh(new THREE.BoxGeometry(1.4, 0.1, 1.4), new THREE.MeshToonMaterial({ color: 0x49823b })),
             colliderDesc: RAPIER.ColliderDesc.cuboid(0.7, 0.05, 0.7)
         }), new PhysicsObject(world, {
             position: { x: -7.75, y: 0, z: -28.15 },
             rotation: { x: 0, y: -Math.PI/8, z: 0 },
-            geometry: new THREE.BoxGeometry(1.4, 0.1, 1.4),
-            material: new THREE.MeshToonMaterial({ color: 0x2b5c1f }),
+            mesh: new THREE.Mesh(new THREE.BoxGeometry(1.4, 0.1, 1.4), new THREE.MeshToonMaterial({ color: 0x2b5c1f })),
             colliderDesc: RAPIER.ColliderDesc.cuboid(0.7, 0.05, 0.7)
         }), new PhysicsObject(world, {
             position: { x: -9.5, y: 0, z: 27.7 },
             rotation: { x: 0, y: 0, z: 0 },
-            geometry: new THREE.BoxGeometry(1.2, 0.1, 1.2),
-            material: new THREE.MeshToonMaterial({ color: 0x49823b }),
+            mesh: new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.1, 1.2), new THREE.MeshToonMaterial({ color: 0x49823b })),
             colliderDesc: RAPIER.ColliderDesc.cuboid(0.6, 0.05, 0.6)
         }), new PhysicsObject(world, {
             position: { x: -12.6, y: 0, z: 28.15 },
             rotation: { x: 0, y: Math.PI/8, z: 0 },
-            geometry: new THREE.BoxGeometry(0.8, 0.1, 0.8),
-            material: new THREE.MeshToonMaterial({ color: 0x2b5c1f }),
+            mesh: new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.1, 0.8), new THREE.MeshToonMaterial({ color: 0x2b5c1f })),
             colliderDesc: RAPIER.ColliderDesc.cuboid(0.4, 0.05, 0.4)
         }), new PhysicsObject(world, {
             position: { x: 15.15, y: 0, z: 41 },
             rotation: { x: 0, y: Math.PI/8, z: 0 },
-            geometry: new THREE.BoxGeometry(1, 0.1, 1),
-            material: new THREE.MeshToonMaterial({ color: 0x49823b }),
+            mesh: new THREE.Mesh(new THREE.BoxGeometry(1, 0.1, 1), new THREE.MeshToonMaterial({ color: 0x49823b })),
             colliderDesc: RAPIER.ColliderDesc.cuboid(0.5, 0.05, 0.5)
         }), new PhysicsObject(world, {
             position: { x: 46.3, y: 0, z: 44 },
             rotation: { x: 0, y: -Math.PI/4, z: 0 },
-            geometry: new THREE.BoxGeometry(1.6, 0.1, 1.6),
-            material: new THREE.MeshToonMaterial({ color: 0x2b5c1f }),
+            mesh: new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.1, 1.6), new THREE.MeshToonMaterial({ color: 0x2b5c1f })),
             colliderDesc: RAPIER.ColliderDesc.cuboid(0.8, 0.05, 0.8)
         }), new PhysicsObject(world, {
             position: { x: -9.3, y: 0, z: -29.5 },
             rotation: { x: 0, y: 0, z: 0 },
-            geometry: new THREE.BoxGeometry(1.2, 0.1, 1.2),
-            material: new THREE.MeshToonMaterial({ color: 0x49823b }),
+            mesh: new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.1, 1.2), new THREE.MeshToonMaterial({ color: 0x49823b })),
             colliderDesc: RAPIER.ColliderDesc.cuboid(0.6, 0.05, 0.6)
         }), new PhysicsObject(world, {
             position: { x: -6.5, y: 0, z: -31.6 },
             rotation: { x: 0, y: Math.PI/6, z: 0 },
-            geometry: new THREE.BoxGeometry(0.9, 0.1, 0.9),
-            material: new THREE.MeshToonMaterial({ color: 0x2b5c1f }),
+            mesh: new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.1, 0.9), new THREE.MeshToonMaterial({ color: 0x2b5c1f })),
             colliderDesc: RAPIER.ColliderDesc.cuboid(0.45, 0.05, 0.45)
-        }), 
+        }),
     ]);
 
     // Clouds
@@ -2773,12 +2186,14 @@ export async function populateWorldObjects(world) {
                     y: CLOUDGEN_BASE_Y+offsetY,
                     z: z+offsetZ 
                 },
-                geometry: new THREE.BoxGeometry(
-                    5 + (Math.random() * 25),
-                    2 + (Math.random() * 5),
-                    5 + (Math.random() * 25)
+                mesh: new THREE.Mesh(
+                    new THREE.BoxGeometry(
+                        5 + (Math.random() * 25),
+                        2 + (Math.random() * 5),
+                        5 + (Math.random() * 25)
+                    ),
+                    new THREE.MeshMatcapMaterial({ color: 0xffffff, transparent: true, opacity: 0.4 + (Math.random() * 0.3), depthWrite: false }),
                 ),
-                material: new THREE.MeshToonMaterial({ color: 0xffffff, transparent: true, opacity: 0.5 + (Math.random() * 0.4), depthWrite: false }),
                 colliderDesc: RAPIER.ColliderDesc.cuboid(-0.1, -0.1, -0.1),
                 onTick: function() { cloudOnTick(this, 0.02 + (Math.random() * 0.05)); }
             }));
@@ -2787,8 +2202,6 @@ export async function populateWorldObjects(world) {
 
     // Ambient light
     objects.push(new LightObject(world, {
-        geometry: new THREE.BoxGeometry(0, 0, 0),
-        material: new THREE.MeshToonMaterial(),
         colliderDesc: RAPIER.ColliderDesc.cuboid(-0.1, -0.1, -0.1),
         light: new THREE.AmbientLight(0xffffff, 0.05)
     }));
@@ -2797,8 +2210,6 @@ export async function populateWorldObjects(world) {
     const hemisphereLight = new THREE.HemisphereLight(0x455d75, 0xffc87a, 0.3);
     const hemiObject = new LightObject(world, {
         position: { x: 0, y: 30, z: 0 },
-        geometry: new THREE.BoxGeometry(0, 0, 0),
-        material: new THREE.MeshBasicMaterial(),
         colliderDesc: RAPIER.ColliderDesc.cuboid(-0.1, -0.1, -0.1),
         light: hemisphereLight
     });
@@ -2811,12 +2222,11 @@ export async function populateWorldObjects(world) {
     sunLight.shadow.camera.bottom = -200;
     sunLight.shadow.camera.near = 1;
     sunLight.shadow.camera.far = 600;
-    sunLight.shadow.mapSize.width = SHADOW_QUALITY;
-    sunLight.shadow.mapSize.height = SHADOW_QUALITY;
+    sunLight.shadow.mapSize.width = DIRECTIONAL_LIGHT_SHADOW_QUALITY;
+    sunLight.shadow.mapSize.height = DIRECTIONAL_LIGHT_SHADOW_QUALITY;
     const sunObject = new LightObject(world, {
         position: SUN_INIT_POSITION,
-        geometry: new THREE.CapsuleGeometry(30, 0),
-        material: new THREE.MeshBasicMaterial({ color: 0xffdd75, transparent: true, opacity: 1.0 }),
+        mesh: new THREE.Mesh(new THREE.CapsuleGeometry(30, 0), new THREE.MeshBasicMaterial({ color: 0xffdd75, transparent: true, opacity: 1.0 })),
         colliderDesc: RAPIER.ColliderDesc.cuboid(-0.1, -0.1, -0.1),
         light: sunLight,
         lightCastShadow: true
@@ -2830,12 +2240,11 @@ export async function populateWorldObjects(world) {
     moonLight.shadow.camera.bottom = -200;
     moonLight.shadow.camera.near = 1;
     moonLight.shadow.camera.far = 600;
-    moonLight.shadow.mapSize.width = SHADOW_QUALITY;
-    moonLight.shadow.mapSize.height = SHADOW_QUALITY;
+    moonLight.shadow.mapSize.width = DIRECTIONAL_LIGHT_SHADOW_QUALITY;
+    moonLight.shadow.mapSize.height = DIRECTIONAL_LIGHT_SHADOW_QUALITY;
     const moonObject = new LightObject(world, {
         position: { x: 200, y: -SUN_INIT_POSITION.y, z: -SUN_INIT_POSITION.z },
-        geometry: new THREE.CapsuleGeometry(10, 0),
-        material: new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 1.0 }),
+        mesh: new THREE.Mesh(new THREE.CapsuleGeometry(10, 0), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 1.0 })),
         colliderDesc: RAPIER.ColliderDesc.cuboid(-0.1, -0.1, -0.1),
         light: moonLight,
         lightCastShadow: true,
@@ -2852,13 +2261,11 @@ export async function populateWorldObjects(world) {
             castShadow: false,
             position: { x: 13.3, y: 4.25, z: -13.7 },
             scale: { x: 0.1, y: 0.1, z: 0.1 },
-            geometry: streetlamp1Mesh.geometry,
-            material: streetlamp1Mesh.material,
+            mesh: streetlamp1Mesh.clone(),
             colliderDesc: RAPIER.ColliderDesc.capsule(0.35, 0.05),
         }), new LightObject(world, { // light
             position: { x: 13.3, y: 7.25, z: -13.7 },
-            geometry: new THREE.CylinderGeometry(0.3, 0.3, 1),
-            material: new THREE.MeshToonMaterial({ color: 0xffb566 , transparent: true, opacity: 0.8 }),
+            mesh: new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 1), new THREE.MeshToonMaterial({ color: 0xffb566 , transparent: true, opacity: 0.8 })),
             colliderDesc: RAPIER.ColliderDesc.cuboid(-0.1, -0.1, -0.1),
             light: new THREE.PointLight(0xffb566, 20),
             lightCastShadow: true,
@@ -2867,13 +2274,11 @@ export async function populateWorldObjects(world) {
             castShadow: false,
             position: { x: 6.3, y: 4.25, z: 19.2 },
             scale: { x: 0.1, y: 0.1, z: 0.1 },
-            geometry: streetlamp1Mesh.geometry,
-            material: streetlamp1Mesh.material,
+            mesh: streetlamp1Mesh.clone(),
             colliderDesc: RAPIER.ColliderDesc.capsule(0.35, 0.05),
         }), new LightObject(world, { // light
             position: { x: 6.3, y: 7.25, z: 19.2 },
-            geometry: new THREE.CylinderGeometry(0.3, 0.3, 1),
-            material: new THREE.MeshToonMaterial({ color: 0xffb566 , transparent: true, opacity: 0.8 }),
+            mesh: new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 1), new THREE.MeshToonMaterial({ color: 0xffb566 , transparent: true, opacity: 0.8 })),
             colliderDesc: RAPIER.ColliderDesc.cuboid(-0.1, -0.1, -0.1),
             light: new THREE.PointLight(0xffb566, 20),
             lightCastShadow: true,
@@ -2882,13 +2287,11 @@ export async function populateWorldObjects(world) {
             castShadow: false,
             position: { x: -19.8, y: 4.25, z: -33 },
             scale: { x: 0.1, y: 0.1, z: 0.1 },
-            geometry: streetlamp1Mesh.geometry,
-            material: streetlamp1Mesh.material,
+            mesh: streetlamp1Mesh.clone(),
             colliderDesc: RAPIER.ColliderDesc.capsule(0.35, 0.05),
         }), new LightObject(world, { // light
             position: { x: -19.8, y: 7.25, z: -33 },
-            geometry: new THREE.CylinderGeometry(0.3, 0.3, 1),
-            material: new THREE.MeshToonMaterial({ color: 0xffb566 , transparent: true, opacity: 0.8 }),
+            mesh: new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 1), new THREE.MeshToonMaterial({ color: 0xffb566 , transparent: true, opacity: 0.8 })),
             colliderDesc: RAPIER.ColliderDesc.cuboid(-0.1, -0.1, -0.1),
             light: new THREE.PointLight(0xffb566, 20),
             lightCastShadow: true,
@@ -2897,13 +2300,11 @@ export async function populateWorldObjects(world) {
             castShadow: false,
             position: { x: 33.5, y: 4.25, z: -7.6 },
             scale: { x: 0.1, y: 0.1, z: 0.1 },
-            geometry: streetlamp1Mesh.geometry,
-            material: streetlamp1Mesh.material,
+            mesh: streetlamp1Mesh.clone(),
             colliderDesc: RAPIER.ColliderDesc.capsule(0.35, 0.05),
         }), new LightObject(world, { // light
             position: { x: 33.5, y: 7.25, z: -7.6 },
-            geometry: new THREE.CylinderGeometry(0.3, 0.3, 1),
-            material: new THREE.MeshToonMaterial({ color: 0xffb566 , transparent: true, opacity: 0.8 }),
+            mesh: new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 1), new THREE.MeshToonMaterial({ color: 0xffb566 , transparent: true, opacity: 0.8 })),
             colliderDesc: RAPIER.ColliderDesc.cuboid(-0.1, -0.1, -0.1),
             light: new THREE.PointLight(0xffb566, 20),
             lightCastShadow: true,
@@ -2912,13 +2313,11 @@ export async function populateWorldObjects(world) {
             castShadow: false,
             position: { x: -8, y: 4.25, z: 40.95 },
             scale: { x: 0.1, y: 0.1, z: 0.1 },
-            geometry: streetlamp1Mesh.geometry,
-            material: streetlamp1Mesh.material,
+            mesh: streetlamp1Mesh.clone(),
             colliderDesc: RAPIER.ColliderDesc.capsule(0.35, 0.05),
         }), new LightObject(world, { // light
             position: { x: -8, y: 7.25, z: 40.95 },
-            geometry: new THREE.CylinderGeometry(0.3, 0.3, 1),
-            material: new THREE.MeshToonMaterial({ color: 0xffb566 , transparent: true, opacity: 0.8 }),
+            mesh: new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 1), new THREE.MeshToonMaterial({ color: 0xffb566 , transparent: true, opacity: 0.8 })),
             colliderDesc: RAPIER.ColliderDesc.cuboid(-0.1, -0.1, -0.1),
             light: new THREE.PointLight(0xffb566, 20),
             lightCastShadow: true,
@@ -2929,14 +2328,10 @@ export async function populateWorldObjects(world) {
     // Center lines
     if (DEBUG) {
         objects.push(...[new PhysicsObject(world, {
-            geometry: new THREE.PlaneGeometry(100, 2),
-            material: new THREE.MeshBasicMaterial({ color: 0xff0000, side: THREE.DoubleSide }),
-            colliderDesc: RAPIER.ColliderDesc.cuboid(-0.1, -0.1, -0.1)
+            mesh: new THREE.Mesh(new THREE.PlaneGeometry(100, 2), new THREE.MeshBasicMaterial({ color: 0xff0000, side: THREE.DoubleSide })),
         }), new PhysicsObject(world, {
             rotation: { x: 0, y: Math.PI/2, z: 0 },
-            geometry: new THREE.PlaneGeometry(100, 2),
-            material: new THREE.MeshBasicMaterial({ color: 0xff0000, side: THREE.DoubleSide }),
-            colliderDesc: RAPIER.ColliderDesc.cuboid(-0.1, -0.1, -0.1)
+            mesh: new THREE.Mesh(new THREE.PlaneGeometry(100, 2), new THREE.MeshBasicMaterial({ color: 0xff0000, side: THREE.DoubleSide })),
         })]);
     }
 

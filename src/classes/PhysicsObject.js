@@ -14,9 +14,8 @@ export class PhysicsObject {
         position = { x: 0, y: 0, z: 0 },
         rotation = { x: 0, y: 0, z: 0 },
         scale = { x: 1, y: 1, z: 1 },
-        geometry,
-        material,
-        colliderDesc,
+        mesh = null,
+        colliderDesc = null,
         colliderProps = { friction: (isStatic ? 0.0 : 0.1), restitution: 0.2, density: 1 },
         onTick = null
     }) {
@@ -26,63 +25,90 @@ export class PhysicsObject {
             throw new Error("PhysicsObject::constructor - ill-defined rotation");
         if (colliderProps.friction === undefined || colliderProps.restitution === undefined || colliderProps.density === undefined)
             throw new Error("PhysicsObject::constructor - ill-defined colliderProps");
+        if (mesh === null && colliderDesc === null)
+            throw new Error("PhysicsObject::constructor - mesh and colliderDesc cannot both be null");
 
         this.world = world;
-
-        this.mesh = new THREE.Mesh(geometry, material);
-        this.mesh.position.set(position.x, position.y, position.z);
-        this.mesh.rotation.set(rotation.x, rotation.y, rotation.z);
-        this.mesh.scale.set(scale.x, scale.y, scale.z);
-        this.mesh.castShadow = castShadow;
-        this.mesh.receiveShadow = receiveShadow;
-        this.world.scene.add(this.mesh);
-
-        const rigidBodyDesc = isStatic ?
-            RAPIER.RigidBodyDesc.fixed() :
-            RAPIER.RigidBodyDesc.dynamic();
-
-        this.rigidBody = this.world.physics.createRigidBody(
-            rigidBodyDesc
-                .setTranslation(position.x, position.y, position.z)
-                .setRotation(new THREE.Quaternion().setFromEuler(new THREE.Euler(rotation.x, rotation.y, rotation.z)))
-        );
-
-        const shape = colliderDesc.shape.type;
-        if (shape === 1) { // cuboid
-            colliderDesc.shape.halfExtents.x *= (1/scale.x);
-            colliderDesc.shape.halfExtents.y *= (1/scale.y);
-            colliderDesc.shape.halfExtents.z *= (1/scale.z);
-        } else if (shape === 2) {
-            colliderDesc.shape.halfHeight *= (1/scale.y);
-            colliderDesc.shape.radius *= Math.max(1/scale.x, 1/scale.z);
-        } else {
-            throw new Error(`PhysicsObject - unimplemented shape ${shape}`);
-        }
-
-        colliderDesc.setFriction(colliderProps.friction);
-        colliderDesc.setRestitution(colliderProps.restitution);
-        colliderDesc.setDensity(colliderProps.density);
-        this.collider = this.world.physics.createCollider(colliderDesc, this.rigidBody);
-
         this.onTick = onTick;
 
+        if (DEBUG && mesh === null) mesh = new THREE.Object3D(); // need this for hitbox wireframes
+        this.mesh = mesh;
+
+        if (mesh !== null) {
+            this.mesh.position.set(position.x, position.y, position.z);
+            this.mesh.rotation.set(rotation.x, rotation.y, rotation.z);
+            this.mesh.scale.set(scale.x, scale.y, scale.z);
+            this.mesh.castShadow = castShadow;
+            this.mesh.receiveShadow = receiveShadow;
+            this.world.scene.add(this.mesh);
+        }
+
+        if (colliderDesc !== null)
+        {
+            const rigidBodyDesc = isStatic ?
+                RAPIER.RigidBodyDesc.fixed() :
+                RAPIER.RigidBodyDesc.dynamic();
+
+            this.rigidBody = this.world.physics.createRigidBody(
+                rigidBodyDesc
+                    .setTranslation(position.x, position.y, position.z)
+                    .setRotation(new THREE.Quaternion().setFromEuler(new THREE.Euler(rotation.x, rotation.y, rotation.z)))
+            );
+
+            const shape = colliderDesc.shape.type;
+            if (shape === 1) { // cuboid
+                colliderDesc.shape.halfExtents.x *= (1/scale.x);
+                colliderDesc.shape.halfExtents.y *= (1/scale.y);
+                colliderDesc.shape.halfExtents.z *= (1/scale.z);
+            } else if (shape === 2) {
+                colliderDesc.shape.halfHeight *= (1/scale.y);
+                colliderDesc.shape.radius *= Math.max(1/scale.x, 1/scale.z);
+            } else {
+                throw new Error(`PhysicsObject - unimplemented shape ${shape}`);
+            }
+
+            colliderDesc.setFriction(colliderProps.friction);
+            colliderDesc.setRestitution(colliderProps.restitution);
+            colliderDesc.setDensity(colliderProps.density);
+
+            this.collider = this.world.physics.createCollider(colliderDesc, this.rigidBody);
+        } else {
+            this.rigidBody = null;
+            this.collider = null;
+        }
+
         if (DEBUG) {
-            dbgColliderMesh(this.mesh, this.collider);
+            if (this.collider !== null)
+            {
+                dbgColliderMesh(this.mesh, this.collider);
+            }
         }
     }
 
-    getPosition() { return this.rigidBody.translation(); }
-    getQuaternion() { return this.rigidBody.rotation(); }
+    hasMesh() { return this.mesh !== null; }
+    hasRigidBody() { return this.rigidBody !== null; }
+    hasCollider() { return this.collider !== null; }
+
+    getPosition() {
+        if (this.hasRigidBody()) return this.rigidBody.translation();
+        else throw new Error("PhysicsObject::getPosition - object has no rigid body");
+    }
+    getQuaternion() {
+        if (this.hasRigidBody()) return this.rigidBody.rotation();
+        else throw new Error("PhysicsObject::getQuaternion - object has no rigid body");
+    }
 
     setPosition(x, y, z) {
-        this.mesh.position.set(x, y, z);
-        this.rigidBody.setTranslation({ x, y, z }, true);
+        if (this.hasMesh()) this.mesh.position.set(x, y, z);
+        if (this.hasRigidBody()) this.rigidBody.setTranslation({ x, y, z }, true);
     }
 
     setRotation(x, y, z) {
-        this.mesh.rotation.set(x, y, z);
-        const q = new THREE.Quaternion().setFromEuler(new THREE.Euler(x, y, z));
-        this.rigidBody.setRotation(q, true);
+        if (this.hasMesh()) this.mesh.rotation.set(x, y, z);
+        if (this.hasRigidBody()) {
+            const q = new THREE.Quaternion().setFromEuler(new THREE.Euler(x, y, z));
+            this.rigidBody.setRotation(q, true);
+        }
     }
 
     setScale(x, y, z) {
@@ -90,19 +116,19 @@ export class PhysicsObject {
     }
 
     update() {
-        if (!this.rigidBody.isFixed()) {
+        if (this.hasMesh() && this.hasRigidBody() && !this.rigidBody.isFixed()) {
             const position = this.getPosition();
-            const rotation = this.rigidBody.rotation();
+            const quaternion = this.getQuaternion();
             this.mesh.position.set(position.x, position.y, position.z);
-            this.mesh.quaternion.set(rotation.x, rotation.y, rotation.z, rotation.w);
+            this.mesh.quaternion.set(quaternion.x, quaternion.y, quaternion.z, quaternion.w);
         }
 
         if (this.onTick !== null) this.onTick();
     }
 
     destroy() {
-        this.mesh.removeFromParent();
-        this.world.physics.removeRigidBody(this.rigidBody);
+        if (this.hasMesh()) this.mesh.removeFromParent();
+        if (this.hasRigidBody()) this.world.physics.removeRigidBody(this.rigidBody);
     }
 }
 

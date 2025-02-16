@@ -26,8 +26,6 @@ animate();
 //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\////\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
 
 /** TODO
- * * lighting (streetlamps, inside house lights, ambient)
- * * allow null geom/mat/colliders
  * * camera fix (ITS ALWAYS RAYCASTING)
  * * matt pip, veron pip, bob, frog pip on lilypad, general pips...
  * * farmhouse, stables
@@ -36,6 +34,7 @@ animate();
  * * * options:
  * * * * 1. (?) combination of CanvasTexture and gyro
  * * * * 2. speech bubble overlay (html) appears with A. cahracter name B. 2d character image C. text
+ * * untie speed from fps
  * * music
  * * sound fx
  * * moving pips? give them velocities in a loop
@@ -49,7 +48,7 @@ animate();
  * * house_2 quest: furnish the house by pushing in other pips furniture
  * * bridges
  * * stars (fade in/out)
- * * settings menu (fps, render distance)
+ * * settings menu (fps, render distance, etc.)
  * * better hitboxes (convexhull? or just cuboid?)
  *
  * * ideas

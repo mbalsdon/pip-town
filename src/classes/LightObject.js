@@ -12,9 +12,8 @@ export class LightObject extends PhysicsObject {
         position = { x: 0, y: 0, z: 0 },
         rotation = { x: 0, y: 0, z: 0 },
         scale = { x: 1, y: 1, z: 1 },
-        geometry,
-        material,
-        colliderDesc,
+        mesh = null,
+        colliderDesc = null,
         colliderProps = { friction: (isStatic ? 0.0 : 0.1), restitution: 0.2, density: 1 },
         light,
         lightRelPos = { x: 0, y: 0, z: 0 },
@@ -28,8 +27,7 @@ export class LightObject extends PhysicsObject {
             position,
             rotation,
             scale,
-            geometry,
-            material,
+            mesh,
             colliderDesc,
             colliderProps,
         });
@@ -71,7 +69,7 @@ export class LightObject extends PhysicsObject {
     }
 
     update() {
-        if (!this.rigidBody.isFixed()) {
+        if (this.hasRigidBody() && !this.rigidBody.isFixed()) {
             const position = this.rigidBody.translation();
             const rotation = this.rigidBody.rotation();
 
