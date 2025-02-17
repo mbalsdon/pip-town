@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import * as RAPIER from '@dimforge/rapier3d-compat';
 import { dbgColliderMesh } from '../debug';
-import { DEBUG } from '../consts';
+import { DEBUG_COLLIDERS } from '../consts';
 
 //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\////\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
 //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\////\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
@@ -17,7 +17,8 @@ export class PhysicsObject {
         mesh = null,
         colliderDesc = null,
         colliderProps = { friction: (isStatic ? 0.0 : 0.1), restitution: 0.2, density: 1 },
-        onTick = null
+        onTick = null,
+        isCameraCollidable = false
     }) {
         if (position.x === undefined || position.y === undefined || position.z === undefined)
             throw new Error("PhysicsObject::constructor - ill-defined position");
@@ -29,9 +30,9 @@ export class PhysicsObject {
             throw new Error("PhysicsObject::constructor - mesh and colliderDesc cannot both be null");
 
         this.world = world;
-        this.onTick = onTick;
+        this._onTick = onTick;
 
-        if (DEBUG && mesh === null) mesh = new THREE.Object3D(); // need this for hitbox wireframes
+        if (DEBUG_COLLIDERS && mesh === null) mesh = new THREE.Object3D(); // need this for hitbox wireframes
         this.mesh = mesh;
 
         if (mesh !== null) {
@@ -40,14 +41,13 @@ export class PhysicsObject {
             this.mesh.scale.set(scale.x, scale.y, scale.z);
             this.mesh.castShadow = castShadow;
             this.mesh.receiveShadow = receiveShadow;
+            if (isCameraCollidable) this.mesh.layers.enable(1);
             this.world.scene.add(this.mesh);
         }
 
         if (colliderDesc !== null)
         {
-            const rigidBodyDesc = isStatic ?
-                RAPIER.RigidBodyDesc.fixed() :
-                RAPIER.RigidBodyDesc.dynamic();
+            const rigidBodyDesc = (isStatic ? RAPIER.RigidBodyDesc.fixed() : RAPIER.RigidBodyDesc.dynamic());
 
             this.rigidBody = this.world.physics.createRigidBody(
                 rigidBodyDesc
@@ -77,9 +77,8 @@ export class PhysicsObject {
             this.collider = null;
         }
 
-        if (DEBUG) {
-            if (this.collider !== null)
-            {
+        if (DEBUG_COLLIDERS) {
+            if (this.collider !== null) {
                 dbgColliderMesh(this.mesh, this.collider);
             }
         }
@@ -123,7 +122,7 @@ export class PhysicsObject {
             this.mesh.quaternion.set(quaternion.x, quaternion.y, quaternion.z, quaternion.w);
         }
 
-        if (this.onTick !== null) this.onTick();
+        if (this._onTick !== null) this._onTick();
     }
 
     destroy() {

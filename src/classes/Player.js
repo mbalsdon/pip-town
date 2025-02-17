@@ -2,7 +2,7 @@
 import * as THREE from 'three';
 import RAPIER from '@dimforge/rapier3d-compat';
 import { PhysicsObject } from './PhysicsObject';
-import { DEBUG, INIT_CHARACTER_ROTATION, JUMP_FORCE, JUMP_RAY_DISTANCE, MOVE_SPEED, ROTATION_SPEED, SPAWN_POSITION } from '../consts';
+import { LAYER_CAMERA_COLLISION, CAMERA_COLLISION_OFFSET, CAMERA_SMOOTHING_FACTOR, CAMERA_Y_OFFSET, DEBUG, INIT_CHARACTER_ROTATION, JUMP_FORCE, JUMP_RAY_DISTANCE, MOVE_SPEED, ROTATION_SPEED, SPAWN_POSITION, CAMERA_COLLISION_ON } from '../consts';
 import { dbgAssertObject, dbgAxesHelper, dbgConsoleCharacter, dbgRay } from '../debug';
 
 //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\////\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
@@ -32,13 +32,27 @@ export class Player extends PhysicsObject {
             mesh,
             colliderDesc,
             colliderProps,
-            onTick: null
+            onTick: null,
+            isCameraCollidable: false
         });
 
-        this.characterRotationY = INIT_CHARACTER_ROTATION;
+        this._position = new THREE.Vector3();
+
+        this._rotY = INIT_CHARACTER_ROTATION;
+        this._rotQuaternion = new THREE.Quaternion();
+        this._yAxis = new THREE.Vector3(0, 1, 0);
+        this._forward = new THREE.Vector3();
+        this._movement = new THREE.Vector3();
+        this._jumpRay = new RAPIER.Ray();
+
+        this._camDirection = new THREE.Vector3();
+        this._newCamPos = new THREE.Vector3();
+        this._camRaycaster = new THREE.Raycaster();
+        this._camRaycaster.layers.set(LAYER_CAMERA_COLLISION);
+
         this.rigidBody.restrictRotations(false, true, false);
 
-        this.keys = {
+        this._keys = {
             w: false,
             s: false,
             a: false,
@@ -48,14 +62,14 @@ export class Player extends PhysicsObject {
 
         document.addEventListener('keydown', (e) => {
             const k = e.key.toLowerCase();
-            if (k === ' ') this.keys.space = true;
-            else if (this.keys.hasOwnProperty(k)) this.keys[k] = true;
+            if (k === ' ') this._keys.space = true;
+            else if (this._keys.hasOwnProperty(k)) this._keys[k] = true;
         });
 
         document.addEventListener('keyup', (e) => {
             const k = e.key.toLowerCase();
-            if (k === ' ') this.keys.space = false;
-            else if (this.keys.hasOwnProperty(k)) this.keys[k] = false;
+            if (k === ' ') this._keys.space = false;
+            else if (this._keys.hasOwnProperty(k)) this._keys[k] = false;
         });
 
         if (DEBUG) {
@@ -65,56 +79,77 @@ export class Player extends PhysicsObject {
 
     update() {
         // Out-of-bounds check
-        let position = this.rigidBody.translation();
-        if (position.y < -50.0) {
+        const p = this.rigidBody.translation();
+        this._position.set(p.x, p.y, p.z);
+        if (this._position.y < -50.0) {
             this.rigidBody.setTranslation(SPAWN_POSITION, true);
             this.rigidBody.setLinvel(SPAWN_POSITION, true);
             return;
         }
 
         // Rotation (A/D)
-        if (this.keys.a) this.characterRotationY += ROTATION_SPEED;
-        if (this.keys.d) this.characterRotationY -= ROTATION_SPEED;
+        if (this._keys.a) this._rotY += (ROTATION_SPEED * this.world.physics.timestep);
+        if (this._keys.d) this._rotY -= (ROTATION_SPEED * this.world.physics.timestep);
 
-        const q = new THREE.Quaternion().setFromAxisAngle(
-            new THREE.Vector3(0, 1, 0),
-            this.characterRotationY
+        this._rotQuaternion.setFromAxisAngle(
+            this._yAxis,
+            this._rotY
         );
 
-        this.rigidBody.setRotation(q, true);
+        this.rigidBody.setRotation(this._rotQuaternion, true);
 
         // Movement (W/S)
-        const forward = new THREE.Vector3(
-            Math.sin(this.characterRotationY),
+        this._forward.set(
+            Math.sin(this._rotY),
             0,
-            Math.cos(this.characterRotationY)
+            Math.cos(this._rotY)
         ).normalize();
 
-        let movement = new THREE.Vector3();
-        if (this.keys.w) movement.add(forward);
-        if (this.keys.s) movement.sub(forward);
-        movement.normalize().multiplyScalar(MOVE_SPEED);
+        this._movement.set(0, 0, 0);
+        if (this._keys.w) this._movement.add(this._forward);
+        if (this._keys.s) this._movement.sub(this._forward);
+        this._movement.normalize().multiplyScalar(MOVE_SPEED);
 
         const currentVelocity = this.rigidBody.linvel();
-        this.rigidBody.setLinvel({ x: movement.x, y: currentVelocity.y, z: movement.z }, true);
+        this.rigidBody.setLinvel({ x: this._movement.x, y: currentVelocity.y, z: this._movement.z }, true);
 
         // Jumping
-        const rayOrigin = { x: position.x, y: position.y, z: position.z };
-        const rayDirection = { x: 0, y: -1, z: 0 };
-        const ray = new RAPIER.Ray(rayOrigin, rayDirection);
-        const hit = this.world.physics.castRay(ray, JUMP_RAY_DISTANCE, true, null, null, null, this.rigidBody);
-        if (this.keys.space && (hit !== null)) {
+        this._jumpRay.origin = { x: this._position.x, y: this._position.y, z: this._position.z };
+        this._jumpRay.dir = { x: 0, y: -1, z: 0 };
+        const hit = this.world.physics.castRay(this._jumpRay, JUMP_RAY_DISTANCE, true, null, null, null, this.rigidBody);
+        if (this._keys.space && (hit !== null)) {
             this.rigidBody.setLinvel({ x: currentVelocity.x, y: JUMP_FORCE, z: currentVelocity.z }, true);
         }
 
+        // Parent class
         super.update();
 
         // Update camera position
-        this.world.controls.target.set(position.x, position.y, position.z);
+        this.world.controls.target.set(this._position.x, this._position.y + CAMERA_Y_OFFSET, this._position.z);
         this.world.controls.update();
 
+        // Position camera in front of objects which obstruct its view of the player
+        if (CAMERA_COLLISION_ON) {
+            const currCamPos = this.world.camera.position;
+
+            this._camDirection.subVectors(currCamPos, this._position).normalize();
+            this._camRaycaster.set(this._position, this._camDirection);
+            this._camRaycaster.far = this.world.controls.getDistance();
+
+            const intersections = this._camRaycaster.intersectObjects(this.world.scene.children).filter(int => int.object !== this.mesh);
+
+            if (intersections.length > 0) {
+                const closest = intersections[0];
+                this._newCamPos.subVectors(
+                    currCamPos,
+                    this._camDirection.multiplyScalar(this.world.controls.getDistance() - closest.distance + CAMERA_COLLISION_OFFSET)
+                );
+                this.world.camera.position.lerp(this._newCamPos, CAMERA_SMOOTHING_FACTOR);
+            }
+        }
+
         if (DEBUG) {
-            dbgRay(this.world.scene, rayOrigin, rayDirection, JUMP_RAY_DISTANCE);
+            dbgRay(this.world.scene, this._jumpRay.origin, this._jumpRay.dir, JUMP_RAY_DISTANCE);
             dbgConsoleCharacter(this.mesh)
             dbgAssertObject(this.mesh, this.rigidBody);
         }

@@ -4,8 +4,11 @@ import { Gyroscope } from 'three/examples/jsm/Addons.js';
 //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\////\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
 //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\////\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
 
+// FUTURE: finer-grained ctrl
+
 let dbgConsoleElmt;
 let dbgTickElmt, dbgCamElmt, dbgCharElmt, dbgDayNightElmt;
+
 export function createDbgConsole() {
     dbgConsoleElmt = document.createElement('div');
     dbgConsoleElmt.style.cssText = `
@@ -66,28 +69,27 @@ export function dbgAxesHelper(mesh) {
     axesHelper.scale.set(1/mesh.scale.x, 1/mesh.scale.y, 1/mesh.scale.z);
 }
 
-let currTickTime = 0;
-const tickTimesCircleBuf = new Array(1000).fill(0);
+let lastTickTime = 0;
+const circleBufSize = 100;
+const tickTimesCircleBuf = new Array(circleBufSize).fill(0);
 let tickIdx = 0;
-export function dbgConsoleTimeTicks() {
-    const lastTickTime = currTickTime;
-    currTickTime = performance.now();
+export function dbgConsoleTimeTicks(currTickTime) {
     const dt = currTickTime - lastTickTime;
 
     tickTimesCircleBuf[tickIdx] = dt;
-    tickIdx = (tickIdx + 1) % 1000;
+    tickIdx = (tickIdx + 1) % circleBufSize;
 
-    const nonZeroCount = tickTimesCircleBuf.filter(x => x !== 0).length;
     let avg = 0;
-    for (let i = 0; i < nonZeroCount; ++i) {
-        avg += tickTimesCircleBuf[i];
+    for (const tickTime of tickTimesCircleBuf) {
+        avg += tickTime;
     }
 
     dbgTickElmt.innerText = `-- Ticks:
-        Last:      ${Math.round(dt)}ms
-        Avg: \u00A0${Math.round(avg/nonZeroCount)}ms
+        Last:      ${Math.round(dt)}ms (${Math.round(1000/dt)}fps)
+        Avg: \u00A0${Math.round(avg/circleBufSize)}ms (${Math.round(1000*(circleBufSize/avg))}fps)
 
     `;
+    lastTickTime = currTickTime;
 }
 
 export function dbgConsoleCamera(camera) {
@@ -148,7 +150,7 @@ export function dbgAssertObject(mesh, rigidBody) {
         (rigidBody.translation().z !== mesh.position.z))
     {
         console.log(`
-            ASSERTION FAILED: rigidBody.translation() !== mesh.position 
+            ASSERTION FAILED: rigidBody.translation() !== mesh.position
             rigidBody.translation(): (${rigidBody.translation().x}, ${rigidBody.translation().y}, ${rigidBody.translation().z})
             mesh.position:           (${mesh.position.x}, ${mesh.position.y}, ${mesh.position.z})
         `);

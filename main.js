@@ -26,15 +26,15 @@ animate();
 //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\////\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
 
 /** TODO
- * * camera fix (ITS ALWAYS RAYCASTING)
- * * matt pip, veron pip, bob, frog pip on lilypad, general pips...
- * * farmhouse, stables
- * * interaction system
- * * * press E when near enough (arrow or doing math w/ obj coords relative to player)
- * * * options:
- * * * * 1. (?) combination of CanvasTexture and gyro
- * * * * 2. speech bubble overlay (html) appears with A. cahracter name B. 2d character image C. text
- * * untie speed from fps
+ * interaction system
+ * * press E when near enough (obj coords relative to player)
+ * * * speech bubble overlay (html) appears with A. cahracter name B. 2d character image C. text
+ * * * camera zooms onto their current location, no mvmt allowed
+ * matt pip, veron pip, bob, frog pip on lilypad, general pips... at least one per house
+ * grass behind farmland (or animals if not too hard)
+ * prod
+ *
+ * * look for optimizations
  * * music
  * * sound fx
  * * moving pips? give them velocities in a loop
@@ -58,6 +58,6 @@ animate();
  * * * something with dynamic bodies
  * * * * button that spawns pips
  * * * crash land alien pip
- * * * look into applied forces; powerup(?) that applies big force to dynamics that player comes in contact with 
+ * * * look into applied forces; powerup(?) that applies big force to dynamics that player comes in contact with
  * * * minimap: orthographic view top down, map x/y to it??
  */

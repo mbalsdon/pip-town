@@ -1,5 +1,4 @@
 import * as THREE from 'three';
-import RAPIER from '@dimforge/rapier3d-compat';
 import { PhysicsObject } from './PhysicsObject';
 import { DEBUG } from '../consts';
 
@@ -18,7 +17,8 @@ export class LightObject extends PhysicsObject {
         light,
         lightRelPos = { x: 0, y: 0, z: 0 },
         lightCastShadow = false,
-        onTick = null
+        onTick = null,
+        isCameraCollidable = false
     }) {
         super(world, {
             isStatic,
@@ -30,7 +30,12 @@ export class LightObject extends PhysicsObject {
             mesh,
             colliderDesc,
             colliderProps,
+            onTick,
+            isCameraCollidable
         });
+
+        this._quaternion = new THREE.Quaternion();
+        this._rotatedRelPos = new THREE.Vector3();
 
         light.position.set(
             position.x + lightRelPos.x,
@@ -39,8 +44,7 @@ export class LightObject extends PhysicsObject {
         );
         light.castShadow = lightCastShadow;
         this.light = light;
-        this.lightRelPos = lightRelPos;
-        this.onTick = onTick;
+        this._lightRelPos = lightRelPos;
 
         if (DEBUG) {
             if (this.light.isAmbientLight) {}
@@ -62,27 +66,27 @@ export class LightObject extends PhysicsObject {
     setPosition(x, y, z) {
         super.setPosition(x, y, z);
         this.light.position.set(
-            x + this.lightRelPos.x,
-            y + this.lightRelPos.y,
-            z + this.lightRelPos.z
+            x + this._lightRelPos.x,
+            y + this._lightRelPos.y,
+            z + this._lightRelPos.z
         );
     }
 
     update() {
         if (this.hasRigidBody() && !this.rigidBody.isFixed()) {
             const position = this.rigidBody.translation();
-            const rotation = this.rigidBody.rotation();
 
-            const q = new THREE.Quaternion(rotation.x, rotation.y, rotation.z, rotation.w);
-            const rp = new THREE.Vector3(this.lightRelPos.x, this.lightRelPos.y, this.lightRelPos.z);
-            rp.applyQuaternion(q);
+            const r = this.rigidBody.rotation();
+            this._quaternion.set(r.x, r.y, r.z, r.w);
+            this._rotatedRelPos.set(this._lightRelPos.x, this._lightRelPos.y, this._lightRelPos.z);
+            this._rotatedRelPos.applyQuaternion(this._quaternion);
 
             this.light.position.set(
-                position.x + rp.x,
-                position.y + rp.y,
-                position.z + rp.z
+                position.x + this._rotatedRelPos.x,
+                position.y + this._rotatedRelPos.y,
+                position.z + this._rotatedRelPos.z
             );
-            this.light.quaternion.set(q.x, q.y, q.z, q.w);
+            this.light.quaternion.copy(this._quaternion);
         }
 
         super.update();
