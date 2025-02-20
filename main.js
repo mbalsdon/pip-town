@@ -26,34 +26,31 @@ animate();
 //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\////\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
 
 /** TODO
- * interaction system
- * * press E when near enough (obj coords relative to player)
- * * * speech bubble overlay (html) appears with A. cahracter name B. 2d character image C. text
- * * * camera zooms onto their current location, no mvmt allowed
  * matt pip, veron pip, bob, frog pip on lilypad, general pips... at least one per house
- * grass behind farmland (or animals if not too hard)
+ * grass behind farmland
+ * controls helper
  * prod
  *
+ * * ctrlF todo
+ * * windmill + animals behind farmland
  * * look for optimizations
  * * music
  * * sound fx
- * * moving pips? give them velocities in a loop
- * * * pushing them would fk their path up, but maybe it would be funny to let that happen
+ * * * small random sound for each dialogue char 
+ * * predetermined npc paths
  * * dynamic objects that fall off the map either A) despawn or B) respawn at their startpos
  * * more pips
  * * more world building
  * * when npcs fall over they say ow
- * * remove small parts of models and add them in as dynamics
  * * river pushes you
  * * house_2 quest: furnish the house by pushing in other pips furniture
+ * * * pickupable objects, quest system
  * * bridges
  * * stars (fade in/out)
  * * settings menu (fps, render distance, etc.)
- * * better hitboxes (convexhull? or just cuboid?)
  *
  * * ideas
- * * * ragdoll player physics
- * * * * unlock XZ rotations, reset them to 0 if fall over (check in update)
+ * * * ragdoll player physics (unlock XZ rotations)
  * * * cannon shoot a pip
  * * * something with dynamic bodies
  * * * * button that spawns pips

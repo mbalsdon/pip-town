@@ -3,6 +3,7 @@ import * as RAPIER from '@dimforge/rapier3d-compat';
 import { OrbitControls } from 'three/examples/jsm/Addons.js';
 import { createDbgConsole, dbgConsoleCamera, dbgConsoleTimeTicks } from '../debug';
 import { CAMERA_FOV, CAMERA_MAX_DISTANCE, CAMERA_MIN_DISTANCE, DEBUG, MAX_FPS, GRAVITY, INIT_CAMERA_POSITION, MAX_TIMESTEP } from '../consts'
+import { Dialogue } from './Dialogue';
 
 //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\////\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
 //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\////\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
@@ -10,6 +11,7 @@ import { CAMERA_FOV, CAMERA_MAX_DISTANCE, CAMERA_MIN_DISTANCE, DEBUG, MAX_FPS, G
 export class World {
     constructor() {
         this.scene = new THREE.Scene();
+        this.dialogue = new Dialogue();
 
         this.dayColor = new THREE.Color(0x87ceeb);
         this.nightColor = new THREE.Color(0x0a0921);

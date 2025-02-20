@@ -3,9 +3,10 @@ import * as RAPIER from '@dimforge/rapier3d-compat';
 import { PhysicsObject } from '../classes/PhysicsObject';
 import { Player } from '../classes/Player';
 import { BufferGeometryUtils, GLTFLoader } from 'three/examples/jsm/Addons.js';
-import { DEBUG, DIRECTIONAL_LIGHT_SHADOW_QUALITY, SPAWN_POSITION, CLOUDGEN_STRIDE, CLOUDGEN_RAD, CLOUDGEN_BASE_Y, SUN_TICK_ROTATION, SUN_INIT_POSITION, DEBUG_PLAYER_MODEL, DEBUG_COLLIDERS } from '../consts';
+import { DEBUG, DIRECTIONAL_LIGHT_SHADOW_QUALITY, SPAWN_POSITION, CLOUDGEN_STRIDE, CLOUDGEN_RAD, CLOUDGEN_BASE_Y, SUN_TICK_ROTATION, SUN_INIT_POSITION, DEBUG_PLAYER_MODEL, DEBUG_COLLIDERS, DISPLAYNAME_TOWN_GREETER } from '../consts';
 import { LightObject } from '../classes/LightObject';
 import { dbgConsoleDayNightCycle } from '../debug';
+import { NonPlayableCharacter } from '../classes/NonPlayableCharacter';
 
 //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\////\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
 //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\////\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
@@ -251,6 +252,7 @@ export async function populateWorldObjects(world) {
 
     // Load external models
     const pip1Mesh          = await loadGLTF("/src/assets/statics/pip_1.glb",            { x: -Math.PI/2, y: 0, z: 0 });
+
     const house1aMesh       = await loadGLTF("/src/assets/statics/house_1a.glb",         { x: -Math.PI/2, y: 0, z: 0 });
     const house1bMesh       = await loadGLTF("/src/assets/statics/house_1b.glb",         { x: -Math.PI/2, y: 0, z: 0 });
     const house1cMesh       = await loadGLTF("/src/assets/statics/house_1c.glb",         { x: -Math.PI/2, y: 0, z: 0 });
@@ -318,13 +320,14 @@ export async function populateWorldObjects(world) {
 
     // Player
     // TODO: Bevelling to get onto steps better
-    objects.push(new Player(world, {
+    const player = new Player(world, {
         position: SPAWN_POSITION,
         scale: { x: 0.1, y: 0.1, z: 0.1 },
-        mesh: DEBUG_PLAYER_MODEL ? mug1Mesh : pip1Mesh,
+        mesh: DEBUG_PLAYER_MODEL ? mug1Mesh.clone() : pip1Mesh.clone(),
         colliderDesc: DEBUG_PLAYER_MODEL ? RAPIER.ColliderDesc.cuboid(0.02, 0.02, 0.02) : RAPIER.ColliderDesc.cuboid(0.1, 0.09, 0.05),
         colliderProps: { friction: 0.0, restitution: 0.2, density: 1 }
-    }));
+    });
+    objects.push(player);
 
     // Ground (TODO: merge raised geometries)
     objects.push(...[
@@ -3567,6 +3570,51 @@ export async function populateWorldObjects(world) {
             lightCastShadow: true,
             onTick: function() { streetLampOnTick(sunObject, this, lampSeeds[4]); }
         }),
+    ]);
+
+    // NPCs
+    objects.push(...[
+        new NonPlayableCharacter(world, player, { // TODO: stand up straight + dialogue + name + image
+            position: { x: -34.62, y: 2.8, z: -40.48 },
+            rotation: { x: 0, y: 0, z: 0 },
+            scale: { x: 0.1, y: 0.1, z: 0.1 },
+            mesh: new THREE.Mesh(pip1Mesh.geometry.clone(), pip1Mesh.material.clone()),
+            colliderDesc: RAPIER.ColliderDesc.capsule(0, 0.1),
+            colliderProps: { friction: 1, restitution: 1, density: 10 },
+            interactionRadius: 4,
+            displayName: DISPLAYNAME_TOWN_GREETER,
+            imagePath: "/src/assets/images/pip1.jpg",
+            dialogueList: [
+                [
+                    "Hey, welcome to..\n\nOh, it's you Pip! Where have you been?",
+                    "...",
+                    "Stuffed animal?",
+                    "...",
+                    "Stuck on some guy named Matt's bed?",
+                    "...",
+                    "I, um... are you alright? Anyways... not much has happened while you were gone. I guess I'll see you around! And uh, just between the two of us ---\n\nYou smell horrible - please take a shower."
+                ],
+                [
+                    "La la la ala llalalaaa..",
+                    "Ew, what is that smell??\n\nOh, it's you again.",
+                    "Have you taken a shower yet?"
+                ],
+                [
+                    "Bro you actually smell so bad.\n\nLike, worse than Farmhand Pip. And he shovels manure all day."
+                ],
+                [
+                    "Did you know I used to be Farmhand Pip?\n\nI ended up getting an ear infection a while back and now I have trouble keeping my balance.\n\nMayor Pip reassigned me to Town Greeter.",
+                    "It's okay though, I actually like this job better. It's fun seeing all of the Pips that come through here.",
+                    "...",
+                    "I'm kind of like a Walmart door greeter?\n\nWhat on God Pip's green Pip World are you talking about?",
+                    "You've been talking nonsense since you got back into town dude. Please get some sleep - I'm actually starting to worry for you."
+                ],
+                [
+                    "Oh god, my ear is acting up again -- ",
+                    "Woaaahhowahawooawhoawoaweaewaesdfkjnasdfkjnlvsdfa"
+                ]
+            ]
+        })
     ]);
 
     // Center lines

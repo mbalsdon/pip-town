@@ -18,7 +18,7 @@ export const ROTATION_SPEED = 2.4;
 
 export const CAMERA_Y_OFFSET = 0.85;
 export const CAMERA_FOV = 60
-export const CAMERA_MIN_DISTANCE = 0;
+export const CAMERA_MIN_DISTANCE = 1;
 export const CAMERA_MAX_DISTANCE = 5;
 export const CAMERA_SMOOTHING_FACTOR = 0.25;
 export const CAMERA_COLLISION_OFFSET = 0.5;
@@ -36,3 +36,7 @@ export const CLOUDGEN_BASE_Y = 100;
 
 export const SUN_INIT_POSITION = { x: 200, y: 300, z: 300 };
 export const SUN_TICK_ROTATION = 0.0002;
+
+export const DIALOGUE_SPEED_NUM_CHARS = 2;
+
+export const DISPLAYNAME_TOWN_GREETER = "Town Greeter Pip";

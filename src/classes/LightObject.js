@@ -14,12 +14,15 @@ export class LightObject extends PhysicsObject {
         mesh = null,
         colliderDesc = null,
         colliderProps = { friction: (isStatic ? 0.0 : 0.1), restitution: 0.2, density: 1 },
-        light,
+        light = null,
         lightRelPos = { x: 0, y: 0, z: 0 },
         lightCastShadow = false,
         onTick = null,
         isCameraCollidable = false
     }) {
+        if (light === null)
+            throw new Error("LightObject::constructor - light cannot be null");
+
         super(world, {
             isStatic,
             castShadow: false, // the associated object, not the light
