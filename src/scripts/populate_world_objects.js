@@ -3,13 +3,13 @@ import * as RAPIER from '@dimforge/rapier3d-compat';
 import { PhysicsObject } from '../classes/PhysicsObject';
 import { Player } from '../classes/Player';
 import { BufferGeometryUtils, GLTFLoader } from 'three/examples/jsm/Addons.js';
-import { DEBUG, DIRECTIONAL_LIGHT_SHADOW_QUALITY, SPAWN_POSITION, CLOUDGEN_STRIDE, CLOUDGEN_RAD, CLOUDGEN_BASE_Y, SUN_TICK_ROTATION, SUN_INIT_POSITION, DEBUG_PLAYER_MODEL, DEBUG_COLLIDERS, DISPLAYNAME_TOWN_GREETER, DISPLAYNAME_GRANDPA, DISPLAYNAME_GRANDMA, DISPLAYNAME_LITTLE_PIP, DISPLAYNAME_FROG_PIP } from '../consts';
+import { DEBUG, DIRECTIONAL_LIGHT_SHADOW_QUALITY, SPAWN_POSITION, CLOUDGEN_STRIDE, CLOUDGEN_RAD, CLOUDGEN_BASE_Y, SUN_TICK_ROTATION, SUN_INIT_POSITION, DEBUG_PLAYER_MODEL, DEBUG_COLLIDERS, DISPLAYNAME_TOWN_GREETER, DISPLAYNAME_GRANDPA, DISPLAYNAME_GRANDMA, DISPLAYNAME_LITTLE_PIP, DISPLAYNAME_FROG_PIP, DISPLAYNAME_VERONICA_PIP, DISPLAYNAME_MATT_PIP, DISPLAYNAME_FLOWER_PIP, DISPLAYNAME_SLEEPY_PIP, DISPLAYNAME_MAYOR_PIP, DISPLAYNAME_FARMHAND_PIP_1, DISPLAYNAME_FARMHAND_PIP_2, DISPLAYNAME_MERCHANT_PIP_1, DISPLAYNAME_MERCHANT_PIP_2, DISPLAYNAME_BOB, DISPLAYNAME_FRISBEE, DISPLAYNAME_SUBARU, DISPLAYNAME_KURT_1, DISPLAYNAME_KURT_2, DISPLAYNAME_KURT_3, DISPLAYNAME_KURT_4, DISPLAYNAME_KURT_5, DISPLAYNAME_KURT_6, DISPLAYNAME_MR_NOODLE, DISPLAYNAME_RATHEW, DISPLAYNAME_CHEESE_PIP, DISPLAYNAME_SEALIAM, DISPLAYNAME_FOREST_PIP, DISPLAYNAME_ASTRO_PIP, DISPLAYNAME_GLASSES_PIP_1, DISPLAYNAME_LONG_HEAD_PIP, DISPLAYNAME_GLASSES_PIP_2 } from '../consts';
 import { LightObject } from '../classes/LightObject';
 import { dbgConsoleDayNightCycle } from '../debug';
 import { NonPlayableCharacter } from '../classes/NonPlayableCharacter';
 
-//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\////\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
-//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\////\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
+//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
+//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
 
 const loader = new GLTFLoader();
 async function loadGLTF(path, initialRotation) {
@@ -263,8 +263,8 @@ function tv1OnTick(tv) {
     }
 }
 
-//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\////\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
-//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\////\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
+//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
+//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
 
 export async function populateWorldObjects(world) {
     const objects = [];
@@ -275,6 +275,26 @@ export async function populateWorldObjects(world) {
     const grandma1Mesh      = await loadGLTF("/src/assets/models/npc/grandma_pip_1.glb",       { x: -Math.PI/2, y: 0, z: 0 });
     const littlePip1Mesh    = await loadGLTF("/src/assets/models/npc/little_pip_1.glb",        { x: -Math.PI/2, y: 0, z: 0 });
     const frogPip1Mesh      = await loadGLTF("/src/assets/models/npc/frog_pip_1.glb",          { x: -Math.PI/2, y: 0, z: 0 });
+    const mattPip1Mesh      = await loadGLTF("/src/assets/models/npc/matt_pip_1.glb",          { x: -Math.PI/2, y: 0, z: 0 });
+    const veronicaPip1Mesh  = await loadGLTF("/src/assets/models/npc/veronica_pip_1.glb",      { x: -Math.PI/2, y: 0, z: 0 });
+    const flowerPip1Mesh    = await loadGLTF("/src/assets/models/npc/flower_pip_1.glb",        { x: -Math.PI/2, y: 0, z: 0 });
+    const sleepyPip1Mesh    = await loadGLTF("/src/assets/models/npc/sleepy_pip_1.glb",        { x: -Math.PI/2, y: 0, z: 0 });
+    const mayorPip1Mesh     = await loadGLTF("/src/assets/models/npc/mayor_pip_1.glb",         { x: -Math.PI/2, y: 0, z: 0 });
+    const farmhandPip1Mesh  = await loadGLTF("/src/assets/models/npc/farmhand_pip_1.glb",      { x: -Math.PI/2, y: 0, z: 0 });
+    const merchantPip1Mesh  = await loadGLTF("/src/assets/models/npc/merchant_pip_1.glb",      { x: -Math.PI/2, y: 0, z: 0 });
+    const bob1Mesh          = await loadGLTF("/src/assets/models/npc/bob_1.glb",               { x: -Math.PI/2, y: 0, z: 0 });
+    const frisbee1Mesh      = await loadGLTF("/src/assets/models/npc/frisbee_1.glb",           { x: -Math.PI/2, y: 0, z: 0 });
+    const subaru1Mesh       = await loadGLTF("/src/assets/models/npc/subaru_1.glb",            { x: -Math.PI/2, y: 0, z: 0 });
+    const mrNoodle1Mesh     = await loadGLTF("/src/assets/models/npc/mr_noodle_1.glb",         { x: -Math.PI/2, y: 0, z: 0 });
+    const sealiam1Mesh      = await loadGLTF("/src/assets/models/npc/sealiam_1.glb",           { x: -Math.PI/2, y: 0, z: 0 });
+    const rathew1Mesh       = await loadGLTF("/src/assets/models/npc/rathew_1.glb",            { x: -Math.PI/2, y: 0, z: 0 });
+    const kurt1Mesh         = await loadGLTF("/src/assets/models/npc/kurt_1.glb",              { x: -Math.PI/2, y: 0, z: 0 });
+    const cheesePip1Mesh    = await loadGLTF("/src/assets/models/npc/cheese_pip_1.glb",        { x: -Math.PI/2, y: 0, z: 0 });
+    const forestPip1Mesh    = await loadGLTF("/src/assets/models/npc/forest_pip_1.glb",        { x: -Math.PI/2, y: 0, z: 0 });
+    const astroPip1Mesh     = await loadGLTF("/src/assets/models/npc/astro_pip_1.glb",         { x: -Math.PI/2, y: 0, z: 0 });
+    const glassesPip1Mesh   = await loadGLTF("/src/assets/models/npc/glasses_pip_1.glb",       { x: -Math.PI/2, y: 0, z: 0 });
+    const glassesPip2Mesh   = await loadGLTF("/src/assets/models/npc/glasses_pip_2.glb",       { x: -Math.PI/2, y: 0, z: 0 });
+    const longHeadPip1Mesh  = await loadGLTF("/src/assets/models/npc/long_head_pip_1.glb",     { x: -Math.PI/2, y: 0, z: 0 });
 
     const house1aMesh       = await loadGLTF("/src/assets/models/static/house_1a.glb",         { x: -Math.PI/2, y: 0, z: 0 });
     const house1bMesh       = await loadGLTF("/src/assets/models/static/house_1b.glb",         { x: -Math.PI/2, y: 0, z: 0 });
@@ -340,6 +360,9 @@ export async function populateWorldObjects(world) {
     const woodChair1Mesh    = await loadGLTF("/src/assets/models/dynamic/wood_chair_1.glb",    { x: -Math.PI/2, y: 0, z: 0 });
     const cheese1Mesh       = await loadGLTF("/src/assets/models/dynamic/cheese_1.glb",        { x: -Math.PI/2, y: 0, z: 0 });
     const pineapple1Mesh    = await loadGLTF("/src/assets/models/dynamic/pineapple_1.glb",     { x: -Math.PI/2, y: 0, z: 0 });
+    const flower1Mesh       = await loadGLTF("/src/assets/models/dynamic/flower_1.glb",        { x: -Math.PI/2, y: 0, z: 0 });
+    const flower2Mesh       = await loadGLTF("/src/assets/models/dynamic/flower_2.glb",        { x: -Math.PI/2, y: 0, z: 0 });
+    const flower3Mesh       = await loadGLTF("/src/assets/models/dynamic/flower_3.glb",        { x: -Math.PI/2, y: 0, z: 0 });
 
     // Player
     // TODO: Bevelling to get onto steps better
@@ -1607,7 +1630,7 @@ export async function populateWorldObjects(world) {
             mesh: plant3Mesh.clone(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(0.08, 0.04, 0.08),
             colliderProps: { friction: 1, restitution: 0, density: 20 }
-        }), 
+        })
     ]);
 
     // House 3
@@ -2049,14 +2072,6 @@ export async function populateWorldObjects(world) {
             mesh: bin1Mesh.clone(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(0.5, 0.5, 0.5),
             colliderProps: { friction: 1, restitution: 0.4, density: 5 }
-        }), new PhysicsObject(world, {
-            isStatic: false,
-            position: { x: -9.15, y: 2.62, z: 10.18 },
-            scale: { x: 0.05, y: 0.05, z: 0.05 },
-            rotation: { x: 0, y: Math.PI/4, z: 0 },
-            mesh: cheese1Mesh.clone(),
-            colliderDesc: RAPIER.ColliderDesc.cuboid(0.006, 0.006, 0.01),
-            colliderProps: { friction: 1, restitution: 0.4, density: 20 }
         }), new PhysicsObject(world, {
             isStatic: false,
             position: { x: -7.69, y: 3, z: 8.89 },
@@ -3207,7 +3222,7 @@ export async function populateWorldObjects(world) {
             scale: { x: 0.3, y: 0.3, z: 0.3 },
             mesh: new THREE.Mesh(new THREE.BoxGeometry(2, 0.3, 1.5), new THREE.MeshBasicMaterial({ transparent: true, opacity: 0 })),
             colliderDesc: RAPIER.ColliderDesc.cuboid(1, 0.15, 0.75),
-            colliderProps: { friction: 0, restitution: 1, density: 1 },
+            colliderProps: { friction: 0, restitution: 1.02, density: 1 },
             isCameraCollidable: true
         }),
 
@@ -3241,7 +3256,7 @@ export async function populateWorldObjects(world) {
             scale: { x: 0.3, y: 0.3, z: 0.3 },
             mesh: new THREE.Mesh(new THREE.BoxGeometry(2, 0.3, 1.5), new THREE.MeshBasicMaterial({ transparent: true, opacity: 0 })),
             colliderDesc: RAPIER.ColliderDesc.cuboid(1, 0.15, 0.75),
-            colliderProps: { friction: 0, restitution: 1, density: 1 },
+            colliderProps: { friction: 0, restitution: 1.02, density: 1 },
             isCameraCollidable: true
         }),
 
@@ -3627,7 +3642,7 @@ export async function populateWorldObjects(world) {
                     "Have you taken a shower yet?"
                 ],
                 [
-                    "Bro you actually smell so bad.\n\nLike, worse than Farmhand Pip. And he shovels manure all day."
+                    "Bro you actually smell so bad.\n\nLike, worse than Farmhand Pip 2. And he shovels manure all day."
                 ],
                 [
                     "Did you know I used to be Farmhand Pip?\n\nI ended up getting an ear infection a while back and now I have trouble keeping my balance.\n\nMayor Pip reassigned me to Town Greeter.",
@@ -3728,7 +3743,533 @@ export async function populateWorldObjects(world) {
                 ["Pibbit. Pibbit."],
                 ["Pibbit."]
             ]
-        })
+        }), new NonPlayableCharacter(world, player, { // FUTURE: furnish quest
+            position: { x: 25.89, y: 1.9, z: 14.47 },
+            rotation: { x: 0, y: -Math.PI/4, z: 0 },
+            scale: { x: 0.1, y: 0.1, z: 0.1 },
+            mesh: new THREE.Mesh(mattPip1Mesh.geometry.clone(), mattPip1Mesh.material.clone()),
+            colliderDesc: RAPIER.ColliderDesc.cuboid(0.1, 0.09, 0.05),
+            colliderProps: { friction: 1, restitution: 0.2, density: 10 },
+            interactionRadius: 2,
+            displayName: DISPLAYNAME_MATT_PIP,
+            imagePath: "/src/assets/images/mattPip1.jpg",
+            dialogueList: [
+                [
+                    "Hey there!",
+                    "My name is Matt Pip. We just moved into Pip Town.\n\nOh, and this is my girlfriend, Veronica Pip.",
+                    "Nice to meet you! I guess we'll see you around."
+                ],
+            ]
+        }), new NonPlayableCharacter(world, player, {
+            position: { x: 27.38, y: 1.9, z: 15.96 },
+            rotation: { x: 0, y: -Math.PI/4, z: 0 },
+            scale: { x: 0.1, y: 0.1, z: 0.1 },
+            mesh: new THREE.Mesh(veronicaPip1Mesh.geometry.clone(), veronicaPip1Mesh.material.clone()),
+            colliderDesc: RAPIER.ColliderDesc.cuboid(0.1, 0.09, 0.05),
+            colliderProps: { friction: 1, restitution: 0.2, density: 10 },
+            interactionRadius: 2,
+            displayName: DISPLAYNAME_VERONICA_PIP,
+            imagePath: "/src/assets/images/veronicaPip1.jpg",
+            dialogueList: [
+                ["ඞimg=/src/assets/images/chineseModeOn.jpg"]
+            ]
+        }), new NonPlayableCharacter(world, player, {
+            position: { x: 31.36, y: 1.9, z: 0 },
+            rotation: { x: 0, y: Math.PI*0.75, z: 0 },
+            scale: { x: 0.1, y: 0.1, z: 0.1 },
+            mesh: new THREE.Mesh(flowerPip1Mesh.geometry.clone(), flowerPip1Mesh.material.clone()),
+            colliderDesc: RAPIER.ColliderDesc.cuboid(0.1, 0.09, 0.05),
+            colliderProps: { friction: 1, restitution: 0.2, density: 10 },
+            interactionRadius: 4,
+            displayName: DISPLAYNAME_FLOWER_PIP,
+            imagePath: "/src/assets/images/flowerPip1.jpg",
+            dialogueList: [
+                [
+                    "Hey Pip! How have you been?",
+                    "...",
+                    "Oh.. I see.",
+                    "...",
+                    "I see.",
+                    "... Well, I don't really know what you're talking about, but I've just been tending to the flower garden while you were gone.",
+                    "Feel free to go take a look! I've planted some new varieties since you were last here.\n\n... Um, but maybe take a shower first before you go in. You smell like compost."
+                ],
+                ["I've been in charge of the flower garden for 11 years.\n\nI still remember the first seed I ever planted!"],
+                ["Here, have a flower!"]
+            ],
+            externalState: [flower1Mesh, flower2Mesh, flower3Mesh]
+        }), new NonPlayableCharacter(world, player, {
+            position: { x: 18.67, y: 2.25, z: 32.48 },
+            rotation: { x: Math.PI/2, y: Math.PI, z: Math.PI/4 },
+            scale: { x: 0.1, y: 0.1, z: 0.1 },
+            mesh: new THREE.Mesh(sleepyPip1Mesh.geometry.clone(), sleepyPip1Mesh.material.clone()),
+            colliderDesc: RAPIER.ColliderDesc.capsule(0.04, 0.04),
+            colliderProps: { friction: 1, restitution: 0.2, density: 10 },
+            interactionRadius: 3,
+            displayName: DISPLAYNAME_SLEEPY_PIP,
+            imagePath: "/src/assets/images/sleepyPip1.jpg",
+            dialogueList: [
+                [
+                    "*snore*",
+                    "...",
+                    "*SNORE*"
+                ],
+                [
+                    "...",
+                    "ඞnumChars=1ඞ...............",
+                    "ඞnumChars=1ඞcharSpeed=50ඞ..............................",
+                    "ඞnumChars=1ඞcharSpeed=150ඞ..............................",
+                    "ඞnumChars=1ඞcharSpeed=1000ඞ. . ."
+                ],
+                ["ඞnumChars=3ඞfontSize=6vhඞ*SNOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO\nOOOOOORRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR\nRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR\nRRRREEEEEEEEEEEEEEEEEEEEEEEEEEEE*"],
+                ["*snore*"]
+            ]
+        }), new NonPlayableCharacter(world, player, {
+            position: { x: -14.5, y: 6.9, z: 9.5 },
+            rotation: { x: 0, y: -Math.PI*0.75, z: 0 },
+            scale: { x: 0.1, y: 0.1, z: 0.1 },
+            mesh: new THREE.Mesh(mayorPip1Mesh.geometry.clone(), mayorPip1Mesh.material.clone()),
+            colliderDesc: RAPIER.ColliderDesc.cuboid(0.1, 0.09, 0.05),
+            colliderProps: { friction: 1, restitution: 0.2, density: 5 },
+            interactionRadius: 3,
+            displayName: DISPLAYNAME_MAYOR_PIP,
+            imagePath: "/src/assets/images/mayorPip1.jpg",
+            dialogueList: [
+                [
+                    "Oh, hey Pip. Glad to see you back in town!",
+                    "I was just admiring the view. Isn't Pip Town just great?"
+                ],
+                [
+                    "Being Mayor Pip is tough work.\n\n... I mean, my duties are easy enough, but it's really hard to keep the hat from falling off.",
+                    "...",
+                    "Why don't I take it off?\n\nBut then how would Pips tell us apart?"
+                ]
+            ]
+        }), new NonPlayableCharacter(world, player, {
+            position: { x: 0, y: 3.11, z: -43.25 },
+            rotation: { x: 0, y: -Math.PI/2, z: 0 },
+            scale: { x: 0.08, y: 0.08, z: 0.08 },
+            mesh: new THREE.Mesh(farmhandPip1Mesh.geometry.clone(), farmhandPip1Mesh.material.clone()),
+            colliderDesc: RAPIER.ColliderDesc.cuboid(0.05, 0.06, 0.025),
+            colliderProps: { friction: 1, restitution: 0.2, density: 5 },
+            interactionRadius: 3,
+            displayName: DISPLAYNAME_FARMHAND_PIP_1,
+            imagePath: "/src/assets/images/farmhandPip1-1.jpg",
+            dialogueList: [
+                [
+                    "ඞnumChars=1ඞcharSpeed=10ඞdoodeooeoeoedo ddoeooeoodedodo\n\ndoo doo doo doo dee dee da doo da dee...",
+                    "Oh, hey!",
+                    "I'm taking a break right now.",
+                    "I work a lot faster than Farmhand Pip 2, but I get tired way quicker."
+                ],
+                [
+                    "ඞcharSpeed=50ඞfontSize=5vhඞLALAALalalaalaa",
+                    "ඞnumChars=3ඞfontSize=2vhඞlalalaalalala\n\nlalalalaalalalala\n\npipipipipipppiiii doodododo"
+                ],
+                [
+                    "Do you like my singing?"
+                ],
+                [
+                    "You shouldn't make Farmhand Pip 2 mad, by the way.\n\nHe gets really grumpy when he's tired."
+                ]
+            ]
+        }), new NonPlayableCharacter(world, player, {
+            position: { x: 16.42, y: 1.91, z: -31.21 },
+            rotation: { x: 0, y: Math.PI/6, z: 0 },
+            scale: { x: 0.14, y: 0.14, z: 0.14 },
+            mesh: new THREE.Mesh(farmhandPip1Mesh.geometry.clone(), farmhandPip1Mesh.material.clone()),
+            colliderDesc: RAPIER.ColliderDesc.cuboid(0.15, 0.19, 0.12),
+            colliderProps: { friction: 1, restitution: 0.2, density: 20 },
+            interactionRadius: 3,
+            displayName: DISPLAYNAME_FARMHAND_PIP_2,
+            imagePath: "/src/assets/images/farmhandPip1-2.jpg",
+            dialogueList: [
+                [
+                    "ඞnumChars=1ඞcharSpeed=150ඞHi there.\n\nI'm Farmhand Pip 2.",
+                    "...",
+                    "ඞnumChars=1ඞcharSpeed=150ඞWhere's Farmhand Pip 1?\n\nShe's on the bench over there taking a break.\n\nI work a lot slower than her, but she gets tired faster.",
+                    "...",
+                    "ඞnumChars=1ඞcharSpeed=150ඞI talk too slow?\n\n...",
+                    "ඞnumChars=10ඞfontSize=2vhඞWOULDYOUPREFERITIFISPOKELIKETHIS?\nI'VEBEENWORKINGINTHEFIELDALLDAYSOMAYBECUTMESOMESLACKHUH?\nHEYWHYDOYOULISTENSOSLOW?\nWHYDOYOULISTENSOSLOW?\nYEAH,THAT'SWHATITHOUGHT.\nOHANDBYTHEWAY,YOUSMELLLIKEPOOP.\nHOWABOUTYOUGOTAKEASHOWERINSTEADOFBOTHERINGME?"
+                ],
+                ["ඞnumChars=1ඞcharSpeed=150ඞCould you please go away?"],
+                ["(You poke Farmhand Pip 2. He glances at you angrily.)"],
+                ["(You poke Farmhand Pip 2 again.)"],
+                ["(You poke Farmhand Pip 2 again.)"],
+                ["ඞnumChars=1ඞcharSpeed=150ඞI'm working here!"],
+                ["(You poke Farmhand Pip 2 for the fifth time.)"],
+                ["ඞnumChars=1ඞcharSpeed=150ඞLast chance, Pip!"],
+                [
+                    "ඞcharTick=falseඞ(Farmhand Pip 2 picks you up and throws you with all his might!)"
+                ]
+            ]
+        }), new NonPlayableCharacter(world, player, {
+            position: { x: -7.43, y: 1.4, z: -6.38 },
+            rotation: { x: 0, y: Math.PI/2, z: 0 },
+            scale: { x: 0.1, y: 0.1, z: 0.1 },
+            mesh: new THREE.Mesh(merchantPip1Mesh.geometry.clone(), merchantPip1Mesh.material.clone()),
+            colliderDesc: RAPIER.ColliderDesc.cuboid(0.1, 0.09, 0.05),
+            colliderProps: { friction: 1, restitution: 0.2, density: 5 },
+            interactionRadius: 5,
+            displayName: DISPLAYNAME_MERCHANT_PIP_1,
+            imagePath: "/src/assets/images/merchantPip1-1.jpg",
+            dialogueList: [
+                [
+                    "Hey there!",
+                    "I don't really have anything for sale right now.",
+                    "...",
+                    "Maybe if I stand here for long enough, something to sell will appear."
+                ]
+            ]
+        }), new NonPlayableCharacter(world, player, {
+            position: { x: -5, y: 1.4, z: -14.5 },
+            rotation: { x: 0, y: Math.PI/4, z: 0 },
+            scale: { x: 0.1, y: 0.1, z: 0.1 },
+            mesh: new THREE.Mesh(merchantPip1Mesh.geometry.clone(), merchantPip1Mesh.material.clone()),
+            colliderDesc: RAPIER.ColliderDesc.cuboid(0.1, 0.09, 0.05),
+            colliderProps: { friction: 1, restitution: 0.2, density: 5 },
+            interactionRadius: 5,
+            displayName: DISPLAYNAME_MERCHANT_PIP_2,
+            imagePath: "/src/assets/images/merchantPip1-2.jpg",
+            dialogueList: [
+                [
+                    "Hello!",
+                    "There's nothing for sale right now.",
+                    "...",
+                    "I'm, uh...\n\nI'm not really sure what to sell.",
+                    "I usually just sell whatever Merchant Pip 1 sells to compete with him.\n\nBut he's not selling anything right now...",
+                    "...",
+                    "Okay, well... Bye!"
+                ]
+            ]
+        }), new NonPlayableCharacter(world, player, {
+            position: { x: 10.04, y: 4, z: -17.29 },
+            rotation: { x: 0, y: Math.PI/2, z: 0 },
+            scale: { x: 0.05, y: 0.05, z: 0.05 },
+            mesh: new THREE.Mesh(kurt1Mesh.geometry.clone(), kurt1Mesh.material.clone()),
+            colliderDesc: RAPIER.ColliderDesc.cuboid(0.03, 0.03, 0.02),
+            colliderProps: { friction: 1, restitution: 0.2, density: 5 },
+            interactionRadius: 4,
+            displayName: DISPLAYNAME_KURT_1,
+            imagePath: "/src/assets/images/kurt1-1.jpg",
+            dialogueList: [["Caw!"], ["Caw!"]]
+        }), new NonPlayableCharacter(world, player, {
+            position: { x: -12.28, y: 19.8, z: 16.72 },
+            scale: { x: 0.05, y: 0.05, z: 0.05 },
+            mesh: new THREE.Mesh(kurt1Mesh.geometry.clone(), kurt1Mesh.material.clone()),
+            colliderDesc: RAPIER.ColliderDesc.cuboid(0.03, 0.03, 0.02),
+            colliderProps: { friction: 1, restitution: 0.2, density: 5 },
+            interactionRadius: 3,
+            displayName: DISPLAYNAME_KURT_2,
+            imagePath: "/src/assets/images/kurt1-2.jpg",
+            dialogueList: [
+                ["Caw caw!"],
+                ["Caw!"],
+                ["..."],
+                ["..."],
+                ["ඞnumChars=1ඞcharSpeed=100ඞ..."],
+                ["What, you thought I would fly away?\n\nYou think I'm just another Kurt?", "I'm not like the others, you know."],
+                ["ඞnumChars=1ඞcharSpeed=100ඞ..."],
+                ["ඞnumChars=1ඞcharSpeed=250ඞ..."],
+                ["What are you waiting around for?"],
+                ["ඞnumChars=1ඞcharSpeed=500ඞ..."],
+                ["Okay, you got me."],
+                ["ඞfontSize=7.5vhඞCAW!"]
+            ]
+        }), new NonPlayableCharacter(world, player, {
+            position: { x: -10.76, y: 20.08, z: 15.22 },
+            scale: { x: 0.05, y: 0.05, z: 0.05 },
+            mesh: new THREE.Mesh(kurt1Mesh.geometry.clone(), kurt1Mesh.material.clone()),
+            colliderDesc: RAPIER.ColliderDesc.cuboid(0.03, 0.03, 0.02),
+            colliderProps: { friction: 1, restitution: 0.2, density: 5 },
+            interactionRadius: 3,
+            displayName: DISPLAYNAME_KURT_3,
+            imagePath: "/src/assets/images/kurt1-3.jpg",
+            dialogueList: [["Caw!"], ["Caw! Caw!"]]
+        }), new NonPlayableCharacter(world, player, {
+            position: { x: -36.75, y: 1.1, z: -31 },
+            scale: { x: 0.05, y: 0.05, z: 0.05 },
+            rotation: { x: 0, y: -Math.PI/2, z: 0 },
+            mesh: new THREE.Mesh(kurt1Mesh.geometry.clone(), kurt1Mesh.material.clone()),
+            colliderDesc: RAPIER.ColliderDesc.cuboid(0.03, 0.03, 0.02),
+            colliderProps: { friction: 1, restitution: 0.2, density: 5 },
+            interactionRadius: 3,
+            displayName: DISPLAYNAME_KURT_4,
+            imagePath: "/src/assets/images/kurt1-4.jpg",
+            dialogueList: [["Caw!"], ["Caw!"], ["Caw!"]],
+        }), new NonPlayableCharacter(world, player, {
+            position: { x: 2.65, y: 1.1, z: 21.17 },
+            scale: { x: 0.05, y: 0.05, z: 0.05 },
+            rotation: { x: 0, y: Math.PI/4, z: 0 },
+            mesh: new THREE.Mesh(kurt1Mesh.geometry.clone(), kurt1Mesh.material.clone()),
+            colliderDesc: RAPIER.ColliderDesc.cuboid(0.03, 0.03, 0.02),
+            colliderProps: { friction: 1, restitution: 0.8, density: 5 },
+            interactionRadius: 3,
+            displayName: DISPLAYNAME_KURT_5,
+            imagePath: "/src/assets/images/kurt1-5.jpg",
+            dialogueList: [["ඞfontSize=7.5vhඞnumChars=1ඞcharSpeed=100ඞC A W . . ."]]
+        }), new NonPlayableCharacter(world, player, {
+            position: { x: 32.28, y: 3.3, z: 34.30 },
+            scale: { x: 0.05, y: 0.05, z: 0.05 },
+            rotation: { x: 0, y: Math.PI/4, z: 0 },
+            mesh: new THREE.Mesh(kurt1Mesh.geometry.clone(), kurt1Mesh.material.clone()),
+            colliderDesc: RAPIER.ColliderDesc.cuboid(0.03, 0.03, 0.02),
+            colliderProps: { friction: 1, restitution: 0.8, density: 5 },
+            interactionRadius: 3,
+            displayName: DISPLAYNAME_KURT_6,
+            imagePath: "/src/assets/images/kurt1-6.jpg",
+            dialogueList: [["Caw! Caw! Caw!"], ["Caw! Caw!"], ["Caw!"]],
+        }), new NonPlayableCharacter(world, player, {
+            position: { x: -7.91, y: 2.5, z: 44.20 },
+            rotation: { x: 0, y: -Math.PI/2, z: 0 },
+            scale: { x: 0.05, y: 0.05, z: 0.05 },
+            mesh: new THREE.Mesh(bob1Mesh.geometry.clone(), bob1Mesh.material.clone()),
+            colliderDesc: RAPIER.ColliderDesc.cuboid(0.025, 0.035, 0.025),
+            colliderProps: { friction: 1, restitution: 0.2, density: 15 },
+            interactionRadius: 5,
+            displayName: DISPLAYNAME_BOB,
+            imagePath: "/src/assets/images/bob1.jpg",
+            dialogueList: [
+                [
+                    "ඞnumChars=1ඞcharSpeed=100ඞTrees... Juicy trees...",
+                    "...",
+                    "Oh, Pip! What's up?\n\nSorry, I didn't notice you approaching. Those trees over there just look so... scrumptious.",
+                    "What I would give to just get my teeth on a piece of...",
+                    "ඞfontSize=4vhඞnumChars=1ඞcharSpeed=100ඞrough...",
+                    "ඞfontSize=5vhඞnumChars=1ඞcharSpeed=100ඞgolden brown...",
+                    "ඞfontSize=6vhඞnumChars=1ඞcharSpeed=100ඞbark...",
+                    "...",
+                    "Ah, uh... Sorry.\n\nMayor Pip asked me to hold off on my logging efforts until next season so that the forest could regrow a bit.",
+                    "I kind of went overboard building the house for that Pip couple that just moved in.\n\nIf I could just stay off the bark for a few days, I should be fine."
+                ],
+                [
+                    "By the way, uh...",
+                    "You kind of smell bad.\n\nMaybe take a dip in the river when you find the time?"
+                ],
+                [
+                    "Do you think you would notice if somebody had nibbled a bit on your floorboards?",
+                    "I'm just uhh, asking for a friend..."
+                ]
+            ]
+        }), new NonPlayableCharacter(world, player, {
+            position: { x: -28.6, y: 1.46, z: -6.7 },
+            rotation: { x: 0, y: 0, z: 0 },
+            scale: { x: 0.05, y: 0.05, z: 0.05 },
+            mesh: new THREE.Mesh(frisbee1Mesh.geometry.clone(), frisbee1Mesh.material.clone()),
+            colliderDesc: RAPIER.ColliderDesc.cuboid(0.025, 0.048, 0.025),
+            colliderProps: { friction: 1, restitution: 0.2, density: 15 },
+            interactionRadius: 5,
+            displayName: DISPLAYNAME_FRISBEE,
+            imagePath: "/src/assets/images/frisbee1.jpg",
+            dialogueList: [
+                [
+                    "Hey Pip! Long time no see!",
+                    "Subaru and I are just hanging out.",
+                    "We saw a frog in the forest over there. It looked really strange.\n\nHave you seen it?\n\nWe've been sitting here for an hour waiting for it to come back...",
+                    "By the way, Subaru wanted to show you something.\n\nYou should talk to her if you haven't yet."
+                ]
+            ]
+        }), new NonPlayableCharacter(world, player, {
+            position: { x: -30.41, y: 1.1, z: -6.54 },
+            rotation: { x: 0, y: 0, z: 0 },
+            scale: { x: 0.05, y: 0.05, z: 0.05 },
+            mesh: new THREE.Mesh(subaru1Mesh.geometry.clone(), subaru1Mesh.material.clone()),
+            colliderDesc: RAPIER.ColliderDesc.cuboid(0.025, 0.03, 0.025),
+            colliderProps: { friction: 1, restitution: 0.2, density: 15 },
+            interactionRadius: 2,
+            displayName: DISPLAYNAME_SUBARU,
+            imagePath: "/src/assets/images/subaru1.jpg",
+            dialogueList: [
+                [
+                    "(Subaru stares at you intently.)",
+                    "ඞnumChars=1ඞcharSpeed=200ඞ. . .",
+                ],
+                ["(She lets out an incredibly loud fart. The foul odor clings to you.)",]
+            ]
+        }), new NonPlayableCharacter(world, player, {
+            position: { x: 36.31, y: 2.77, z: 3.61 },
+            rotation: { x: 0, y: Math.PI/4, z: 0 },
+            scale: { x: 0.1, y: 0.1, z: 0.1 },
+            mesh: new THREE.Mesh(mrNoodle1Mesh.geometry.clone(), mrNoodle1Mesh.material.clone()),
+            colliderDesc: RAPIER.ColliderDesc.capsule(0.177, 0.05),
+            colliderProps: { friction: 1, restitution: 0, density: 999999999 },
+            interactionRadius: 4,
+            displayName: DISPLAYNAME_MR_NOODLE,
+            imagePath: "/src/assets/images/mrNoodle1.jpg",
+            dialogueList: [
+                [
+                    "Help!! Help!!!",
+                    "Pip!! Hey!",
+                    "I don't know how I got stuck here!\n\nCan you help me out??",
+                ],
+                ["My back is... so sore..."],
+                ["Oh my gosh, thanks so much!"]
+            ],
+            onTick: function() {
+                const dx = this._position.x - this._spawnPosition.x;
+                const dy = this._position.y - this._spawnPosition.y;
+                const dz = this._position.z - this._spawnPosition.z;
+                this._sufficientlyMoved = (dx*dx + dy*dy + dz*dz) >= 75;
+            }
+        }), new NonPlayableCharacter(world, player, {
+            position: { x: -4.26, y: 4.57, z: 8.6 },
+            rotation: { x: 0, y: -Math.PI/2, z: 0 },
+            scale: { x: 0.03, y: 0.03, z: 0.03 },
+            mesh: new THREE.Mesh(rathew1Mesh.geometry.clone(), rathew1Mesh.material.clone()),
+            colliderDesc: RAPIER.ColliderDesc.cuboid(0.005, 0.005, 0.01),
+            colliderProps: { friction: 1, restitution: 0.2, density: 5 },
+            interactionRadius: 4,
+            displayName: DISPLAYNAME_RATHEW,
+            imagePath: "/src/assets/images/rathew1.jpg",
+            dialogueList: [
+                [
+                    "ඞfontSize=1.5vhඞcharSpeed=50ඞshhhhhhh!",
+                    "ඞfontSize=1.5vhඞcharSpeed=50ඞquiet, pip! i've been tracking this cheese down for days.\n\ndon't move an inch! it doesn't notice me..."
+                ],
+                ["ඞfontSize=1.5vhඞcharSpeed=50ඞi'm preparing for my penultimate attack....\n\ni just need the perfect moment...!"],
+                ["ඞfontSize=1.5vhඞnumChars=1ඞcharSpeed=25ඞthree...."],
+                ["ඞfontSize=1.5vhඞnumChars=1ඞcharSpeed=50ඞtwo......."],
+                ["ඞfontSize=1.5vhඞnumChars=1ඞcharSpeed=75ඞone............!"],
+                ["ඞfontSize=3.5vhඞcharTick=falseඞYARGGGGGH!!!!!! THE TIME IS NIGH!!!!!!\n\nYOU'RE MINE!!!"],
+                ["Ow......."]
+            ]
+        }), new NonPlayableCharacter(world, player, {
+            position: { x: -9.15, y: 2.65, z: 10.18 },
+            scale: { x: 0.02, y: 0.02, z: 0.02 },
+            mesh: new THREE.Mesh(cheesePip1Mesh.geometry.clone(), cheesePip1Mesh.material.clone()),
+            colliderDesc: RAPIER.ColliderDesc.capsule(0, 0.003),
+            colliderProps: { friction: 1, restitution: 0.2, density: 15 },
+            interactionRadius: 3,
+            displayName: DISPLAYNAME_CHEESE_PIP,
+            imagePath: "/src/assets/images/cheesePip1.jpg",
+            dialogueList: [
+                [
+                    "Heh, that stupid rat has been chasing me for days.",
+                    "I'll be blue before he ever catches me!"
+                ]
+            ]
+        }), new NonPlayableCharacter(world, player, {
+            position: { x: 8.64, y: -0.29, z: 40.21 },
+            scale: { x: 0.1, y: 0.1, z: 0.1 },
+            rotation: { x: 0, y: Math.PI/2, z: 0 },
+            mesh: new THREE.Mesh(sealiam1Mesh.geometry.clone(), sealiam1Mesh.material.clone()),
+            colliderDesc: RAPIER.ColliderDesc.capsule(0, 0.05),
+            colliderProps: { friction: 1, restitution: 1, density: 15 },
+            interactionRadius: 4,
+            displayName: DISPLAYNAME_SEALIAM,
+            imagePath: "/src/assets/images/sealiam1.jpg",
+            dialogueList: [
+                [
+                    "Blubbb, blubb..",
+                    "Hey Pip!",
+                    "Check out my swimming skills!"
+                ]
+            ]
+        }), new NonPlayableCharacter(world, player, {
+            position: { x: -39.49, y: 1.40, z: 34.83 },
+            scale: { x: 0.1, y: 0.1, z: 0.1 },
+            rotation: { x: 0, y: -Math.PI/2, z: 0 },
+            mesh: new THREE.Mesh(forestPip1Mesh.geometry.clone(), forestPip1Mesh.material.clone()),
+            colliderDesc: RAPIER.ColliderDesc.cuboid(0.1, 0.09, 0.05),
+            colliderProps: { friction: 1, restitution: 0.2, density: 10 },
+            interactionRadius: 3,
+            displayName: DISPLAYNAME_FOREST_PIP,
+            imagePath: "/src/assets/images/forestPip1.jpg",
+            dialogueList: [
+                [
+                    "Hi there!",
+                    "I'm foraging for apples right now.\n\nHave you seen any?"
+                ],
+                [
+                    "My sword isn't actually real.",
+                    "It's pretty sick though, isn't it?"
+                ],
+                [
+                    "Sometimes I get scared out here in the forest.\n\nBut then I remember that Pips are apex predators!",
+                    "Grahhhhh!"
+                ]
+            ]
+        }), new NonPlayableCharacter(world, player, {
+            position: { x: 44.09, y: 1.53, z: 21.09 },
+            scale: { x: 0.1, y: 0.1, z: 0.1 },
+            rotation: { x: 0, y: Math.PI*1.2, z: 0 },
+            mesh: new THREE.Mesh(astroPip1Mesh.geometry.clone(), astroPip1Mesh.material.clone()),
+            colliderDesc: RAPIER.ColliderDesc.cuboid(0.1, 0.09, 0.05),
+            colliderProps: { friction: 1, restitution: 0.8, density: 10 },
+            interactionRadius: 3,
+            displayName: DISPLAYNAME_ASTRO_PIP,
+            imagePath: "/src/assets/images/astroPip1.jpg",
+            dialogueList: [
+                [
+                    "Since I was\n\na little Pip,",
+                    "I always dreamed\n\nof being a space Pip",
+                    "This mortal realm\n\nnever satisfied me,",
+                    "the way the sun and moon do.\n\nAnd so,",
+                    "I shall reach the heavens,\n\nand perhaps",
+                    "cleanse my decrepit Pip soul\n\nunder the forgiving gaze,",
+                    "of the great God Pip In the Sky."
+                ],
+                ["ඞfontSize=6vhඞTHREE..."],
+                ["ඞfontSize=6vhඞTWO..."],
+                ["ඞfontSize=6vhඞONE..."],
+                ["ඞfontSize=6vhඞcharTick=falseඞLIFTOFF!!!!"],
+            ]
+        }), new NonPlayableCharacter(world, player, {
+            position: { x: -3.27, y: 2.65, z: 1.15 },
+            scale: { x: 0.1, y: 0.1, z: 0.1 },
+            rotation: { x: 0, y: Math.PI*0.6, z: 0 },
+            mesh: new THREE.Mesh(glassesPip1Mesh.geometry.clone(), glassesPip1Mesh.material.clone()),
+            colliderDesc: RAPIER.ColliderDesc.cuboid(0.1, 0.09, 0.05),
+            colliderProps: { friction: 1, restitution: 0.2, density: 15 },
+            interactionRadius: 3,
+            displayName: DISPLAYNAME_GLASSES_PIP_1,
+            imagePath: "/src/assets/images/glassesPip1.jpg",
+            dialogueList: [
+                [
+                    "What do you think of my glasses?",
+                    "Me personally, I think they're the coolest in Pip Town."
+                ],
+                [
+                    "See that Pip over there?",
+                    "His glasses are so last season.\n\nThe saddest part is I don't think he even knows."
+                ]
+            ]
+        }), new NonPlayableCharacter(world, player, {
+            position: { x: 17.13, y: 2.65, z: -10.42 },
+            scale: { x: 0.1, y: 0.1, z: 0.1 },
+            rotation: { x: 0, y: -Math.PI*0.3, z: 0 },
+            mesh: new THREE.Mesh(glassesPip2Mesh.geometry.clone(), glassesPip2Mesh.material.clone()),
+            colliderDesc: RAPIER.ColliderDesc.cuboid(0.1, 0.09, 0.05),
+            colliderProps: { friction: 1, restitution: 0.2, density: 15 },
+            interactionRadius: 3,
+            displayName: DISPLAYNAME_GLASSES_PIP_2,
+            imagePath: "/src/assets/images/glassesPip2.jpg",
+            dialogueList: [
+                [
+                    "Hey!",
+                    "Check out my sick glasses.\n\nThey're so sick."
+                ],
+                [
+                    "See that Pip over there?",
+                    "Her glasses are nice, but they just don't fit her style at all -- nuh uh.\n\nThe funny part is she probably thinks they look great on her."
+                ]
+            ]
+        }), new NonPlayableCharacter(world, player, {
+            position: { x: 22.6, y: 2.65, z: 6.83 },
+            scale: { x: 0.1, y: 0.1, z: 0.1 },
+            rotation: { x: 0, y: -Math.PI/1.7, z: 0 },
+            mesh: new THREE.Mesh(longHeadPip1Mesh.geometry.clone(), longHeadPip1Mesh.material.clone()),
+            colliderDesc: RAPIER.ColliderDesc.cuboid(0.1, 0.09, 0.05),
+            colliderProps: { friction: 1, restitution: 0.2, density: 15 },
+            interactionRadius: 3,
+            displayName: DISPLAYNAME_LONG_HEAD_PIP,
+            imagePath: "/src/assets/images/longHeadPip1.jpg",
+            dialogueList: [
+                [
+                    "Those two Pips over there are both obssessed with who has the nicer glasses.",
+                    "I think they should just kiss already."
+                ]
+            ]
+        }),
     ]);
 
     // Center lines
@@ -3747,5 +4288,5 @@ export async function populateWorldObjects(world) {
     }
 }
 
-//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\////\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
-//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\////\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
+//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
+//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//

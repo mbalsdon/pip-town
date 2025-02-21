@@ -2,11 +2,11 @@
 import * as THREE from 'three';
 import RAPIER from '@dimforge/rapier3d-compat';
 import { PhysicsObject } from './PhysicsObject';
-import { LAYER_CAMERA_COLLISION, CAMERA_COLLISION_OFFSET, CAMERA_SMOOTHING_FACTOR, CAMERA_Y_OFFSET, DEBUG, INIT_CHARACTER_ROTATION, JUMP_FORCE, JUMP_RAY_DISTANCE, MOVE_SPEED, ROTATION_SPEED, SPAWN_POSITION, CAMERA_COLLISION_ON } from '../consts';
+import { LAYER_CAMERA_COLLISION, CAMERA_COLLISION_OFFSET, CAMERA_SMOOTHING_FACTOR, CAMERA_Y_OFFSET, DEBUG, INIT_CHARACTER_ROTATION, JUMP_FORCE, JUMP_RAY_DISTANCE, MOVE_SPEED, ROTATION_SPEED, SPAWN_POSITION, CAMERA_COLLISION_ON, DEBUG_COLLIDERS } from '../consts';
 import { dbgAssertObject, dbgAxesHelper, dbgConsoleCharacter, dbgRay } from '../debug';
 
-//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\////\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
-//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\////\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
+//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
+//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
 
 export class Player extends PhysicsObject {
     constructor(world, {
@@ -50,6 +50,9 @@ export class Player extends PhysicsObject {
         this._camRaycaster = new THREE.Raycaster();
         this._camRaycaster.layers.set(LAYER_CAMERA_COLLISION);
 
+        this._prevCamPos = new THREE.Vector3();
+        this._prevCamTarget = new THREE.Vector3();
+
         this.rigidBody.restrictRotations(false, true, false);
 
         this.collider.setRestitutionCombineRule(3);
@@ -75,7 +78,7 @@ export class Player extends PhysicsObject {
             else if (this.keys.hasOwnProperty(k)) this.keys[k] = false;
         });
 
-        if (DEBUG) {
+        if (DEBUG_COLLIDERS) {
             dbgAxesHelper(this.mesh);
         }
     }
@@ -167,13 +170,15 @@ export class Player extends PhysicsObject {
         // Parent class
         super.update();
 
-        if (DEBUG) {
+        if (DEBUG_COLLIDERS) {
             dbgRay(this.world.scene, this._jumpRay.origin, this._jumpRay.dir, JUMP_RAY_DISTANCE);
+        }
+        if (DEBUG) {
             dbgConsoleCharacter(this.mesh)
             dbgAssertObject(this.mesh, this.rigidBody);
         }
     }
 }
 
-//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\////\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
-//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\////\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
+//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
+//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
