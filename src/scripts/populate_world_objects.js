@@ -3,7 +3,7 @@ import * as RAPIER from '@dimforge/rapier3d-compat';
 import { PhysicsObject } from '../classes/PhysicsObject';
 import { Player } from '../classes/Player';
 import { BufferGeometryUtils, GLTFLoader } from 'three/examples/jsm/Addons.js';
-import { DEBUG, DIRECTIONAL_LIGHT_SHADOW_QUALITY, SPAWN_POSITION, CLOUDGEN_STRIDE, CLOUDGEN_RAD, CLOUDGEN_BASE_Y, SUN_TICK_ROTATION, SUN_INIT_POSITION, DEBUG_PLAYER_MODEL, DEBUG_COLLIDERS, DISPLAYNAME_TOWN_GREETER } from '../consts';
+import { DEBUG, DIRECTIONAL_LIGHT_SHADOW_QUALITY, SPAWN_POSITION, CLOUDGEN_STRIDE, CLOUDGEN_RAD, CLOUDGEN_BASE_Y, SUN_TICK_ROTATION, SUN_INIT_POSITION, DEBUG_PLAYER_MODEL, DEBUG_COLLIDERS, DISPLAYNAME_TOWN_GREETER, DISPLAYNAME_GRANDPA, DISPLAYNAME_GRANDMA, DISPLAYNAME_LITTLE_PIP, DISPLAYNAME_FROG_PIP } from '../consts';
 import { LightObject } from '../classes/LightObject';
 import { dbgConsoleDayNightCycle } from '../debug';
 import { NonPlayableCharacter } from '../classes/NonPlayableCharacter';
@@ -148,8 +148,8 @@ function generateGrassPatch(dim) {
     return grassesList;
 }
 
-function cloudOnTick(inst, speed) {
-    const pos = inst.getPosition();
+function cloudOnTick(cloud, speed) {
+    const pos = cloud.getPosition();
     const newPos = { x: pos.x, y: pos.y, z: pos.z };
     if (pos.x > CLOUDGEN_RAD) {
         newPos.x -= (CLOUDGEN_RAD*2);
@@ -160,7 +160,7 @@ function cloudOnTick(inst, speed) {
 
     newPos.x += speed;
 
-    inst.setPosition(newPos.x, newPos.y, newPos.z);
+    cloud.setPosition(newPos.x, newPos.y, newPos.z);
 }
 
 function dayNightOnTick(sun, moon, hemi) {
@@ -244,6 +244,25 @@ function streetLampOnTick(sun, lamp, seed) {
     }
 }
 
+let tvTick = 0;
+let tvState = { on: false };
+function tv1OnTick(tv) {
+    if (!tvState.on) return;
+    tvTick++;
+    if (tvTick > 3) {
+        const color = Math.random() * 0xffffff;
+        const intensity = Math.random();
+
+        tv.mesh.material.emissive.setHex(color);
+        tv.mesh.material.emissiveIntensity = intensity;
+
+        tv.light.color.setHex(color);
+        tv.light.intensity = intensity * 10;
+
+        tvTick = 0;
+    }
+}
+
 //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\////\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
 //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\////\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
 
@@ -251,72 +270,76 @@ export async function populateWorldObjects(world) {
     const objects = [];
 
     // Load external models
-    const pip1Mesh          = await loadGLTF("/src/assets/statics/pip_1.glb",            { x: -Math.PI/2, y: 0, z: 0 });
+    const pip1Mesh          = await loadGLTF("/src/assets/models/npc/pip_1.glb",               { x: -Math.PI/2, y: 0, z: 0 });
+    const grandpa1Mesh      = await loadGLTF("/src/assets/models/npc/grandpa_pip_1.glb",       { x: -Math.PI/2, y: 0, z: 0 });
+    const grandma1Mesh      = await loadGLTF("/src/assets/models/npc/grandma_pip_1.glb",       { x: -Math.PI/2, y: 0, z: 0 });
+    const littlePip1Mesh    = await loadGLTF("/src/assets/models/npc/little_pip_1.glb",        { x: -Math.PI/2, y: 0, z: 0 });
+    const frogPip1Mesh      = await loadGLTF("/src/assets/models/npc/frog_pip_1.glb",          { x: -Math.PI/2, y: 0, z: 0 });
 
-    const house1aMesh       = await loadGLTF("/src/assets/statics/house_1a.glb",         { x: -Math.PI/2, y: 0, z: 0 });
-    const house1bMesh       = await loadGLTF("/src/assets/statics/house_1b.glb",         { x: -Math.PI/2, y: 0, z: 0 });
-    const house1cMesh       = await loadGLTF("/src/assets/statics/house_1c.glb",         { x: -Math.PI/2, y: 0, z: 0 });
-    const house2Mesh        = await loadGLTF("/src/assets/statics/house_2.glb",          { x: -Math.PI/2, y: 0, z: 0 });
-    const house3Mesh        = await loadGLTF("/src/assets/statics/house_3.glb",          { x: -Math.PI/2, y: 0, z: 0 });
-    const house4Mesh        = await loadGLTF("/src/assets/statics/house_4.glb",          { x: -Math.PI/2, y: 0, z: 0 });
-    const tree1Mesh         = await loadGLTF("/src/assets/statics/tree_1.glb",           { x: -Math.PI/2, y: 0, z: 0 });
-    const tree2Mesh         = await loadGLTF("/src/assets/statics/tree_2.glb",           { x: -Math.PI/2, y: 0, z: 0 });
-    const tree3Mesh         = await loadGLTF("/src/assets/statics/tree_3.glb",           { x: -Math.PI/2, y: 0, z: 0 });
-    const fence1Mesh        = await loadGLTF("/src/assets/statics/fence_1.glb",          { x: -Math.PI/2, y: 0, z: 0 });
-    const stall1Mesh        = await loadGLTF("/src/assets/statics/marketstall_1.glb",    { x: -Math.PI/2, y: 0, z: 0 });
-    const stall2Mesh        = await loadGLTF("/src/assets/statics/marketstall_2.glb",    { x: -Math.PI/2, y: 0, z: 0 });
-    const statue1Mesh       = await loadGLTF("/src/assets/statics/statue_1.glb",         { x: -Math.PI/2, y: 0, z: 0 });
-    const streetlamp1Mesh   = await loadGLTF("/src/assets/statics/streetlamp_1.glb",     { x: -Math.PI/2, y: 0, z: 0 });
-    const lamp1Mesh         = await loadGLTF("/src/assets/statics/lamp_1.glb",           { x: -Math.PI/2, y: 0, z: 0 });
-    const lamp2Mesh         = await loadGLTF("/src/assets/statics/lamp_2.glb",           { x: -Math.PI/2, y: 0, z: 0 });
+    const house1aMesh       = await loadGLTF("/src/assets/models/static/house_1a.glb",         { x: -Math.PI/2, y: 0, z: 0 });
+    const house1bMesh       = await loadGLTF("/src/assets/models/static/house_1b.glb",         { x: -Math.PI/2, y: 0, z: 0 });
+    const house1cMesh       = await loadGLTF("/src/assets/models/static/house_1c.glb",         { x: -Math.PI/2, y: 0, z: 0 });
+    const house2Mesh        = await loadGLTF("/src/assets/models/static/house_2.glb",          { x: -Math.PI/2, y: 0, z: 0 });
+    const house3Mesh        = await loadGLTF("/src/assets/models/static/house_3.glb",          { x: -Math.PI/2, y: 0, z: 0 });
+    const house4Mesh        = await loadGLTF("/src/assets/models/static/house_4.glb",          { x: -Math.PI/2, y: 0, z: 0 });
+    const tree1Mesh         = await loadGLTF("/src/assets/models/static/tree_1.glb",           { x: -Math.PI/2, y: 0, z: 0 });
+    const tree2Mesh         = await loadGLTF("/src/assets/models/static/tree_2.glb",           { x: -Math.PI/2, y: 0, z: 0 });
+    const tree3Mesh         = await loadGLTF("/src/assets/models/static/tree_3.glb",           { x: -Math.PI/2, y: 0, z: 0 });
+    const fence1Mesh        = await loadGLTF("/src/assets/models/static/fence_1.glb",          { x: -Math.PI/2, y: 0, z: 0 });
+    const stall1Mesh        = await loadGLTF("/src/assets/models/static/marketstall_1.glb",    { x: -Math.PI/2, y: 0, z: 0 });
+    const stall2Mesh        = await loadGLTF("/src/assets/models/static/marketstall_2.glb",    { x: -Math.PI/2, y: 0, z: 0 });
+    const statue1Mesh       = await loadGLTF("/src/assets/models/static/statue_1.glb",         { x: -Math.PI/2, y: 0, z: 0 });
+    const streetlamp1Mesh   = await loadGLTF("/src/assets/models/static/streetlamp_1.glb",     { x: -Math.PI/2, y: 0, z: 0 });
+    const lamp1Mesh         = await loadGLTF("/src/assets/models/static/lamp_1.glb",           { x: -Math.PI/2, y: 0, z: 0 });
+    const lamp2Mesh         = await loadGLTF("/src/assets/models/static/lamp_2.glb",           { x: -Math.PI/2, y: 0, z: 0 });
 
-    const pumpkin1Mesh      = await loadGLTF("/src/assets/dynamics/pumpkin_1.glb",       { x: -Math.PI/2, y: 0, z: 0 });
-    const melon1Mesh        = await loadGLTF("/src/assets/dynamics/melon_1.glb",         { x: -Math.PI/2, y: 0, z: 0 });
-    const alarmClock1Mesh   = await loadGLTF("/src/assets/dynamics/alarm_clock_1.glb",   { x: -Math.PI/2, y: 0, z: 0 });
-    const apple1Mesh        = await loadGLTF("/src/assets/dynamics/apple_1.glb",         { x: -Math.PI/2, y: 0, z: 0 });
-    const beachChair1Mesh   = await loadGLTF("/src/assets/dynamics/beach_chair_1.glb",   { x: -Math.PI/2, y: 0, z: 0 });
-    const bench1Mesh        = await loadGLTF("/src/assets/dynamics/bench_1.glb",         { x: -Math.PI/2, y: 0, z: 0 });
-    const bin1Mesh          = await loadGLTF("/src/assets/dynamics/bin_1.glb",           { x: -Math.PI/2, y: 0, z: 0 });
-    const bottle1Mesh       = await loadGLTF("/src/assets/dynamics/bottle_1.glb",        { x: -Math.PI/2, y: 0, z: 0 });
-    const bowl1Mesh         = await loadGLTF("/src/assets/dynamics/bowl_1.glb",          { x: -Math.PI/2, y: 0, z: 0 });
-    const bowl2Mesh         = await loadGLTF("/src/assets/dynamics/bowl_2.glb",          { x: -Math.PI/2, y: 0, z: 0 });
-    const couch1Mesh        = await loadGLTF("/src/assets/dynamics/couch_1.glb",         { x: -Math.PI/2, y: 0, z: 0 });
-    const couch2Mesh        = await loadGLTF("/src/assets/dynamics/couch_2.glb",         { x: -Math.PI/2, y: 0, z: 0 });
-    const endTable1Mesh     = await loadGLTF("/src/assets/dynamics/end_table_1.glb",     { x: -Math.PI/2, y: 0, z: 0 });
-    const hammer1Mesh       = await loadGLTF("/src/assets/dynamics/hammer_1.glb",        { x: -Math.PI/2, y: 0, z: Math.PI/6 });
-    const longTable1Mesh    = await loadGLTF("/src/assets/dynamics/long_table_1.glb",    { x: -Math.PI/2, y: 0, z: 0 });
-    const mug1Mesh          = await loadGLTF("/src/assets/dynamics/mug_1.glb",           { x: -Math.PI/2, y: 0, z: 0 });
-    const plant1Mesh        = await loadGLTF("/src/assets/dynamics/plant_1.glb",         { x: -Math.PI/2, y: 0, z: 0 });
-    const plant10Mesh       = await loadGLTF("/src/assets/dynamics/plant_10.glb",        { x: -Math.PI/2, y: 0, z: 0 });
-    const plant11Mesh       = await loadGLTF("/src/assets/dynamics/plant_11.glb",        { x: -Math.PI/2, y: 0, z: 0 });
-    const plant12Mesh       = await loadGLTF("/src/assets/dynamics/plant_12.glb",        { x: -Math.PI/2, y: 0, z: 0 });
-    const plant2Mesh        = await loadGLTF("/src/assets/dynamics/plant_2.glb",         { x: -Math.PI/2, y: 0, z: 0 });
-    const plant3Mesh        = await loadGLTF("/src/assets/dynamics/plant_3.glb",         { x: -Math.PI/2, y: 0, z: 0 });
-    const plant4Mesh        = await loadGLTF("/src/assets/dynamics/plant_4.glb",         { x: -Math.PI/2, y: 0, z: 0 });
-    const plant5Mesh        = await loadGLTF("/src/assets/dynamics/plant_5.glb",         { x: -Math.PI/2, y: 0, z: 0 });
-    const plant6Mesh        = await loadGLTF("/src/assets/dynamics/plant_6.glb",         { x: -Math.PI/2, y: 0, z: 0 });
-    const plant7Mesh        = await loadGLTF("/src/assets/dynamics/plant_7.glb",         { x: -Math.PI/2, y: 0, z: 0 });
-    const plant8Mesh        = await loadGLTF("/src/assets/dynamics/plant_8.glb",         { x: -Math.PI/2, y: 0, z: 0 });
-    const plant9Mesh        = await loadGLTF("/src/assets/dynamics/plant_9.glb",         { x: -Math.PI/2, y: 0, z: 0 });
-    const plunger1Mesh      = await loadGLTF("/src/assets/dynamics/plunger_1.glb",       { x: -Math.PI/2, y: 0, z: 0 });
-    const pottedTree1Mesh   = await loadGLTF("/src/assets/dynamics/potted_tree_1.glb",   { x: -Math.PI/2, y: 0, z: 0 });
-    const pottedTree2Mesh   = await loadGLTF("/src/assets/dynamics/potted_tree_2.glb",   { x: -Math.PI/2, y: 0, z: 0 });
-    const pottedTree3Mesh   = await loadGLTF("/src/assets/dynamics/potted_tree_3.glb",   { x: -Math.PI/2, y: 0, z: 0 });
-    const pottedTree4Mesh   = await loadGLTF("/src/assets/dynamics/potted_tree_4.glb",   { x: -Math.PI/2, y: 0, z: 0 });
-    const pottedTree5Mesh   = await loadGLTF("/src/assets/dynamics/potted_tree_5.glb",   { x: -Math.PI/2, y: 0, z: 0 });
-    const rockingChair1Mesh = await loadGLTF("/src/assets/dynamics/rocking_chair_1.glb", { x: -Math.PI/2, y: 0, z: Math.PI/4 });
-    const roundTable1Mesh   = await loadGLTF("/src/assets/dynamics/round_table_1.glb",   { x: -Math.PI/2, y: 0, z: 0 });
-    const smartphone1Mesh   = await loadGLTF("/src/assets/dynamics/smartphone_1.glb",    { x: -Math.PI/2, y: 0, z: 0 });
-    const squareTable1Mesh  = await loadGLTF("/src/assets/dynamics/square_table_1.glb",  { x: -Math.PI/2, y: 0, z: Math.PI/4 });
-    const squareTable2Mesh  = await loadGLTF("/src/assets/dynamics/square_table_2.glb",  { x: -Math.PI/2, y: 0, z: 0 });
-    const trinket1Mesh      = await loadGLTF("/src/assets/dynamics/trinket_1.glb",       { x: -Math.PI/2, y: 0, z: 0 });
-    const trinket2Mesh      = await loadGLTF("/src/assets/dynamics/trinket_2.glb",       { x: -Math.PI/2, y: 0, z: 0 });
-    const trinket3Mesh      = await loadGLTF("/src/assets/dynamics/trinket_3.glb",       { x: -Math.PI/2, y: 0, z: Math.PI/6 });
-    const tv1Mesh           = await loadGLTF("/src/assets/dynamics/tv_1.glb",            { x: -Math.PI/2, y: 0, z: 0 });
-    const tv2Mesh           = await loadGLTF("/src/assets/dynamics/tv_2.glb",            { x: -Math.PI/2, y: 0, z: 0 });
-    const woodChair1Mesh    = await loadGLTF("/src/assets/dynamics/wood_chair_1.glb",    { x: -Math.PI/2, y: 0, z: 0 });
-    const cheese1Mesh       = await loadGLTF("/src/assets/dynamics/cheese_1.glb",        { x: -Math.PI/2, y: 0, z: 0 });
-    const pineapple1Mesh    = await loadGLTF("/src/assets/dynamics/pineapple_1.glb",     { x: -Math.PI/2, y: 0, z: 0 });
+    const pumpkin1Mesh      = await loadGLTF("/src/assets/models/dynamic/pumpkin_1.glb",       { x: -Math.PI/2, y: 0, z: 0 });
+    const melon1Mesh        = await loadGLTF("/src/assets/models/dynamic/melon_1.glb",         { x: -Math.PI/2, y: 0, z: 0 });
+    const alarmClock1Mesh   = await loadGLTF("/src/assets/models/dynamic/alarm_clock_1.glb",   { x: -Math.PI/2, y: 0, z: 0 });
+    const apple1Mesh        = await loadGLTF("/src/assets/models/dynamic/apple_1.glb",         { x: -Math.PI/2, y: 0, z: 0 });
+    const beachChair1Mesh   = await loadGLTF("/src/assets/models/dynamic/beach_chair_1.glb",   { x: -Math.PI/2, y: 0, z: 0 });
+    const bench1Mesh        = await loadGLTF("/src/assets/models/dynamic/bench_1.glb",         { x: -Math.PI/2, y: 0, z: 0 });
+    const bin1Mesh          = await loadGLTF("/src/assets/models/dynamic/bin_1.glb",           { x: -Math.PI/2, y: 0, z: 0 });
+    const bottle1Mesh       = await loadGLTF("/src/assets/models/dynamic/bottle_1.glb",        { x: -Math.PI/2, y: 0, z: 0 });
+    const bowl1Mesh         = await loadGLTF("/src/assets/models/dynamic/bowl_1.glb",          { x: -Math.PI/2, y: 0, z: 0 });
+    const bowl2Mesh         = await loadGLTF("/src/assets/models/dynamic/bowl_2.glb",          { x: -Math.PI/2, y: 0, z: 0 });
+    const couch1Mesh        = await loadGLTF("/src/assets/models/dynamic/couch_1.glb",         { x: -Math.PI/2, y: 0, z: 0 });
+    const couch2Mesh        = await loadGLTF("/src/assets/models/dynamic/couch_2.glb",         { x: -Math.PI/2, y: 0, z: 0 });
+    const endTable1Mesh     = await loadGLTF("/src/assets/models/dynamic/end_table_1.glb",     { x: -Math.PI/2, y: 0, z: 0 });
+    const hammer1Mesh       = await loadGLTF("/src/assets/models/dynamic/hammer_1.glb",        { x: -Math.PI/2, y: 0, z: Math.PI/6 });
+    const longTable1Mesh    = await loadGLTF("/src/assets/models/dynamic/long_table_1.glb",    { x: -Math.PI/2, y: 0, z: 0 });
+    const mug1Mesh          = await loadGLTF("/src/assets/models/dynamic/mug_1.glb",           { x: -Math.PI/2, y: 0, z: 0 });
+    const plant1Mesh        = await loadGLTF("/src/assets/models/dynamic/plant_1.glb",         { x: -Math.PI/2, y: 0, z: 0 });
+    const plant10Mesh       = await loadGLTF("/src/assets/models/dynamic/plant_10.glb",        { x: -Math.PI/2, y: 0, z: 0 });
+    const plant11Mesh       = await loadGLTF("/src/assets/models/dynamic/plant_11.glb",        { x: -Math.PI/2, y: 0, z: 0 });
+    const plant12Mesh       = await loadGLTF("/src/assets/models/dynamic/plant_12.glb",        { x: -Math.PI/2, y: 0, z: 0 });
+    const plant2Mesh        = await loadGLTF("/src/assets/models/dynamic/plant_2.glb",         { x: -Math.PI/2, y: 0, z: 0 });
+    const plant3Mesh        = await loadGLTF("/src/assets/models/dynamic/plant_3.glb",         { x: -Math.PI/2, y: 0, z: 0 });
+    const plant4Mesh        = await loadGLTF("/src/assets/models/dynamic/plant_4.glb",         { x: -Math.PI/2, y: 0, z: 0 });
+    const plant5Mesh        = await loadGLTF("/src/assets/models/dynamic/plant_5.glb",         { x: -Math.PI/2, y: 0, z: 0 });
+    const plant6Mesh        = await loadGLTF("/src/assets/models/dynamic/plant_6.glb",         { x: -Math.PI/2, y: 0, z: 0 });
+    const plant7Mesh        = await loadGLTF("/src/assets/models/dynamic/plant_7.glb",         { x: -Math.PI/2, y: 0, z: 0 });
+    const plant8Mesh        = await loadGLTF("/src/assets/models/dynamic/plant_8.glb",         { x: -Math.PI/2, y: 0, z: 0 });
+    const plant9Mesh        = await loadGLTF("/src/assets/models/dynamic/plant_9.glb",         { x: -Math.PI/2, y: 0, z: 0 });
+    const plunger1Mesh      = await loadGLTF("/src/assets/models/dynamic/plunger_1.glb",       { x: -Math.PI/2, y: 0, z: 0 });
+    const pottedTree1Mesh   = await loadGLTF("/src/assets/models/dynamic/potted_tree_1.glb",   { x: -Math.PI/2, y: 0, z: 0 });
+    const pottedTree2Mesh   = await loadGLTF("/src/assets/models/dynamic/potted_tree_2.glb",   { x: -Math.PI/2, y: 0, z: 0 });
+    const pottedTree3Mesh   = await loadGLTF("/src/assets/models/dynamic/potted_tree_3.glb",   { x: -Math.PI/2, y: 0, z: 0 });
+    const pottedTree4Mesh   = await loadGLTF("/src/assets/models/dynamic/potted_tree_4.glb",   { x: -Math.PI/2, y: 0, z: 0 });
+    const pottedTree5Mesh   = await loadGLTF("/src/assets/models/dynamic/potted_tree_5.glb",   { x: -Math.PI/2, y: 0, z: 0 });
+    const rockingChair1Mesh = await loadGLTF("/src/assets/models/dynamic/rocking_chair_1.glb", { x: -Math.PI/2, y: 0, z: Math.PI/4 });
+    const roundTable1Mesh   = await loadGLTF("/src/assets/models/dynamic/round_table_1.glb",   { x: -Math.PI/2, y: 0, z: 0 });
+    const smartphone1Mesh   = await loadGLTF("/src/assets/models/dynamic/smartphone_1.glb",    { x: -Math.PI/2, y: 0, z: 0 });
+    const squareTable1Mesh  = await loadGLTF("/src/assets/models/dynamic/square_table_1.glb",  { x: -Math.PI/2, y: 0, z: Math.PI/4 });
+    const squareTable2Mesh  = await loadGLTF("/src/assets/models/dynamic/square_table_2.glb",  { x: -Math.PI/2, y: 0, z: 0 });
+    const trinket1Mesh      = await loadGLTF("/src/assets/models/dynamic/trinket_1.glb",       { x: -Math.PI/2, y: 0, z: 0 });
+    const trinket2Mesh      = await loadGLTF("/src/assets/models/dynamic/trinket_2.glb",       { x: -Math.PI/2, y: 0, z: 0 });
+    const trinket3Mesh      = await loadGLTF("/src/assets/models/dynamic/trinket_3.glb",       { x: -Math.PI/2, y: 0, z: Math.PI/6 });
+    const tv1Mesh           = await loadGLTF("/src/assets/models/dynamic/tv_1.glb",            { x: -Math.PI/2, y: 0, z: 0 });
+    const tv2Mesh           = await loadGLTF("/src/assets/models/dynamic/tv_2.glb",            { x: -Math.PI/2, y: 0, z: 0 });
+    const woodChair1Mesh    = await loadGLTF("/src/assets/models/dynamic/wood_chair_1.glb",    { x: -Math.PI/2, y: 0, z: 0 });
+    const cheese1Mesh       = await loadGLTF("/src/assets/models/dynamic/cheese_1.glb",        { x: -Math.PI/2, y: 0, z: 0 });
+    const pineapple1Mesh    = await loadGLTF("/src/assets/models/dynamic/pineapple_1.glb",     { x: -Math.PI/2, y: 0, z: 0 });
 
     // Player
     // TODO: Bevelling to get onto steps better
@@ -2329,14 +2352,17 @@ export async function populateWorldObjects(world) {
             colliderProps: { friction: 1, restitution: 0.2, density: 10 },
             light: new THREE.PointLight(0xf0e195, 3),
             lightCastShadow: true,
-        }), new PhysicsObject(world, {
+        }), new LightObject(world, {
             isStatic: false,
             position: { x: -31, y: 2.9, z: -8.85 },
             rotation: { x: 0, y: Math.PI, z: 0 },
             scale: { x: 0.25, y: 0.25, z: 0.25 },
             mesh: tv1Mesh.clone(),
             colliderDesc: RAPIER.ColliderDesc.cuboid(0.37, 0.21, 0.03),
-            colliderProps: { friction: 1, restitution: 0.1, density: 15 }
+            colliderProps: { friction: 1, restitution: 0.1, density: 15 },
+            light: new THREE.PointLight(0xffffff, 0.1),
+            lightCastShadow: true,
+            onTick: function() { tv1OnTick(this); }
         }), new PhysicsObject(world, {
             isStatic: false,
             position: { x: -32.62, y: 2.15, z: -9.21 },
@@ -3181,6 +3207,7 @@ export async function populateWorldObjects(world) {
             scale: { x: 0.3, y: 0.3, z: 0.3 },
             mesh: new THREE.Mesh(new THREE.BoxGeometry(2, 0.3, 1.5), new THREE.MeshBasicMaterial({ transparent: true, opacity: 0 })),
             colliderDesc: RAPIER.ColliderDesc.cuboid(1, 0.15, 0.75),
+            colliderProps: { friction: 0, restitution: 1, density: 1 },
             isCameraCollidable: true
         }),
 
@@ -3214,6 +3241,7 @@ export async function populateWorldObjects(world) {
             scale: { x: 0.3, y: 0.3, z: 0.3 },
             mesh: new THREE.Mesh(new THREE.BoxGeometry(2, 0.3, 1.5), new THREE.MeshBasicMaterial({ transparent: true, opacity: 0 })),
             colliderDesc: RAPIER.ColliderDesc.cuboid(1, 0.15, 0.75),
+            colliderProps: { friction: 0, restitution: 1, density: 1 },
             isCameraCollidable: true
         }),
 
@@ -3574,9 +3602,8 @@ export async function populateWorldObjects(world) {
 
     // NPCs
     objects.push(...[
-        new NonPlayableCharacter(world, player, { // TODO: stand up straight + dialogue + name + image
+        new NonPlayableCharacter(world, player, {
             position: { x: -34.62, y: 2.8, z: -40.48 },
-            rotation: { x: 0, y: 0, z: 0 },
             scale: { x: 0.1, y: 0.1, z: 0.1 },
             mesh: new THREE.Mesh(pip1Mesh.geometry.clone(), pip1Mesh.material.clone()),
             colliderDesc: RAPIER.ColliderDesc.capsule(0, 0.1),
@@ -3595,7 +3622,7 @@ export async function populateWorldObjects(world) {
                     "I, um... are you alright? Anyways... not much has happened while you were gone. I guess I'll see you around! And uh, just between the two of us ---\n\nYou smell horrible - please take a shower."
                 ],
                 [
-                    "La la la ala llalalaaa..",
+                    "La la la lala pippip ppipi aallala..",
                     "Ew, what is that smell??\n\nOh, it's you again.",
                     "Have you taken a shower yet?"
                 ],
@@ -3613,6 +3640,93 @@ export async function populateWorldObjects(world) {
                     "Oh god, my ear is acting up again -- ",
                     "Woaaahhowahawooawhoawoaweaewaesdfkjnasdfkjnlvsdfa"
                 ]
+            ]
+        }), new NonPlayableCharacter(world, player, {
+            position: { x: -30.98, y: 2.7, z: -12.41 },
+            scale: { x: 0.1, y: 0.1, z: 0.1 },
+            mesh: new THREE.Mesh(grandpa1Mesh.geometry.clone(), grandpa1Mesh.material.clone()),
+            colliderDesc: RAPIER.ColliderDesc.cuboid(0.1, 0.09, 0.05),
+            colliderProps: { friction: 1, restitution: 0.5, density: 5 },
+            interactionRadius: 4,
+            displayName: DISPLAYNAME_GRANDPA,
+            imagePath: "/src/assets/images/grandpa1.jpg",
+            dialogueList: [
+                [
+                    "(The television turns on as you walk in.)"
+                ],
+                [
+                    "...",
+                    "...",
+                    "WHAT'S THAT YOU SAID SONNY?",
+                    "DID YOU SAY SOMETHING?"
+                ],
+                [
+                    "...",
+                    "YOU'LL NEED TO SPEAK UP - THESE EARS DON'T WORK LIKE THEY USED TO!",
+                    "...",
+                    "WHAT?",
+                    "...",
+                    "WHAT?",
+                    "..."
+                ],
+                [
+                    "(He doesn't seem to be able to hear you.)",
+                ]
+            ],
+            externalState: tvState
+        }), new NonPlayableCharacter(world, player, {
+            position: { x: -36.87, y: 1.82, z: -16.39 },
+            rotation: { x: 0, y: -Math.PI/4, z: 0 },
+            scale: { x: 0.085, y: 0.085, z: 0.085 },
+            mesh: new THREE.Mesh(grandma1Mesh.geometry.clone(), grandma1Mesh.material.clone()),
+            colliderDesc: RAPIER.ColliderDesc.capsule(0, 0.069),
+            colliderProps: { friction: 1, restitution: 0.5, density: 5 },
+            interactionRadius: 4,
+            displayName: DISPLAYNAME_GRANDMA,
+            imagePath: "/src/assets/images/grandma1.jpg",
+            dialogueList: [
+                [
+                    "All my damn husband does is watch the TV ---\n\nI've had it up to here with him.",
+                    "And Little Pip is glued to the screen. Always watching those tak toks and talking about his skibidi."
+                ],
+                [
+                    "That's it.",
+                    "I'm done."
+                ]
+            ]
+        }), new NonPlayableCharacter(world, player, {
+            position: { x: -39.89, y: 2.55, z: -19.87 },
+            rotation: { x: 0, y: Math.PI, z: 0 },
+            scale: { x: 0.065, y: 0.065, z: 0.065 },
+            mesh: new THREE.Mesh(littlePip1Mesh.geometry.clone(), littlePip1Mesh.material.clone()),
+            colliderDesc: RAPIER.ColliderDesc.capsule(0, 0.04),
+            colliderProps: { friction: 1, restitution: 0.5, density: 5 },
+            interactionRadius: 4,
+            displayName: DISPLAYNAME_LITTLE_PIP,
+            imagePath: "/src/assets/images/littlePip1.jpg",
+            dialogueList: [
+                ["..."],
+                ["..."],
+                ["Can you go away? You smell bad."],
+                ["..."],
+                ["..."],
+                ["..."],
+                ["(He doesn't seem to notice you.)"]
+            ]
+        }), new NonPlayableCharacter(world, player, {
+            position: { x: -33.29, y: 0.95, z: 13.87 },
+            rotation: { x: 0, y: Math.PI/6, z: 0 },
+            scale: { x: 0.04, y: 0.04, z: 0.04 },
+            mesh: new THREE.Mesh(frogPip1Mesh.geometry.clone(), frogPip1Mesh.material.clone()),
+            colliderDesc: RAPIER.ColliderDesc.cuboid(0.013, 0.016, 0.01),
+            colliderProps: { friction: 1, restitution: 1, density: 5 },
+            interactionRadius: 4,
+            displayName: DISPLAYNAME_FROG_PIP,
+            imagePath: "/src/assets/images/frogPip1.jpg",
+            dialogueList: [
+                ["Pibbit."],
+                ["Pibbit. Pibbit."],
+                ["Pibbit."]
             ]
         })
     ]);

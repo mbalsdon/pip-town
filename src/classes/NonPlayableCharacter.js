@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { PhysicsObject } from './PhysicsObject';
 import { BufferGeometryUtils } from 'three/examples/jsm/Addons.js';
-import { DISPLAYNAME_TOWN_GREETER } from '../consts';
+import { DISPLAYNAME_FROG_PIP, DISPLAYNAME_GRANDMA, DISPLAYNAME_GRANDPA, DISPLAYNAME_TOWN_GREETER } from '../consts';
 
 //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\////\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
 //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\////\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
@@ -18,6 +18,7 @@ export class NonPlayableCharacter extends PhysicsObject {
         displayName = null,
         imagePath = null,
         dialogueList = [],
+        externalState = null,
         onTick = null
     }) {
         if (mesh === null)
@@ -55,16 +56,17 @@ export class NonPlayableCharacter extends PhysicsObject {
             this.mesh.geometry.clone(),
             new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.BackSide })
         );
-        this._outlineMesh.scale.multiplyScalar(1.05);
+        this._outlineMesh.scale.multiplyScalar(1.03);
         this.mesh.add(this._outlineMesh);
 
         this._dialogueIdx = 0;
 
+        this._player = player;
         this._interactionRadius = interactionRadius;
         this._displayName = displayName;
         this._imagePath = imagePath;
         this._dialogueList = dialogueList;
-        this._player = player;
+        this._externalState = externalState;
     }
 
     // FUTURE: quests
@@ -81,11 +83,6 @@ export class NonPlayableCharacter extends PhysicsObject {
     //         new THREE.MeshBasicMaterial({ color: 0xffd52b, transparent: true, opacity: 0.9 })
     //     );
     // }
-
-    _townGreeterEvent() {
-        this.rigidBody.setLinvel({ x: 1, y: 2, z: 0 }, true);
-        this.rigidBody.setAngvel({ x: 2, y: 2, z: 0 }, true);
-    }
 
     hasMoreDialogue() { return this._dialogueIdx <= this._dialogueList.length - 1; }
 
@@ -128,11 +125,34 @@ export class NonPlayableCharacter extends PhysicsObject {
         this.world.camera.lookAt(this._position);
 
         // Special dialogue events
-        if (!this.hasMoreDialogue()) {
-            if (this._displayName === DISPLAYNAME_TOWN_GREETER) {
-                setTimeout(() => { this._townGreeterEvent(); }, 3000);
-            }
+        if ((this._displayName === DISPLAYNAME_TOWN_GREETER) && (this._dialogueIdx === 5)) {
+            setTimeout(() => { this._townGreeterEvent(); }, 3000);
+        } else if ((this._displayName === DISPLAYNAME_GRANDPA) && (this._dialogueIdx === 1)) {
+            setTimeout(() => { this._externalState.on = true; }, 1000);
+        } else if ((this._displayName === DISPLAYNAME_GRANDMA) && (this._dialogueIdx === 2)) {
+            setTimeout(() => { this._grandmaEvent(); }, 1000);
+        } else if ((this._displayName === DISPLAYNAME_FROG_PIP) && (this._dialogueIdx === 3)) {
+            this._frogEvent();
         }
+    }
+
+    _townGreeterEvent() {
+        this.rigidBody.setLinvel({ x: 1, y: 0, z: 0 }, true);
+        this.rigidBody.setAngvel({ x: 2, y: 2, z: 0 }, true);
+    }
+
+    _grandmaEvent() {
+        this.collider.setRestitution(1);
+        this.collider.setFriction(0);
+        this.collider.setRestitutionCombineRule(3);
+        this.collider.setDensity(500);
+        this.rigidBody.setLinvel({ x: -15, y: 5, z: 15 }, true);
+        this.rigidBody.setAngvel({ x: 10, y: 10, z: 10 }, true);
+    }
+
+    _frogEvent(){
+        this.collider.setRestitutionCombineRule(3);
+        this.rigidBody.setLinvel({ x: 0, y: 5, z: 3 }, true);
     }
 
     update() {

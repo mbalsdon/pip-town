@@ -16,7 +16,7 @@ export class PhysicsObject {
         scale = { x: 1, y: 1, z: 1 },
         mesh = null,
         colliderDesc = null,
-        colliderProps = { friction: (isStatic ? 0.0 : 0.1), restitution: 0.2, density: 1 },
+        colliderProps = { friction: undefined, restitution: undefined, density: undefined },
         onTick = null,
         isCameraCollidable = false
     }) {
@@ -24,8 +24,6 @@ export class PhysicsObject {
             throw new Error("PhysicsObject::constructor - ill-defined position");
         if (rotation.x === undefined || rotation.y === undefined || rotation.z === undefined)
             throw new Error("PhysicsObject::constructor - ill-defined rotation");
-        if (colliderProps.friction === undefined || colliderProps.restitution === undefined || colliderProps.density === undefined)
-            throw new Error("PhysicsObject::constructor - ill-defined colliderProps");
         if (mesh === null && colliderDesc === null)
             throw new Error("PhysicsObject::constructor - mesh and colliderDesc cannot both be null");
 
@@ -67,9 +65,14 @@ export class PhysicsObject {
                 throw new Error(`PhysicsObject - unimplemented shape ${shape}`);
             }
 
-            colliderDesc.setFriction(colliderProps.friction);
-            colliderDesc.setRestitution(colliderProps.restitution);
-            colliderDesc.setDensity(colliderProps.density);
+            if (colliderProps.friction === undefined) colliderDesc.setFriction((isStatic ? 0.0 : 0.1));
+            else colliderDesc.setFriction(colliderProps.friction);
+
+            if (colliderProps.restitution === undefined) colliderDesc.setRestitution(0.2);
+            else colliderDesc.setRestitution(colliderProps.restitution);
+
+            if (colliderProps.density === undefined) colliderDesc.setDensity(1);
+            else colliderDesc.setDensity(colliderProps.density);
 
             this.collider = this.world.physics.createCollider(colliderDesc, this.rigidBody);
         } else {

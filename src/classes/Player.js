@@ -52,6 +52,8 @@ export class Player extends PhysicsObject {
 
         this.rigidBody.restrictRotations(false, true, false);
 
+        this.collider.setRestitutionCombineRule(3);
+
         this.keys = {
             w: false,
             s: false,

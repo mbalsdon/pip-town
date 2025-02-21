@@ -1,6 +1,6 @@
 // FUTURE: params/settings class since we want to be able to dynamically change some of these
 
-export const DEBUG = false;
+export const DEBUG = true;
 export const DEBUG_COLLIDERS = false;
 export const DEBUG_PLAYER_MODEL = false;
 export const CAMERA_COLLISION_ON = true;
@@ -26,7 +26,7 @@ export const LAYER_CAMERA_COLLISION = 1;
 
 export const JUMP_RAY_DISTANCE = 1.2;
 
-export const SPAWN_POSITION = { x: -46, y: 10, z: -36 };
+export const SPAWN_POSITION = { x: -30, y: 2, z: 11 }; // TODO: { x: -46, y: 10, z: -36 };
 export const INIT_CAMERA_POSITION = { x: -60, y: 8, z: -36 };
 export const INIT_CHARACTER_ROTATION = Math.PI/2;
 
@@ -40,3 +40,7 @@ export const SUN_TICK_ROTATION = 0.0002;
 export const DIALOGUE_SPEED_NUM_CHARS = 2;
 
 export const DISPLAYNAME_TOWN_GREETER = "Town Greeter Pip";
+export const DISPLAYNAME_GRANDPA = "Grandpa Pip";
+export const DISPLAYNAME_GRANDMA = "Grandma Pip";
+export const DISPLAYNAME_LITTLE_PIP = "Little Pip";
+export const DISPLAYNAME_FROG_PIP = "Frog Pip";

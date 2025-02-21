@@ -26,7 +26,8 @@ animate();
 //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\////\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
 
 /** TODO
- * matt pip, veron pip, bob, frog pip on lilypad, general pips... at least one per house
+ * fix post-dialogue camera
+ * flower pip (h1b), matt&veron pip (h2), mayor pip (h3), ??? (h1c), bob (???), ...
  * grass behind farmland
  * controls helper
  * prod
