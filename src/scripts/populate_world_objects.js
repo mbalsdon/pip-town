@@ -270,99 +270,119 @@ export async function populateWorldObjects(world) {
     const objects = [];
 
     // Load external models
-    const pip1Mesh          = await loadGLTF("/src/assets/models/npc/pip_1.glb",               { x: -Math.PI/2, y: 0, z: 0 });
-    const grandpa1Mesh      = await loadGLTF("/src/assets/models/npc/grandpa_pip_1.glb",       { x: -Math.PI/2, y: 0, z: 0 });
-    const grandma1Mesh      = await loadGLTF("/src/assets/models/npc/grandma_pip_1.glb",       { x: -Math.PI/2, y: 0, z: 0 });
-    const littlePip1Mesh    = await loadGLTF("/src/assets/models/npc/little_pip_1.glb",        { x: -Math.PI/2, y: 0, z: 0 });
-    const frogPip1Mesh      = await loadGLTF("/src/assets/models/npc/frog_pip_1.glb",          { x: -Math.PI/2, y: 0, z: 0 });
-    const mattPip1Mesh      = await loadGLTF("/src/assets/models/npc/matt_pip_1.glb",          { x: -Math.PI/2, y: 0, z: 0 });
-    const veronicaPip1Mesh  = await loadGLTF("/src/assets/models/npc/veronica_pip_1.glb",      { x: -Math.PI/2, y: 0, z: 0 });
-    const flowerPip1Mesh    = await loadGLTF("/src/assets/models/npc/flower_pip_1.glb",        { x: -Math.PI/2, y: 0, z: 0 });
-    const sleepyPip1Mesh    = await loadGLTF("/src/assets/models/npc/sleepy_pip_1.glb",        { x: -Math.PI/2, y: 0, z: 0 });
-    const mayorPip1Mesh     = await loadGLTF("/src/assets/models/npc/mayor_pip_1.glb",         { x: -Math.PI/2, y: 0, z: 0 });
-    const farmhandPip1Mesh  = await loadGLTF("/src/assets/models/npc/farmhand_pip_1.glb",      { x: -Math.PI/2, y: 0, z: 0 });
-    const merchantPip1Mesh  = await loadGLTF("/src/assets/models/npc/merchant_pip_1.glb",      { x: -Math.PI/2, y: 0, z: 0 });
-    const bob1Mesh          = await loadGLTF("/src/assets/models/npc/bob_1.glb",               { x: -Math.PI/2, y: 0, z: 0 });
-    const frisbee1Mesh      = await loadGLTF("/src/assets/models/npc/frisbee_1.glb",           { x: -Math.PI/2, y: 0, z: 0 });
-    const subaru1Mesh       = await loadGLTF("/src/assets/models/npc/subaru_1.glb",            { x: -Math.PI/2, y: 0, z: 0 });
-    const mrNoodle1Mesh     = await loadGLTF("/src/assets/models/npc/mr_noodle_1.glb",         { x: -Math.PI/2, y: 0, z: 0 });
-    const sealiam1Mesh      = await loadGLTF("/src/assets/models/npc/sealiam_1.glb",           { x: -Math.PI/2, y: 0, z: 0 });
-    const rathew1Mesh       = await loadGLTF("/src/assets/models/npc/rathew_1.glb",            { x: -Math.PI/2, y: 0, z: 0 });
-    const kurt1Mesh         = await loadGLTF("/src/assets/models/npc/kurt_1.glb",              { x: -Math.PI/2, y: 0, z: 0 });
-    const cheesePip1Mesh    = await loadGLTF("/src/assets/models/npc/cheese_pip_1.glb",        { x: -Math.PI/2, y: 0, z: 0 });
-    const forestPip1Mesh    = await loadGLTF("/src/assets/models/npc/forest_pip_1.glb",        { x: -Math.PI/2, y: 0, z: 0 });
-    const astroPip1Mesh     = await loadGLTF("/src/assets/models/npc/astro_pip_1.glb",         { x: -Math.PI/2, y: 0, z: 0 });
-    const glassesPip1Mesh   = await loadGLTF("/src/assets/models/npc/glasses_pip_1.glb",       { x: -Math.PI/2, y: 0, z: 0 });
-    const glassesPip2Mesh   = await loadGLTF("/src/assets/models/npc/glasses_pip_2.glb",       { x: -Math.PI/2, y: 0, z: 0 });
-    const longHeadPip1Mesh  = await loadGLTF("/src/assets/models/npc/long_head_pip_1.glb",     { x: -Math.PI/2, y: 0, z: 0 });
+    const loadingElmt = document.createElement("div");
+    loadingElmt.style.cssText = `
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 72px;
+    color: brown;
+    font-family: monospace;
+    `;
+    document.body.appendChild(loadingElmt);
 
-    const house1aMesh       = await loadGLTF("/src/assets/models/static/house_1a.glb",         { x: -Math.PI/2, y: 0, z: 0 });
-    const house1bMesh       = await loadGLTF("/src/assets/models/static/house_1b.glb",         { x: -Math.PI/2, y: 0, z: 0 });
-    const house1cMesh       = await loadGLTF("/src/assets/models/static/house_1c.glb",         { x: -Math.PI/2, y: 0, z: 0 });
-    const house2Mesh        = await loadGLTF("/src/assets/models/static/house_2.glb",          { x: -Math.PI/2, y: 0, z: 0 });
-    const house3Mesh        = await loadGLTF("/src/assets/models/static/house_3.glb",          { x: -Math.PI/2, y: 0, z: 0 });
-    const house4Mesh        = await loadGLTF("/src/assets/models/static/house_4.glb",          { x: -Math.PI/2, y: 0, z: 0 });
-    const tree1Mesh         = await loadGLTF("/src/assets/models/static/tree_1.glb",           { x: -Math.PI/2, y: 0, z: 0 });
-    const tree2Mesh         = await loadGLTF("/src/assets/models/static/tree_2.glb",           { x: -Math.PI/2, y: 0, z: 0 });
-    const tree3Mesh         = await loadGLTF("/src/assets/models/static/tree_3.glb",           { x: -Math.PI/2, y: 0, z: 0 });
-    const fence1Mesh        = await loadGLTF("/src/assets/models/static/fence_1.glb",          { x: -Math.PI/2, y: 0, z: 0 });
-    const stall1Mesh        = await loadGLTF("/src/assets/models/static/marketstall_1.glb",    { x: -Math.PI/2, y: 0, z: 0 });
-    const stall2Mesh        = await loadGLTF("/src/assets/models/static/marketstall_2.glb",    { x: -Math.PI/2, y: 0, z: 0 });
-    const statue1Mesh       = await loadGLTF("/src/assets/models/static/statue_1.glb",         { x: -Math.PI/2, y: 0, z: 0 });
-    const streetlamp1Mesh   = await loadGLTF("/src/assets/models/static/streetlamp_1.glb",     { x: -Math.PI/2, y: 0, z: 0 });
-    const lamp1Mesh         = await loadGLTF("/src/assets/models/static/lamp_1.glb",           { x: -Math.PI/2, y: 0, z: 0 });
-    const lamp2Mesh         = await loadGLTF("/src/assets/models/static/lamp_2.glb",           { x: -Math.PI/2, y: 0, z: 0 });
+    // FIXME fix terrible code
+    const numModels = 91;
+    let numLoaded = 0;
+    const loadingString = (i) => `Loading... (${i}/${numModels})`;
+    loadingElmt.textContent = loadingString(numLoaded++);
 
-    const pumpkin1Mesh      = await loadGLTF("/src/assets/models/dynamic/pumpkin_1.glb",       { x: -Math.PI/2, y: 0, z: 0 });
-    const melon1Mesh        = await loadGLTF("/src/assets/models/dynamic/melon_1.glb",         { x: -Math.PI/2, y: 0, z: 0 });
-    const alarmClock1Mesh   = await loadGLTF("/src/assets/models/dynamic/alarm_clock_1.glb",   { x: -Math.PI/2, y: 0, z: 0 });
-    const apple1Mesh        = await loadGLTF("/src/assets/models/dynamic/apple_1.glb",         { x: -Math.PI/2, y: 0, z: 0 });
-    const beachChair1Mesh   = await loadGLTF("/src/assets/models/dynamic/beach_chair_1.glb",   { x: -Math.PI/2, y: 0, z: 0 });
-    const bench1Mesh        = await loadGLTF("/src/assets/models/dynamic/bench_1.glb",         { x: -Math.PI/2, y: 0, z: 0 });
-    const bin1Mesh          = await loadGLTF("/src/assets/models/dynamic/bin_1.glb",           { x: -Math.PI/2, y: 0, z: 0 });
-    const bottle1Mesh       = await loadGLTF("/src/assets/models/dynamic/bottle_1.glb",        { x: -Math.PI/2, y: 0, z: 0 });
-    const bowl1Mesh         = await loadGLTF("/src/assets/models/dynamic/bowl_1.glb",          { x: -Math.PI/2, y: 0, z: 0 });
-    const bowl2Mesh         = await loadGLTF("/src/assets/models/dynamic/bowl_2.glb",          { x: -Math.PI/2, y: 0, z: 0 });
-    const couch1Mesh        = await loadGLTF("/src/assets/models/dynamic/couch_1.glb",         { x: -Math.PI/2, y: 0, z: 0 });
-    const couch2Mesh        = await loadGLTF("/src/assets/models/dynamic/couch_2.glb",         { x: -Math.PI/2, y: 0, z: 0 });
-    const endTable1Mesh     = await loadGLTF("/src/assets/models/dynamic/end_table_1.glb",     { x: -Math.PI/2, y: 0, z: 0 });
-    const hammer1Mesh       = await loadGLTF("/src/assets/models/dynamic/hammer_1.glb",        { x: -Math.PI/2, y: 0, z: Math.PI/6 });
-    const longTable1Mesh    = await loadGLTF("/src/assets/models/dynamic/long_table_1.glb",    { x: -Math.PI/2, y: 0, z: 0 });
-    const mug1Mesh          = await loadGLTF("/src/assets/models/dynamic/mug_1.glb",           { x: -Math.PI/2, y: 0, z: 0 });
-    const plant1Mesh        = await loadGLTF("/src/assets/models/dynamic/plant_1.glb",         { x: -Math.PI/2, y: 0, z: 0 });
-    const plant10Mesh       = await loadGLTF("/src/assets/models/dynamic/plant_10.glb",        { x: -Math.PI/2, y: 0, z: 0 });
-    const plant11Mesh       = await loadGLTF("/src/assets/models/dynamic/plant_11.glb",        { x: -Math.PI/2, y: 0, z: 0 });
-    const plant12Mesh       = await loadGLTF("/src/assets/models/dynamic/plant_12.glb",        { x: -Math.PI/2, y: 0, z: 0 });
-    const plant2Mesh        = await loadGLTF("/src/assets/models/dynamic/plant_2.glb",         { x: -Math.PI/2, y: 0, z: 0 });
-    const plant3Mesh        = await loadGLTF("/src/assets/models/dynamic/plant_3.glb",         { x: -Math.PI/2, y: 0, z: 0 });
-    const plant4Mesh        = await loadGLTF("/src/assets/models/dynamic/plant_4.glb",         { x: -Math.PI/2, y: 0, z: 0 });
-    const plant5Mesh        = await loadGLTF("/src/assets/models/dynamic/plant_5.glb",         { x: -Math.PI/2, y: 0, z: 0 });
-    const plant6Mesh        = await loadGLTF("/src/assets/models/dynamic/plant_6.glb",         { x: -Math.PI/2, y: 0, z: 0 });
-    const plant7Mesh        = await loadGLTF("/src/assets/models/dynamic/plant_7.glb",         { x: -Math.PI/2, y: 0, z: 0 });
-    const plant8Mesh        = await loadGLTF("/src/assets/models/dynamic/plant_8.glb",         { x: -Math.PI/2, y: 0, z: 0 });
-    const plant9Mesh        = await loadGLTF("/src/assets/models/dynamic/plant_9.glb",         { x: -Math.PI/2, y: 0, z: 0 });
-    const plunger1Mesh      = await loadGLTF("/src/assets/models/dynamic/plunger_1.glb",       { x: -Math.PI/2, y: 0, z: 0 });
-    const pottedTree1Mesh   = await loadGLTF("/src/assets/models/dynamic/potted_tree_1.glb",   { x: -Math.PI/2, y: 0, z: 0 });
-    const pottedTree2Mesh   = await loadGLTF("/src/assets/models/dynamic/potted_tree_2.glb",   { x: -Math.PI/2, y: 0, z: 0 });
-    const pottedTree3Mesh   = await loadGLTF("/src/assets/models/dynamic/potted_tree_3.glb",   { x: -Math.PI/2, y: 0, z: 0 });
-    const pottedTree4Mesh   = await loadGLTF("/src/assets/models/dynamic/potted_tree_4.glb",   { x: -Math.PI/2, y: 0, z: 0 });
-    const pottedTree5Mesh   = await loadGLTF("/src/assets/models/dynamic/potted_tree_5.glb",   { x: -Math.PI/2, y: 0, z: 0 });
-    const rockingChair1Mesh = await loadGLTF("/src/assets/models/dynamic/rocking_chair_1.glb", { x: -Math.PI/2, y: 0, z: Math.PI/4 });
-    const roundTable1Mesh   = await loadGLTF("/src/assets/models/dynamic/round_table_1.glb",   { x: -Math.PI/2, y: 0, z: 0 });
-    const smartphone1Mesh   = await loadGLTF("/src/assets/models/dynamic/smartphone_1.glb",    { x: -Math.PI/2, y: 0, z: 0 });
-    const squareTable1Mesh  = await loadGLTF("/src/assets/models/dynamic/square_table_1.glb",  { x: -Math.PI/2, y: 0, z: Math.PI/4 });
-    const squareTable2Mesh  = await loadGLTF("/src/assets/models/dynamic/square_table_2.glb",  { x: -Math.PI/2, y: 0, z: 0 });
-    const trinket1Mesh      = await loadGLTF("/src/assets/models/dynamic/trinket_1.glb",       { x: -Math.PI/2, y: 0, z: 0 });
-    const trinket2Mesh      = await loadGLTF("/src/assets/models/dynamic/trinket_2.glb",       { x: -Math.PI/2, y: 0, z: 0 });
-    const trinket3Mesh      = await loadGLTF("/src/assets/models/dynamic/trinket_3.glb",       { x: -Math.PI/2, y: 0, z: Math.PI/6 });
-    const tv1Mesh           = await loadGLTF("/src/assets/models/dynamic/tv_1.glb",            { x: -Math.PI/2, y: 0, z: 0 });
-    const tv2Mesh           = await loadGLTF("/src/assets/models/dynamic/tv_2.glb",            { x: -Math.PI/2, y: 0, z: 0 });
-    const woodChair1Mesh    = await loadGLTF("/src/assets/models/dynamic/wood_chair_1.glb",    { x: -Math.PI/2, y: 0, z: 0 });
-    const cheese1Mesh       = await loadGLTF("/src/assets/models/dynamic/cheese_1.glb",        { x: -Math.PI/2, y: 0, z: 0 });
-    const pineapple1Mesh    = await loadGLTF("/src/assets/models/dynamic/pineapple_1.glb",     { x: -Math.PI/2, y: 0, z: 0 });
-    const flower1Mesh       = await loadGLTF("/src/assets/models/dynamic/flower_1.glb",        { x: -Math.PI/2, y: 0, z: 0 });
-    const flower2Mesh       = await loadGLTF("/src/assets/models/dynamic/flower_2.glb",        { x: -Math.PI/2, y: 0, z: 0 });
-    const flower3Mesh       = await loadGLTF("/src/assets/models/dynamic/flower_3.glb",        { x: -Math.PI/2, y: 0, z: 0 });
+    const pip1Mesh          = await loadGLTF(import.meta.env.BASE_URL + "assets/models/npc/pip_1.glb",               { x: -Math.PI/2, y: 0, z: 0 });         loadingElmt.textContent = loadingString(numLoaded++);
+    const grandpa1Mesh      = await loadGLTF(import.meta.env.BASE_URL + "assets/models/npc/grandpa_pip_1.glb",       { x: -Math.PI/2, y: 0, z: 0 });         loadingElmt.textContent = loadingString(numLoaded++);
+    const grandma1Mesh      = await loadGLTF(import.meta.env.BASE_URL + "assets/models/npc/grandma_pip_1.glb",       { x: -Math.PI/2, y: 0, z: 0 });         loadingElmt.textContent = loadingString(numLoaded++);
+    const littlePip1Mesh    = await loadGLTF(import.meta.env.BASE_URL + "assets/models/npc/little_pip_1.glb",        { x: -Math.PI/2, y: 0, z: 0 });         loadingElmt.textContent = loadingString(numLoaded++);
+    const frogPip1Mesh      = await loadGLTF(import.meta.env.BASE_URL + "assets/models/npc/frog_pip_1.glb",          { x: -Math.PI/2, y: 0, z: 0 });         loadingElmt.textContent = loadingString(numLoaded++);
+    const mattPip1Mesh      = await loadGLTF(import.meta.env.BASE_URL + "assets/models/npc/matt_pip_1.glb",          { x: -Math.PI/2, y: 0, z: 0 });         loadingElmt.textContent = loadingString(numLoaded++);
+    const veronicaPip1Mesh  = await loadGLTF(import.meta.env.BASE_URL + "assets/models/npc/veronica_pip_1.glb",      { x: -Math.PI/2, y: 0, z: 0 });         loadingElmt.textContent = loadingString(numLoaded++);
+    const flowerPip1Mesh    = await loadGLTF(import.meta.env.BASE_URL + "assets/models/npc/flower_pip_1.glb",        { x: -Math.PI/2, y: 0, z: 0 });         loadingElmt.textContent = loadingString(numLoaded++);
+    const sleepyPip1Mesh    = await loadGLTF(import.meta.env.BASE_URL + "assets/models/npc/sleepy_pip_1.glb",        { x: -Math.PI/2, y: 0, z: 0 });         loadingElmt.textContent = loadingString(numLoaded++);
+    const mayorPip1Mesh     = await loadGLTF(import.meta.env.BASE_URL + "assets/models/npc/mayor_pip_1.glb",         { x: -Math.PI/2, y: 0, z: 0 });         loadingElmt.textContent = loadingString(numLoaded++);
+    const farmhandPip1Mesh  = await loadGLTF(import.meta.env.BASE_URL + "assets/models/npc/farmhand_pip_1.glb",      { x: -Math.PI/2, y: 0, z: 0 });         loadingElmt.textContent = loadingString(numLoaded++);
+    const merchantPip1Mesh  = await loadGLTF(import.meta.env.BASE_URL + "assets/models/npc/merchant_pip_1.glb",      { x: -Math.PI/2, y: 0, z: 0 });         loadingElmt.textContent = loadingString(numLoaded++);
+    const bob1Mesh          = await loadGLTF(import.meta.env.BASE_URL + "assets/models/npc/bob_1.glb",               { x: -Math.PI/2, y: 0, z: 0 });         loadingElmt.textContent = loadingString(numLoaded++);
+    const frisbee1Mesh      = await loadGLTF(import.meta.env.BASE_URL + "assets/models/npc/frisbee_1.glb",           { x: -Math.PI/2, y: 0, z: 0 });         loadingElmt.textContent = loadingString(numLoaded++);
+    const subaru1Mesh       = await loadGLTF(import.meta.env.BASE_URL + "assets/models/npc/subaru_1.glb",            { x: -Math.PI/2, y: 0, z: 0 });         loadingElmt.textContent = loadingString(numLoaded++);
+    const mrNoodle1Mesh     = await loadGLTF(import.meta.env.BASE_URL + "assets/models/npc/mr_noodle_1.glb",         { x: -Math.PI/2, y: 0, z: 0 });         loadingElmt.textContent = loadingString(numLoaded++);
+    const sealiam1Mesh      = await loadGLTF(import.meta.env.BASE_URL + "assets/models/npc/sealiam_1.glb",           { x: -Math.PI/2, y: 0, z: 0 });         loadingElmt.textContent = loadingString(numLoaded++);
+    const rathew1Mesh       = await loadGLTF(import.meta.env.BASE_URL + "assets/models/npc/rathew_1.glb",            { x: -Math.PI/2, y: 0, z: 0 });         loadingElmt.textContent = loadingString(numLoaded++);
+    const kurt1Mesh         = await loadGLTF(import.meta.env.BASE_URL + "assets/models/npc/kurt_1.glb",              { x: -Math.PI/2, y: 0, z: 0 });         loadingElmt.textContent = loadingString(numLoaded++);
+    const cheesePip1Mesh    = await loadGLTF(import.meta.env.BASE_URL + "assets/models/npc/cheese_pip_1.glb",        { x: -Math.PI/2, y: 0, z: 0 });         loadingElmt.textContent = loadingString(numLoaded++);
+    const forestPip1Mesh    = await loadGLTF(import.meta.env.BASE_URL + "assets/models/npc/forest_pip_1.glb",        { x: -Math.PI/2, y: 0, z: 0 });         loadingElmt.textContent = loadingString(numLoaded++);
+    const astroPip1Mesh     = await loadGLTF(import.meta.env.BASE_URL + "assets/models/npc/astro_pip_1.glb",         { x: -Math.PI/2, y: 0, z: 0 });         loadingElmt.textContent = loadingString(numLoaded++);
+    const glassesPip1Mesh   = await loadGLTF(import.meta.env.BASE_URL + "assets/models/npc/glasses_pip_1.glb",       { x: -Math.PI/2, y: 0, z: 0 });         loadingElmt.textContent = loadingString(numLoaded++);
+    const glassesPip2Mesh   = await loadGLTF(import.meta.env.BASE_URL + "assets/models/npc/glasses_pip_2.glb",       { x: -Math.PI/2, y: 0, z: 0 });         loadingElmt.textContent = loadingString(numLoaded++);
+    const longHeadPip1Mesh  = await loadGLTF(import.meta.env.BASE_URL + "assets/models/npc/long_head_pip_1.glb",     { x: -Math.PI/2, y: 0, z: 0 });         loadingElmt.textContent = loadingString(numLoaded++);
+
+    const house1aMesh       = await loadGLTF(import.meta.env.BASE_URL + "assets/models/static/house_1a.glb",         { x: -Math.PI/2, y: 0, z: 0 });         loadingElmt.textContent = loadingString(numLoaded++);
+    const house1bMesh       = await loadGLTF(import.meta.env.BASE_URL + "assets/models/static/house_1b.glb",         { x: -Math.PI/2, y: 0, z: 0 });         loadingElmt.textContent = loadingString(numLoaded++);
+    const house1cMesh       = await loadGLTF(import.meta.env.BASE_URL + "assets/models/static/house_1c.glb",         { x: -Math.PI/2, y: 0, z: 0 });         loadingElmt.textContent = loadingString(numLoaded++);
+    const house2Mesh        = await loadGLTF(import.meta.env.BASE_URL + "assets/models/static/house_2.glb",          { x: -Math.PI/2, y: 0, z: 0 });         loadingElmt.textContent = loadingString(numLoaded++);
+    const house3Mesh        = await loadGLTF(import.meta.env.BASE_URL + "assets/models/static/house_3.glb",          { x: -Math.PI/2, y: 0, z: 0 });         loadingElmt.textContent = loadingString(numLoaded++);
+    const house4Mesh        = await loadGLTF(import.meta.env.BASE_URL + "assets/models/static/house_4.glb",          { x: -Math.PI/2, y: 0, z: 0 });         loadingElmt.textContent = loadingString(numLoaded++);
+    const tree1Mesh         = await loadGLTF(import.meta.env.BASE_URL + "assets/models/static/tree_1.glb",           { x: -Math.PI/2, y: 0, z: 0 });         loadingElmt.textContent = loadingString(numLoaded++);
+    const tree2Mesh         = await loadGLTF(import.meta.env.BASE_URL + "assets/models/static/tree_2.glb",           { x: -Math.PI/2, y: 0, z: 0 });         loadingElmt.textContent = loadingString(numLoaded++);
+    const tree3Mesh         = await loadGLTF(import.meta.env.BASE_URL + "assets/models/static/tree_3.glb",           { x: -Math.PI/2, y: 0, z: 0 });         loadingElmt.textContent = loadingString(numLoaded++);
+    const fence1Mesh        = await loadGLTF(import.meta.env.BASE_URL + "assets/models/static/fence_1.glb",          { x: -Math.PI/2, y: 0, z: 0 });         loadingElmt.textContent = loadingString(numLoaded++);
+    const stall1Mesh        = await loadGLTF(import.meta.env.BASE_URL + "assets/models/static/marketstall_1.glb",    { x: -Math.PI/2, y: 0, z: 0 });         loadingElmt.textContent = loadingString(numLoaded++);
+    const stall2Mesh        = await loadGLTF(import.meta.env.BASE_URL + "assets/models/static/marketstall_2.glb",    { x: -Math.PI/2, y: 0, z: 0 });         loadingElmt.textContent = loadingString(numLoaded++);
+    const statue1Mesh       = await loadGLTF(import.meta.env.BASE_URL + "assets/models/static/statue_1.glb",         { x: -Math.PI/2, y: 0, z: 0 });         loadingElmt.textContent = loadingString(numLoaded++);
+    const streetlamp1Mesh   = await loadGLTF(import.meta.env.BASE_URL + "assets/models/static/streetlamp_1.glb",     { x: -Math.PI/2, y: 0, z: 0 });         loadingElmt.textContent = loadingString(numLoaded++);
+    const lamp1Mesh         = await loadGLTF(import.meta.env.BASE_URL + "assets/models/static/lamp_1.glb",           { x: -Math.PI/2, y: 0, z: 0 });         loadingElmt.textContent = loadingString(numLoaded++);
+    const lamp2Mesh         = await loadGLTF(import.meta.env.BASE_URL + "assets/models/static/lamp_2.glb",           { x: -Math.PI/2, y: 0, z: 0 });         loadingElmt.textContent = loadingString(numLoaded++);
+
+    const pumpkin1Mesh      = await loadGLTF(import.meta.env.BASE_URL + "assets/models/dynamic/pumpkin_1.glb",       { x: -Math.PI/2, y: 0, z: 0 });         loadingElmt.textContent = loadingString(numLoaded++);
+    const melon1Mesh        = await loadGLTF(import.meta.env.BASE_URL + "assets/models/dynamic/melon_1.glb",         { x: -Math.PI/2, y: 0, z: 0 });         loadingElmt.textContent = loadingString(numLoaded++);
+    const alarmClock1Mesh   = await loadGLTF(import.meta.env.BASE_URL + "assets/models/dynamic/alarm_clock_1.glb",   { x: -Math.PI/2, y: 0, z: 0 });         loadingElmt.textContent = loadingString(numLoaded++);
+    const apple1Mesh        = await loadGLTF(import.meta.env.BASE_URL + "assets/models/dynamic/apple_1.glb",         { x: -Math.PI/2, y: 0, z: 0 });         loadingElmt.textContent = loadingString(numLoaded++);
+    const beachChair1Mesh   = await loadGLTF(import.meta.env.BASE_URL + "assets/models/dynamic/beach_chair_1.glb",   { x: -Math.PI/2, y: 0, z: 0 });         loadingElmt.textContent = loadingString(numLoaded++);
+    const bench1Mesh        = await loadGLTF(import.meta.env.BASE_URL + "assets/models/dynamic/bench_1.glb",         { x: -Math.PI/2, y: 0, z: 0 });         loadingElmt.textContent = loadingString(numLoaded++);
+    const bin1Mesh          = await loadGLTF(import.meta.env.BASE_URL + "assets/models/dynamic/bin_1.glb",           { x: -Math.PI/2, y: 0, z: 0 });         loadingElmt.textContent = loadingString(numLoaded++);
+    const bottle1Mesh       = await loadGLTF(import.meta.env.BASE_URL + "assets/models/dynamic/bottle_1.glb",        { x: -Math.PI/2, y: 0, z: 0 });         loadingElmt.textContent = loadingString(numLoaded++);
+    const bowl1Mesh         = await loadGLTF(import.meta.env.BASE_URL + "assets/models/dynamic/bowl_1.glb",          { x: -Math.PI/2, y: 0, z: 0 });         loadingElmt.textContent = loadingString(numLoaded++);
+    const bowl2Mesh         = await loadGLTF(import.meta.env.BASE_URL + "assets/models/dynamic/bowl_2.glb",          { x: -Math.PI/2, y: 0, z: 0 });         loadingElmt.textContent = loadingString(numLoaded++);
+    const couch1Mesh        = await loadGLTF(import.meta.env.BASE_URL + "assets/models/dynamic/couch_1.glb",         { x: -Math.PI/2, y: 0, z: 0 });         loadingElmt.textContent = loadingString(numLoaded++);
+    const couch2Mesh        = await loadGLTF(import.meta.env.BASE_URL + "assets/models/dynamic/couch_2.glb",         { x: -Math.PI/2, y: 0, z: 0 });         loadingElmt.textContent = loadingString(numLoaded++);
+    const endTable1Mesh     = await loadGLTF(import.meta.env.BASE_URL + "assets/models/dynamic/end_table_1.glb",     { x: -Math.PI/2, y: 0, z: 0 });         loadingElmt.textContent = loadingString(numLoaded++);
+    const hammer1Mesh       = await loadGLTF(import.meta.env.BASE_URL + "assets/models/dynamic/hammer_1.glb",        { x: -Math.PI/2, y: 0, z: Math.PI/6 }); loadingElmt.textContent = loadingString(numLoaded++);
+    const longTable1Mesh    = await loadGLTF(import.meta.env.BASE_URL + "assets/models/dynamic/long_table_1.glb",    { x: -Math.PI/2, y: 0, z: 0 });         loadingElmt.textContent = loadingString(numLoaded++);
+    const mug1Mesh          = await loadGLTF(import.meta.env.BASE_URL + "assets/models/dynamic/mug_1.glb",           { x: -Math.PI/2, y: 0, z: 0 });         loadingElmt.textContent = loadingString(numLoaded++);
+    const plant1Mesh        = await loadGLTF(import.meta.env.BASE_URL + "assets/models/dynamic/plant_1.glb",         { x: -Math.PI/2, y: 0, z: 0 });         loadingElmt.textContent = loadingString(numLoaded++);
+    const plant10Mesh       = await loadGLTF(import.meta.env.BASE_URL + "assets/models/dynamic/plant_10.glb",        { x: -Math.PI/2, y: 0, z: 0 });         loadingElmt.textContent = loadingString(numLoaded++);
+    const plant11Mesh       = await loadGLTF(import.meta.env.BASE_URL + "assets/models/dynamic/plant_11.glb",        { x: -Math.PI/2, y: 0, z: 0 });         loadingElmt.textContent = loadingString(numLoaded++);
+    const plant12Mesh       = await loadGLTF(import.meta.env.BASE_URL + "assets/models/dynamic/plant_12.glb",        { x: -Math.PI/2, y: 0, z: 0 });         loadingElmt.textContent = loadingString(numLoaded++);
+    const plant2Mesh        = await loadGLTF(import.meta.env.BASE_URL + "assets/models/dynamic/plant_2.glb",         { x: -Math.PI/2, y: 0, z: 0 });         loadingElmt.textContent = loadingString(numLoaded++);
+    const plant3Mesh        = await loadGLTF(import.meta.env.BASE_URL + "assets/models/dynamic/plant_3.glb",         { x: -Math.PI/2, y: 0, z: 0 });         loadingElmt.textContent = loadingString(numLoaded++);
+    const plant4Mesh        = await loadGLTF(import.meta.env.BASE_URL + "assets/models/dynamic/plant_4.glb",         { x: -Math.PI/2, y: 0, z: 0 });         loadingElmt.textContent = loadingString(numLoaded++);
+    const plant5Mesh        = await loadGLTF(import.meta.env.BASE_URL + "assets/models/dynamic/plant_5.glb",         { x: -Math.PI/2, y: 0, z: 0 });         loadingElmt.textContent = loadingString(numLoaded++);
+    const plant6Mesh        = await loadGLTF(import.meta.env.BASE_URL + "assets/models/dynamic/plant_6.glb",         { x: -Math.PI/2, y: 0, z: 0 });         loadingElmt.textContent = loadingString(numLoaded++);
+    const plant7Mesh        = await loadGLTF(import.meta.env.BASE_URL + "assets/models/dynamic/plant_7.glb",         { x: -Math.PI/2, y: 0, z: 0 });         loadingElmt.textContent = loadingString(numLoaded++);
+    const plant8Mesh        = await loadGLTF(import.meta.env.BASE_URL + "assets/models/dynamic/plant_8.glb",         { x: -Math.PI/2, y: 0, z: 0 });         loadingElmt.textContent = loadingString(numLoaded++);
+    const plant9Mesh        = await loadGLTF(import.meta.env.BASE_URL + "assets/models/dynamic/plant_9.glb",         { x: -Math.PI/2, y: 0, z: 0 });         loadingElmt.textContent = loadingString(numLoaded++);
+    const plunger1Mesh      = await loadGLTF(import.meta.env.BASE_URL + "assets/models/dynamic/plunger_1.glb",       { x: -Math.PI/2, y: 0, z: 0 });         loadingElmt.textContent = loadingString(numLoaded++);
+    const pottedTree1Mesh   = await loadGLTF(import.meta.env.BASE_URL + "assets/models/dynamic/potted_tree_1.glb",   { x: -Math.PI/2, y: 0, z: 0 });         loadingElmt.textContent = loadingString(numLoaded++);
+    const pottedTree2Mesh   = await loadGLTF(import.meta.env.BASE_URL + "assets/models/dynamic/potted_tree_2.glb",   { x: -Math.PI/2, y: 0, z: 0 });         loadingElmt.textContent = loadingString(numLoaded++);
+    const pottedTree3Mesh   = await loadGLTF(import.meta.env.BASE_URL + "assets/models/dynamic/potted_tree_3.glb",   { x: -Math.PI/2, y: 0, z: 0 });         loadingElmt.textContent = loadingString(numLoaded++);
+    const pottedTree4Mesh   = await loadGLTF(import.meta.env.BASE_URL + "assets/models/dynamic/potted_tree_4.glb",   { x: -Math.PI/2, y: 0, z: 0 });         loadingElmt.textContent = loadingString(numLoaded++);
+    const pottedTree5Mesh   = await loadGLTF(import.meta.env.BASE_URL + "assets/models/dynamic/potted_tree_5.glb",   { x: -Math.PI/2, y: 0, z: 0 });         loadingElmt.textContent = loadingString(numLoaded++);
+    const rockingChair1Mesh = await loadGLTF(import.meta.env.BASE_URL + "assets/models/dynamic/rocking_chair_1.glb", { x: -Math.PI/2, y: 0, z: Math.PI/4 }); loadingElmt.textContent = loadingString(numLoaded++);
+    const roundTable1Mesh   = await loadGLTF(import.meta.env.BASE_URL + "assets/models/dynamic/round_table_1.glb",   { x: -Math.PI/2, y: 0, z: 0 });         loadingElmt.textContent = loadingString(numLoaded++);
+    const smartphone1Mesh   = await loadGLTF(import.meta.env.BASE_URL + "assets/models/dynamic/smartphone_1.glb",    { x: -Math.PI/2, y: 0, z: 0 });         loadingElmt.textContent = loadingString(numLoaded++);
+    const squareTable1Mesh  = await loadGLTF(import.meta.env.BASE_URL + "assets/models/dynamic/square_table_1.glb",  { x: -Math.PI/2, y: 0, z: Math.PI/4 }); loadingElmt.textContent = loadingString(numLoaded++);
+    const squareTable2Mesh  = await loadGLTF(import.meta.env.BASE_URL + "assets/models/dynamic/square_table_2.glb",  { x: -Math.PI/2, y: 0, z: 0 });         loadingElmt.textContent = loadingString(numLoaded++);
+    const trinket1Mesh      = await loadGLTF(import.meta.env.BASE_URL + "assets/models/dynamic/trinket_1.glb",       { x: -Math.PI/2, y: 0, z: 0 });         loadingElmt.textContent = loadingString(numLoaded++);
+    const trinket2Mesh      = await loadGLTF(import.meta.env.BASE_URL + "assets/models/dynamic/trinket_2.glb",       { x: -Math.PI/2, y: 0, z: 0 });         loadingElmt.textContent = loadingString(numLoaded++);
+    const trinket3Mesh      = await loadGLTF(import.meta.env.BASE_URL + "assets/models/dynamic/trinket_3.glb",       { x: -Math.PI/2, y: 0, z: Math.PI/6 }); loadingElmt.textContent = loadingString(numLoaded++);
+    const tv1Mesh           = await loadGLTF(import.meta.env.BASE_URL + "assets/models/dynamic/tv_1.glb",            { x: -Math.PI/2, y: 0, z: 0 });         loadingElmt.textContent = loadingString(numLoaded++);
+    const tv2Mesh           = await loadGLTF(import.meta.env.BASE_URL + "assets/models/dynamic/tv_2.glb",            { x: -Math.PI/2, y: 0, z: 0 });         loadingElmt.textContent = loadingString(numLoaded++);
+    const woodChair1Mesh    = await loadGLTF(import.meta.env.BASE_URL + "assets/models/dynamic/wood_chair_1.glb",    { x: -Math.PI/2, y: 0, z: 0 });         loadingElmt.textContent = loadingString(numLoaded++);
+    const cheese1Mesh       = await loadGLTF(import.meta.env.BASE_URL + "assets/models/dynamic/cheese_1.glb",        { x: -Math.PI/2, y: 0, z: 0 });         loadingElmt.textContent = loadingString(numLoaded++);
+    const pineapple1Mesh    = await loadGLTF(import.meta.env.BASE_URL + "assets/models/dynamic/pineapple_1.glb",     { x: -Math.PI/2, y: 0, z: 0 });         loadingElmt.textContent = loadingString(numLoaded++);
+    const flower1Mesh       = await loadGLTF(import.meta.env.BASE_URL + "assets/models/dynamic/flower_1.glb",        { x: -Math.PI/2, y: 0, z: 0 });         loadingElmt.textContent = loadingString(numLoaded++);
+    const flower2Mesh       = await loadGLTF(import.meta.env.BASE_URL + "assets/models/dynamic/flower_2.glb",        { x: -Math.PI/2, y: 0, z: 0 });         loadingElmt.textContent = loadingString(numLoaded++);
+    const flower3Mesh       = await loadGLTF(import.meta.env.BASE_URL + "assets/models/dynamic/flower_3.glb",        { x: -Math.PI/2, y: 0, z: 0 });         loadingElmt.textContent = loadingString(numLoaded++);
+
+    loadingElmt.hidden = true;
 
     // Player
     // TODO: Bevelling to get onto steps better
@@ -3619,6 +3639,7 @@ export async function populateWorldObjects(world) {
     ]);
 
     // NPCs
+    const veronPipJpgPath = import.meta.env.BASE_URL + "assets/images/chineseModeOn.jpg";
     objects.push(...[
         new NonPlayableCharacter(world, player, {
             position: { x: -34.62, y: 2.8, z: -40.48 },
@@ -3628,7 +3649,7 @@ export async function populateWorldObjects(world) {
             colliderProps: { friction: 1, restitution: 1, density: 10 },
             interactionRadius: 4,
             displayName: DISPLAYNAME_TOWN_GREETER,
-            imagePath: "/src/assets/images/pip1.jpg",
+            imagePath: import.meta.env.BASE_URL + "assets/images/pip1.jpg",
             dialogueList: [
                 [
                     "Hey, welcome to..\n\nOh, it's you Pip! Where have you been?",
@@ -3667,7 +3688,7 @@ export async function populateWorldObjects(world) {
             colliderProps: { friction: 1, restitution: 0.5, density: 5 },
             interactionRadius: 4,
             displayName: DISPLAYNAME_GRANDPA,
-            imagePath: "/src/assets/images/grandpa1.jpg",
+            imagePath: import.meta.env.BASE_URL + "assets/images/grandpa1.jpg",
             dialogueList: [
                 [
                     "(The television turns on as you walk in.)"
@@ -3701,7 +3722,7 @@ export async function populateWorldObjects(world) {
             colliderProps: { friction: 1, restitution: 0.5, density: 5 },
             interactionRadius: 4,
             displayName: DISPLAYNAME_GRANDMA,
-            imagePath: "/src/assets/images/grandma1.jpg",
+            imagePath: import.meta.env.BASE_URL + "assets/images/grandma1.jpg",
             dialogueList: [
                 [
                     "All my damn husband does is watch the TV ---\n\nI've had it up to here with him.",
@@ -3721,7 +3742,7 @@ export async function populateWorldObjects(world) {
             colliderProps: { friction: 1, restitution: 0.5, density: 5 },
             interactionRadius: 4,
             displayName: DISPLAYNAME_LITTLE_PIP,
-            imagePath: "/src/assets/images/littlePip1.jpg",
+            imagePath: import.meta.env.BASE_URL + "assets/images/littlePip1.jpg",
             dialogueList: [
                 ["..."],
                 ["..."],
@@ -3740,7 +3761,7 @@ export async function populateWorldObjects(world) {
             colliderProps: { friction: 1, restitution: 1, density: 5 },
             interactionRadius: 4,
             displayName: DISPLAYNAME_FROG_PIP,
-            imagePath: "/src/assets/images/frogPip1.jpg",
+            imagePath: import.meta.env.BASE_URL + "assets/images/frogPip1.jpg",
             dialogueList: [
                 ["Pibbit."],
                 ["Pibbit. Pibbit."],
@@ -3755,7 +3776,7 @@ export async function populateWorldObjects(world) {
             colliderProps: { friction: 1, restitution: 0.2, density: 10 },
             interactionRadius: 2,
             displayName: DISPLAYNAME_MATT_PIP,
-            imagePath: "/src/assets/images/mattPip1.jpg",
+            imagePath: import.meta.env.BASE_URL + "assets/images/mattPip1.jpg",
             dialogueList: [
                 [
                     "Hey there!",
@@ -3772,9 +3793,9 @@ export async function populateWorldObjects(world) {
             colliderProps: { friction: 1, restitution: 0.2, density: 10 },
             interactionRadius: 2,
             displayName: DISPLAYNAME_VERONICA_PIP,
-            imagePath: "/src/assets/images/veronicaPip1.jpg",
+            imagePath: import.meta.env.BASE_URL + "assets/images/veronicaPip1.jpg",
             dialogueList: [
-                ["ඞimg=/src/assets/images/chineseModeOn.jpg"]
+                [`ඞimg=${veronPipJpgPath}`]
             ]
         }), new NonPlayableCharacter(world, player, {
             position: { x: 31.36, y: 1.9, z: 0 },
@@ -3785,7 +3806,7 @@ export async function populateWorldObjects(world) {
             colliderProps: { friction: 1, restitution: 0.2, density: 10 },
             interactionRadius: 4,
             displayName: DISPLAYNAME_FLOWER_PIP,
-            imagePath: "/src/assets/images/flowerPip1.jpg",
+            imagePath: import.meta.env.BASE_URL + "assets/images/flowerPip1.jpg",
             dialogueList: [
                 [
                     "Hey Pip! How have you been?",
@@ -3809,7 +3830,7 @@ export async function populateWorldObjects(world) {
             colliderProps: { friction: 1, restitution: 0.2, density: 10 },
             interactionRadius: 3,
             displayName: DISPLAYNAME_SLEEPY_PIP,
-            imagePath: "/src/assets/images/sleepyPip1.jpg",
+            imagePath: import.meta.env.BASE_URL + "assets/images/sleepyPip1.jpg",
             dialogueList: [
                 [
                     "*snore*",
@@ -3835,7 +3856,7 @@ export async function populateWorldObjects(world) {
             colliderProps: { friction: 1, restitution: 0.2, density: 5 },
             interactionRadius: 3,
             displayName: DISPLAYNAME_MAYOR_PIP,
-            imagePath: "/src/assets/images/mayorPip1.jpg",
+            imagePath: import.meta.env.BASE_URL + "assets/images/mayorPip1.jpg",
             dialogueList: [
                 [
                     "Oh, hey Pip. Glad to see you back in town!",
@@ -3856,7 +3877,7 @@ export async function populateWorldObjects(world) {
             colliderProps: { friction: 1, restitution: 0.2, density: 5 },
             interactionRadius: 3,
             displayName: DISPLAYNAME_FARMHAND_PIP_1,
-            imagePath: "/src/assets/images/farmhandPip1-1.jpg",
+            imagePath: import.meta.env.BASE_URL + "assets/images/farmhandPip1-1.jpg",
             dialogueList: [
                 [
                     "ඞnumChars=1ඞcharSpeed=10ඞdoodeooeoeoedo ddoeooeoodedodo\n\ndoo doo doo doo dee dee da doo da dee...",
@@ -3884,7 +3905,7 @@ export async function populateWorldObjects(world) {
             colliderProps: { friction: 1, restitution: 0.2, density: 20 },
             interactionRadius: 3,
             displayName: DISPLAYNAME_FARMHAND_PIP_2,
-            imagePath: "/src/assets/images/farmhandPip1-2.jpg",
+            imagePath: import.meta.env.BASE_URL + "assets/images/farmhandPip1-2.jpg",
             dialogueList: [
                 [
                     "ඞnumChars=1ඞcharSpeed=150ඞHi there.\n\nI'm Farmhand Pip 2.",
@@ -3914,7 +3935,7 @@ export async function populateWorldObjects(world) {
             colliderProps: { friction: 1, restitution: 0.2, density: 5 },
             interactionRadius: 5,
             displayName: DISPLAYNAME_MERCHANT_PIP_1,
-            imagePath: "/src/assets/images/merchantPip1-1.jpg",
+            imagePath: import.meta.env.BASE_URL + "assets/images/merchantPip1-1.jpg",
             dialogueList: [
                 [
                     "Hey there!",
@@ -3932,7 +3953,7 @@ export async function populateWorldObjects(world) {
             colliderProps: { friction: 1, restitution: 0.2, density: 5 },
             interactionRadius: 5,
             displayName: DISPLAYNAME_MERCHANT_PIP_2,
-            imagePath: "/src/assets/images/merchantPip1-2.jpg",
+            imagePath: import.meta.env.BASE_URL + "assets/images/merchantPip1-2.jpg",
             dialogueList: [
                 [
                     "Hello!",
@@ -3953,7 +3974,7 @@ export async function populateWorldObjects(world) {
             colliderProps: { friction: 1, restitution: 0.2, density: 5 },
             interactionRadius: 4,
             displayName: DISPLAYNAME_KURT_1,
-            imagePath: "/src/assets/images/kurt1-1.jpg",
+            imagePath: import.meta.env.BASE_URL + "assets/images/kurt1-1.jpg",
             dialogueList: [["Caw!"], ["Caw!"]]
         }), new NonPlayableCharacter(world, player, {
             position: { x: -12.28, y: 19.8, z: 16.72 },
@@ -3963,7 +3984,7 @@ export async function populateWorldObjects(world) {
             colliderProps: { friction: 1, restitution: 0.2, density: 5 },
             interactionRadius: 3,
             displayName: DISPLAYNAME_KURT_2,
-            imagePath: "/src/assets/images/kurt1-2.jpg",
+            imagePath: import.meta.env.BASE_URL + "assets/images/kurt1-2.jpg",
             dialogueList: [
                 ["Caw caw!"],
                 ["Caw!"],
@@ -3986,7 +4007,7 @@ export async function populateWorldObjects(world) {
             colliderProps: { friction: 1, restitution: 0.2, density: 5 },
             interactionRadius: 3,
             displayName: DISPLAYNAME_KURT_3,
-            imagePath: "/src/assets/images/kurt1-3.jpg",
+            imagePath: import.meta.env.BASE_URL + "assets/images/kurt1-3.jpg",
             dialogueList: [["Caw!"], ["Caw! Caw!"]]
         }), new NonPlayableCharacter(world, player, {
             position: { x: -36.75, y: 1.1, z: -31 },
@@ -3997,7 +4018,7 @@ export async function populateWorldObjects(world) {
             colliderProps: { friction: 1, restitution: 0.2, density: 5 },
             interactionRadius: 3,
             displayName: DISPLAYNAME_KURT_4,
-            imagePath: "/src/assets/images/kurt1-4.jpg",
+            imagePath: import.meta.env.BASE_URL + "assets/images/kurt1-4.jpg",
             dialogueList: [["Caw!"], ["Caw!"], ["Caw!"]],
         }), new NonPlayableCharacter(world, player, {
             position: { x: 2.65, y: 1.1, z: 21.17 },
@@ -4008,7 +4029,7 @@ export async function populateWorldObjects(world) {
             colliderProps: { friction: 1, restitution: 0.8, density: 5 },
             interactionRadius: 3,
             displayName: DISPLAYNAME_KURT_5,
-            imagePath: "/src/assets/images/kurt1-5.jpg",
+            imagePath: import.meta.env.BASE_URL + "assets/images/kurt1-5.jpg",
             dialogueList: [["ඞfontSize=7.5vhඞnumChars=1ඞcharSpeed=100ඞC A W . . ."]]
         }), new NonPlayableCharacter(world, player, {
             position: { x: 32.28, y: 3.3, z: 34.30 },
@@ -4019,7 +4040,7 @@ export async function populateWorldObjects(world) {
             colliderProps: { friction: 1, restitution: 0.8, density: 5 },
             interactionRadius: 3,
             displayName: DISPLAYNAME_KURT_6,
-            imagePath: "/src/assets/images/kurt1-6.jpg",
+            imagePath: import.meta.env.BASE_URL + "assets/images/kurt1-6.jpg",
             dialogueList: [["Caw! Caw! Caw!"], ["Caw! Caw!"], ["Caw!"]],
         }), new NonPlayableCharacter(world, player, {
             position: { x: -7.91, y: 2.5, z: 44.20 },
@@ -4030,7 +4051,7 @@ export async function populateWorldObjects(world) {
             colliderProps: { friction: 1, restitution: 0.2, density: 15 },
             interactionRadius: 5,
             displayName: DISPLAYNAME_BOB,
-            imagePath: "/src/assets/images/bob1.jpg",
+            imagePath: import.meta.env.BASE_URL + "assets/images/bob1.jpg",
             dialogueList: [
                 [
                     "ඞnumChars=1ඞcharSpeed=100ඞTrees... Juicy trees...",
@@ -4062,7 +4083,7 @@ export async function populateWorldObjects(world) {
             colliderProps: { friction: 1, restitution: 0.2, density: 15 },
             interactionRadius: 5,
             displayName: DISPLAYNAME_FRISBEE,
-            imagePath: "/src/assets/images/frisbee1.jpg",
+            imagePath: import.meta.env.BASE_URL + "assets/images/frisbee1.jpg",
             dialogueList: [
                 [
                     "Hey Pip! Long time no see!",
@@ -4080,7 +4101,7 @@ export async function populateWorldObjects(world) {
             colliderProps: { friction: 1, restitution: 0.2, density: 15 },
             interactionRadius: 2,
             displayName: DISPLAYNAME_SUBARU,
-            imagePath: "/src/assets/images/subaru1.jpg",
+            imagePath: import.meta.env.BASE_URL + "assets/images/subaru1.jpg",
             dialogueList: [
                 [
                     "(Subaru stares at you intently.)",
@@ -4097,7 +4118,7 @@ export async function populateWorldObjects(world) {
             colliderProps: { friction: 1, restitution: 0, density: 999999999 },
             interactionRadius: 4,
             displayName: DISPLAYNAME_MR_NOODLE,
-            imagePath: "/src/assets/images/mrNoodle1.jpg",
+            imagePath: import.meta.env.BASE_URL + "assets/images/mrNoodle1.jpg",
             dialogueList: [
                 [
                     "Help!! Help!!!",
@@ -4122,7 +4143,7 @@ export async function populateWorldObjects(world) {
             colliderProps: { friction: 1, restitution: 0.2, density: 5 },
             interactionRadius: 4,
             displayName: DISPLAYNAME_RATHEW,
-            imagePath: "/src/assets/images/rathew1.jpg",
+            imagePath: import.meta.env.BASE_URL + "assets/images/rathew1.jpg",
             dialogueList: [
                 [
                     "ඞfontSize=1.5vhඞcharSpeed=50ඞshhhhhhh!",
@@ -4143,7 +4164,7 @@ export async function populateWorldObjects(world) {
             colliderProps: { friction: 1, restitution: 0.2, density: 15 },
             interactionRadius: 3,
             displayName: DISPLAYNAME_CHEESE_PIP,
-            imagePath: "/src/assets/images/cheesePip1.jpg",
+            imagePath: import.meta.env.BASE_URL + "assets/images/cheesePip1.jpg",
             dialogueList: [
                 [
                     "Heh, that stupid rat has been chasing me for days.",
@@ -4159,7 +4180,7 @@ export async function populateWorldObjects(world) {
             colliderProps: { friction: 1, restitution: 1, density: 15 },
             interactionRadius: 4,
             displayName: DISPLAYNAME_SEALIAM,
-            imagePath: "/src/assets/images/sealiam1.jpg",
+            imagePath: import.meta.env.BASE_URL + "assets/images/sealiam1.jpg",
             dialogueList: [
                 [
                     "Blubbb, blubb..",
@@ -4176,7 +4197,7 @@ export async function populateWorldObjects(world) {
             colliderProps: { friction: 1, restitution: 0.2, density: 10 },
             interactionRadius: 3,
             displayName: DISPLAYNAME_FOREST_PIP,
-            imagePath: "/src/assets/images/forestPip1.jpg",
+            imagePath: import.meta.env.BASE_URL + "assets/images/forestPip1.jpg",
             dialogueList: [
                 [
                     "Hi there!",
@@ -4200,7 +4221,7 @@ export async function populateWorldObjects(world) {
             colliderProps: { friction: 1, restitution: 0.8, density: 10 },
             interactionRadius: 3,
             displayName: DISPLAYNAME_ASTRO_PIP,
-            imagePath: "/src/assets/images/astroPip1.jpg",
+            imagePath: import.meta.env.BASE_URL + "assets/images/astroPip1.jpg",
             dialogueList: [
                 [
                     "Since I was\n\na little Pip,",
@@ -4225,7 +4246,7 @@ export async function populateWorldObjects(world) {
             colliderProps: { friction: 1, restitution: 0.2, density: 15 },
             interactionRadius: 3,
             displayName: DISPLAYNAME_GLASSES_PIP_1,
-            imagePath: "/src/assets/images/glassesPip1.jpg",
+            imagePath: import.meta.env.BASE_URL + "assets/images/glassesPip1.jpg",
             dialogueList: [
                 [
                     "What do you think of my glasses?",
@@ -4245,7 +4266,7 @@ export async function populateWorldObjects(world) {
             colliderProps: { friction: 1, restitution: 0.2, density: 15 },
             interactionRadius: 3,
             displayName: DISPLAYNAME_GLASSES_PIP_2,
-            imagePath: "/src/assets/images/glassesPip2.jpg",
+            imagePath: import.meta.env.BASE_URL + "assets/images/glassesPip2.jpg",
             dialogueList: [
                 [
                     "Hey!",
@@ -4265,7 +4286,7 @@ export async function populateWorldObjects(world) {
             colliderProps: { friction: 1, restitution: 0.2, density: 15 },
             interactionRadius: 3,
             displayName: DISPLAYNAME_LONG_HEAD_PIP,
-            imagePath: "/src/assets/images/longHeadPip1.jpg",
+            imagePath: import.meta.env.BASE_URL + "assets/images/longHeadPip1.jpg",
             dialogueList: [
                 [
                     "Those two Pips over there are both obssessed with who has the nicer glasses.",

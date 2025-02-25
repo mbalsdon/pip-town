@@ -1,9 +1,12 @@
-import { defineConfig } from 'vite';
+import { defineConfig } from "vite";
 
-export default defineConfig({
-    server: {
-        port: 3000,      // Specify the port
-        strictPort: true, // Ensure the port is always 3000
-    },
-    base: './', // Required for GitHub Pages deployment
+export default defineConfig(({ command }) => {
+    const prod = (command === "build");
+    return {
+        base: prod ? "/pip-town/" : "./",
+        build: {
+            outDir: "dist",
+            assetsDir: "assets"
+        }
+    }
 });

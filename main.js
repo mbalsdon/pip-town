@@ -31,9 +31,8 @@ import { register_controls_helper } from './src/scripts/register_controls_helper
 //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
 
 /** TODO
- * prod
- *
  * * ctrlF todo
+ * * phone support
  * * windmill + animals behind farmland
  * * look for optimizations
  * * music

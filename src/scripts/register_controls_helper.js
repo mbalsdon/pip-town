@@ -19,7 +19,7 @@ export function register_controls_helper() {
     `;
 
     const imgElmt = document.createElement("img");
-    imgElmt.src = "/src/assets/images/controls.jpg";
+    imgElmt.src = import.meta.env.BASE_URL + "assets/images/controls.jpg";
     imgElmt.style.cssText = `
         width: 100%;
         height: 100%;
