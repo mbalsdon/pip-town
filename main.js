@@ -1,33 +1,36 @@
 import * as RAPIER from '@dimforge/rapier3d-compat';
 import { World } from './src/classes/World';
 import { populateWorldObjects } from './src/scripts/populate_world_objects';
+import { register_controls_helper } from './src/scripts/register_controls_helper';
 
 //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
 //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
 
-// Init libraries
-await RAPIER.init();
+(async function() {
+    // Init libraries
+    await RAPIER.init();
 
-// Init world
-const world = new World();
+    // Init world
+    const world = new World();
 
-// Add objects to world
-await populateWorldObjects(world);
+    // Add objects to world
+    await populateWorldObjects(world);
 
-// Begin gameplay loop
-function animate(currentTime) {
-    requestAnimationFrame(animate);
-    world.update(currentTime);
-}
+    setTimeout(register_controls_helper, 2000);
 
-animate();
+    // Begin gameplay loop
+    function animate(currentTime) {
+        requestAnimationFrame(animate);
+        world.update(currentTime);
+    }
+
+    animate();
+})();
 
 //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
 //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
 
 /** TODO
- * grass behind farmland
- * controls helper
  * prod
  *
  * * ctrlF todo

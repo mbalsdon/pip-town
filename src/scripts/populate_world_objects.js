@@ -3324,6 +3324,9 @@ export async function populateWorldObjects(world) {
         { dim: { x: 20, y: 0, z: 7 }, pos: { x: -14.1, y: 0.5, z: 7.85 }, rot: { x: 0, y: Math.PI/4, z: 0 } },
         { dim: { x: 2, y: 0, z: 15 }, pos: { x: -12.35, y: 0.5, z: 21.35 }, rot: { x: 0, y: Math.PI/4, z: 0 } },
         { dim: { x: 9, y: 0, z: 2 }, pos: { x: -2, y: 0.5, z: 22.3 }, rot: { x: 0, y: Math.PI/4, z: 0 } },
+
+        // FUTURE: Replace with a structure
+        { dim: { x: 16, y: 0, z: 30 }, pos: { x: 42, y: 0.5, z: -35 }, rot: { x: 0, y: 0, z: 0 } },
     ];
     for (const data of grassPatchData) {
         const grassesList = generateGrassPatch(data.dim);

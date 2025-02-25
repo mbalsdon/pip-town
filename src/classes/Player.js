@@ -66,15 +66,15 @@ export class Player extends PhysicsObject {
             space: false
         }
 
-        document.addEventListener('keydown', (e) => {
+        document.addEventListener("keydown", (e) => {
             const k = e.key.toLowerCase();
-            if (k === ' ') this.keys.space = true;
+            if (k === " ") this.keys.space = true;
             else if (this.keys.hasOwnProperty(k)) this.keys[k] = true;
         });
 
-        document.addEventListener('keyup', (e) => {
+        document.addEventListener("keyup", (e) => {
             const k = e.key.toLowerCase();
-            if (k === ' ') this.keys.space = false;
+            if (k === " ") this.keys.space = false;
             else if (this.keys.hasOwnProperty(k)) this.keys[k] = false;
         });
 

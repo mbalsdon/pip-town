@@ -10,7 +10,7 @@ let dbgConsoleElmt;
 let dbgTickElmt, dbgCamElmt, dbgCharElmt, dbgDayNightElmt;
 
 export function createDbgConsole() {
-    dbgConsoleElmt = document.createElement('div');
+    dbgConsoleElmt = document.createElement("div");
     dbgConsoleElmt.style.cssText = `
         position: absolute;
         top: 10px;
@@ -24,16 +24,16 @@ export function createDbgConsole() {
         pointer-events: none;
     `;
 
-    const dbgAxesHelperElmt = document.createElement('div');
+    const dbgAxesHelperElmt = document.createElement("div");
     dbgAxesHelperElmt.innerText = `-- Axes:
         Red = X | Green = Y | Blue = Z
 
     `;
 
-    dbgTickElmt = document.createElement('div');
-    dbgCamElmt = document.createElement('div');
-    dbgCharElmt = document.createElement('div');
-    dbgDayNightElmt = document.createElement('div')
+    dbgTickElmt = document.createElement("div");
+    dbgCamElmt = document.createElement("div");
+    dbgCharElmt = document.createElement("div");
+    dbgDayNightElmt = document.createElement("div")
 
     dbgConsoleElmt.appendChild(dbgAxesHelperElmt);
     dbgConsoleElmt.appendChild(dbgTickElmt);

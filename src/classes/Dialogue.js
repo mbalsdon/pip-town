@@ -123,7 +123,7 @@ export class Dialogue {
             const message = this.messageQueue.shift();
 
             this._interactionElmt.style.display = "flex";
-            this._textOverlayElmt.textContent = '';
+            this._textOverlayElmt.textContent = "";
             this._imgOverlayElmt.hidden = true;
 
             // Config parsing (image)
